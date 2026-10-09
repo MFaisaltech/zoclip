@@ -1,9 +1,9 @@
 # ZoClip architecture blueprint
 
-Status: Phase 0 design, 2026-10-09. No services, routes, migrations or integrations
-are implemented. The master specification is the product contract. This document
+Status: Phase 0 design with Phase 1 foundation now implemented; see
+IMPLEMENTATION_STATUS.md for evidence and remaining gates. The master specification is the product contract. This document
 selects implementation defaults; capacity figures below are planning limits, not
-benchmarks. Frontend implementation and all phases 1–8 remain out of scope.
+benchmarks. Frontend and phases 2–8 remain unimplemented.
 
 ## Components and boundaries
 
@@ -67,7 +67,8 @@ versions selected and locked in Phase 1. No guessed current package versions.
 Official Deepgram/Google SDK versions and model IDs are selected against current
 official docs in Phase 4. Ubuntu FFmpeg/ffprobe and OpenCV compatibility is tested
 in media phases; record container image digests and binary versions. No dependencies
-or lockfile are installed in Phase 0.
+or lockfile were installed in Phase 0. Phase 1 now provides pyproject.toml and uv.lock;
+the resolved environment is recorded in implementation status.
 
 ## Database and migration plan
 
@@ -83,7 +84,8 @@ review generated SQL and validate upgrade/downgrade on a disposable PostgreSQL D
 Use expand/migrate/contract for changes with existing data. Run one migration job
 before application rollout, never from every worker. Back up before destructive
 changes; financial rollback normally restores compatible code or uses a forward
-fix, not deletion of ledger rows. No migrations exist yet.
+fix, not deletion of ledger rows. Phase 1 adds revision 39bc6d102a49 for identity/auth;
+financial and job schemas remain future work.
 
 ## Identity and API contract
 

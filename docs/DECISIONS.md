@@ -1,8 +1,8 @@
 # ZoClip decision register
 
-Phase 0, 2026-10-09. Accepted here means design default, not implemented or tested.
-No provider websites were consulted: no provider integration, current fee or model
-availability claim is made. Verify official documentation in the implementing phase.
+Phase 0 decisions, with Phase 1 additions below. Accepted means design default;
+implementation evidence lives in IMPLEMENTATION_STATUS.md. No payment/AI provider
+integration, current fee or model availability claim is made.
 
 | ID | Decision/default | Rationale / revisit gate |
 |---|---|---|
@@ -55,3 +55,34 @@ availability claim is made. Verify official documentation in the implementing ph
 
 These are not blockers to Phase 1 scaffolding. They block affected integrations,
 commercial launch or capacity claims at their respective gates.
+
+## Phase 1 additions
+
+- Opaque random server sessions use only hashes in PostgreSQL; no session-signing
+  secret is required. CSRF also uses a random token hash bound to that session.
+  Anonymous sessions protect pre-login mutations. Explicit Origin required even for curl.
+- Verification/reset tokens are hashed, single-use and serialized on user/token locks.
+  Password reset revokes all authenticated sessions. Session rotation locks user first.
+- Argon2id 64 MiB, time cost 3, parallelism 1; at most two simultaneous hash/verify
+  operations per API process. API concurrency cap 32, DB pool 2/overflow 0; UTC
+  connections with 10s statement and 5s lock deadlines. These are defaults, not load results.
+- Redis Lua fixed-window auth limits fail closed when unavailable. Tests use real
+  PostgreSQL; fakeredis/Lua is explicit locally, real Redis is configured in CI.
+- Google uses Authlib 1.8 + joserfc signature/claim validation and server-side
+  single-use flow/browser binding. No automatic email-based linking: prove both
+  identities through an active verified local login and verified matching Google email.
+- Email modes are disabled or explicit private development mailbox. No live email
+  provider is implemented; production registration/recovery stays unavailable until one is added.
+- Phase 1 Compose has internal PostgreSQL/Redis, loopback API and empty AI/render
+  workers. It is not the finished Phase 7 production deployment. Before production,
+  split migration/runtime DB privileges; Compose's initial database owner is privileged.
+- Audit mutation trigger rejects UPDATE/DELETE/TRUNCATE; database superuser schema
+  access remains an operational boundary. No publicly callable role grant exists.
+- Dependency ranges are in pyproject.toml, exact versions/hashes in uv.lock; no
+  guessed vendor models/rates. Google OIDC/Authlib official documentation and installed
+  source interfaces were checked; live Google credential verification remains pending.
+
+Phase 1 infrastructure follow-up (2026-10-10): local Windows-port Redis/RQ and
+PostgreSQL tests are supplemental evidence only. Official Linux Docker build,
+startup and both worker entrypoints remain pending. The user will install Docker
+Desktop/WSL2 locally; Contabo access/configuration is not authorized. No Phase 2 work.

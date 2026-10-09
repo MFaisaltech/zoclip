@@ -1,0 +1,106 @@
+name: zoclip
+x-app: &app
+  build: .
+  environment: &environment
+    APP_ENV: ${APP_ENV:-development}
+    DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
+    REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://localhost:3000}
+    API_PUBLIC_URL: ${API_PUBLIC_URL:-http://localhost:8000}
+    ALLOWED_HOSTS: ${ALLOWED_HOSTS:-["localhost","127.0.0.1"]}
+    COOKIE_SECURE: ${COOKIE_SECURE:-true}
+    EMAIL_MODE: ${EMAIL_MODE:-disabled}
+    DEV_MAILBOX_DIR: /app/var/mailbox
+    GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+    GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
+    AUTH_RATE_LIMIT: ${AUTH_RATE_LIMIT:-10}
+    AUTH_RATE_WINDOW_SECONDS: ${AUTH_RATE_WINDOW_SECONDS:-900}
+    SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-86400}
+    ANONYMOUS_TTL_SECONDS: ${ANONYMOUS_TTL_SECONDS:-1800}
+    ENABLE_LIVE_PAYMENTS: ${ENABLE_LIVE_PAYMENTS:-false}
+    ENABLE_TRIAL_CREDITS: ${ENABLE_TRIAL_CREDITS:-false}
+    PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-disabled}
+  init: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  logging:
+    driver: json-file
+    options: {max-size: 10m, max-file: "3"}
+
+services:
+  db:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_USER: zoclip
+      POSTGRES_DB: zoclip
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    mem_limit: 1536m
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U zoclip -d zoclip"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  redis:
+    image: redis:7.4-bookworm
+    command: [redis-server, --appendonly, "yes", --maxmemory, 192mb, --maxmemory-policy, noeviction]
+    volumes: [redis_data:/data]
+    mem_limit: 256m
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  migrate:
+    <<: *app
+    command: [alembic, upgrade, head]
+    mem_limit: 512m
+    depends_on:
+      db: {condition: service_healthy}
+  api:
+    <<: *app
+    ports: ["127.0.0.1:8000:8000"]
+    volumes: [mailbox:/app/var/mailbox]
+    mem_limit: 768m
+    cpus: 1.0
+    restart: unless-stopped
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, "import os, urllib.request; from urllib.parse import urlsplit; req=urllib.request.Request('http://localhost:8000/health/ready',headers={'Host':urlsplit(os.environ['API_PUBLIC_URL']).netloc}); urllib.request.urlopen(req, timeout=5)"]
+      interval: 15s
+      timeout: 6s
+      retries: 3
+  worker-ai:
+    <<: *app
+    environment:
+      <<: *environment
+      WORKER_QUEUE: ai
+    command: [python, -m, zoclip.workers.run]
+    mem_limit: 1024m
+    cpus: 1.0
+    restart: unless-stopped
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+  worker-render:
+    <<: *app
+    environment:
+      <<: *environment
+      WORKER_QUEUE: render
+    command: [python, -m, zoclip.workers.run]
+    mem_limit: 2048m
+    cpus: 2.0
+    restart: unless-stopped
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+
+volumes:
+  postgres_data:
+  redis_data:
+  mailbox:

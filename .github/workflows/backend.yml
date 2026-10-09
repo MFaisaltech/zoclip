@@ -1,0 +1,47 @@
+name: backend
+on: [push, pull_request]
+jobs:
+  phase1:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17-bookworm
+        env:
+          POSTGRES_USER: zoclip_test
+          POSTGRES_PASSWORD: test-only-password
+          POSTGRES_DB: zoclip_ci_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U zoclip_test -d zoclip_ci_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:7.4-bookworm
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s
+          --health-timeout 3s --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://zoclip_test:test-only-password@localhost:5432/zoclip_ci_test
+      TEST_REDIS_URL: redis://localhost:6379/15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: "0.12.24"
+          python-version: "3.12"
+      - run: uv sync --frozen
+      - run: uv run ruff check src tests scripts alembic
+      - run: uv run ruff format --check src tests scripts alembic
+      - run: uv run mypy src
+      - run: uv run python scripts/export_openapi.py
+      - run: git diff --exit-code -- docs/openapi.json
+      - run: uv run pytest -q
+      - run: docker compose --env-file .env.example config --quiet
+      - run: docker build --tag zoclip-phase1 .
+      - name: Start isolated Phase 1 containers
+        run: docker compose --project-name zoclip-phase1-ci --env-file .env.example up --build --detach --wait --wait-timeout 180
+      - name: Check actual API, database, Redis and both workers
+        run: docker compose --project-name zoclip-phase1-ci --env-file .env.example exec -T api python scripts/container_smoke.py
+      - name: Stop isolated containers
+        if: always()
+        run: docker compose --project-name zoclip-phase1-ci --env-file .env.example down
