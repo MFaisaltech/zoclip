@@ -1,4 +1,4 @@
-# API handoff — Phase 1
+# API handoff — Phases 1–2
 
 The implemented contract is [openapi.json](openapi.json), generated with
 `uv run python scripts/export_openapi.py` from `zoclip.main.create_app` without
@@ -15,6 +15,64 @@ Foreign resource lookups use ownership in the SQL predicate and return 404.
 
 Production disables interactive docs and OpenAPI HTTP routes. Keep generated
 contract artifacts available privately to frontend developers. No frontend or
-v0 production handoff beyond auth is claimed in this phase. PATCH /me is deferred
+v0 production handoff is claimed in this phase. PATCH /me is deferred
 because no editable profile fields were specified; email/password/role changes are
 not exposed as an unrestricted profile update.
+
+## Credits and plans
+
+The generated OpenAPI includes these implemented routes. Cookie authentication
+and verified active accounts apply to all /me routes. Customers cannot select an
+owner ID. Ledger history excludes staff actors/reasons, operation keys and hashes.
+
+| Method and path under /api/v1 | Contract |
+|---|---|
+| GET /plans | Public Free/Creator/Pro/Business/topup catalog, nullable price version, PKR integer paisa, approved flag, rules, no auto-renewal/credit expiry |
+| GET /me/credits | WalletView: available_credits, reserved_credits; lazy zero wallet |
+| GET /me/credit-transactions | TransactionPage: items, next_cursor; limit 1–100, UUID cursor |
+| GET /me/entitlements | Bounded EntitlementView list; limit 1–100, exclusive UUID cursor; active flag; price_version_id pins rules |
+| POST /jobs/quote | QuoteInput -> QuoteView; free calculation, idempotent, 15-minute expiry; not a job or enqueue |
+
+QuoteInput fields are source_seconds (integer 1–7200), output_count (1–100),
+edit_count (0–100, default 0), captions (default true), reframe (default true).
+Plan limits may be smaller. QuoteView contains id, price_version_id, credits,
+request and expires_at. No price/balance/deduction/user overrides are accepted.
+
+POST requires Idempotency-Key (1–128 ASCII letters/digits/underscore/dot/colon/hyphen),
+Origin and X-CSRF-Token. Credentialed CORS permits Idempotency-Key. Identical key
+and payload return the same persisted result; reuse with changed payload returns
+409 idempotency_conflict. An expired quote replay retains its original expiry;
+use a new key for a fresh quote. Quote retries never charge. Later source/job routes
+must revalidate advisory source duration and bind output/edit quotas to owned media.
+
+## Staff configuration and metrics
+
+Every staff route enforces server-side AdminUser, and service mutations recheck RBAC.
+POSTs require CSRF, Idempotency-Key and a meaningful reason. Mutations and metrics
+reads append immutable audit events. No customer grant/reserve/settle/refund endpoint
+exists; job accounting is an internal transaction contract.
+
+| Method and path under /api/v1 | Contract |
+|---|---|
+| POST /admin/plans/{plan_id}/versions | PlanVersionInput -> PriceView; immutable price, credits, validity, consumption rules, approved flag |
+| POST /admin/users/{user_id}/credit-adjustments | AdjustmentInput -> TransactionView; signed nonzero integer adjustment, nonnegative result |
+| POST /admin/users/{user_id}/entitlements | EntitlementInput -> EntitlementView; explicit manual award and exactly-once allowance, not payment verification |
+| POST /admin/cost-rates | RateInput -> RateView; versioned model/unit/USD rate and max units |
+| POST /admin/limits/versions | PolicyInput -> PolicyView; complete budgets/assumptions/rate IDs and breaker state |
+| GET /admin/limits | Current PolicyView or null when unconfigured |
+| GET /admin/usage-costs | Estimated, actual, held_or_unknown USD (decimal strings), attempt count |
+
+Initial catalog price values and current policy are null. Price/rate/allowance
+configuration is not seeded with invented commerce. No subscription auto-renewal,
+checkout, payment verification, uploads, processing or output endpoint is implied.
+Automatic trials are disabled and cannot be toggled on until anti-abuse controls exist.
+Use decimal strings for staff USD inputs; floats are rejected. See actual schema for
+every required rule/limit field and [CREDITS_AND_MARGIN.md](CREDITS_AND_MARGIN.md) for
+allowance lifecycle, quote math, lock order, refund semantics and worker integration.
+
+Additional documented errors: 409 insufficient_credits, idempotency_conflict,
+quote_expired, quote_stale, plan_limit, usage_limit, concurrency_limit,
+reservation_exists/reservation_final; 503 plan_unconfigured, price_unapproved,
+spending_disabled, rates_unconfigured, budget_exceeded, uncertain_spend,
+accounting_mismatch. Internal errors appear only where the corresponding contract
+is consumed in later phases; they do not imply an existing customer job-start route.

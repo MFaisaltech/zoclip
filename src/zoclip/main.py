@@ -23,6 +23,7 @@ from zoclip.auth.routes import router
 from zoclip.core.config import Settings
 from zoclip.core.db import build_engine
 from zoclip.core.errors import ApiError, Problem, problem_response
+from zoclip.credits.routes import router as credits_router
 
 logger = logging.getLogger("zoclip.requests")
 
@@ -135,6 +136,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.google = GoogleOIDC(settings)
     app.include_router(router)
     app.include_router(google_router)
+    app.include_router(credits_router)
     app.add_exception_handler(ApiError, problem_response)  # type: ignore[arg-type]
 
     @app.exception_handler(RequestValidationError)
@@ -185,7 +187,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_origins=[settings.public_app_url],
         allow_credentials=True,
         allow_methods=["GET", "POST"],
-        allow_headers=["Content-Type", "X-CSRF-Token"],
+        allow_headers=["Content-Type", "X-CSRF-Token", "Idempotency-Key"],
         expose_headers=["X-Request-ID"],
     )
     app.add_middleware(RequestBoundary, production=settings.app_env == "production")

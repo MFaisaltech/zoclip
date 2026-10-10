@@ -1,9 +1,10 @@
 # ZoClip architecture blueprint
 
-Status: Phase 0 design with Phase 1 foundation now implemented; see
+Status: Phase 0 design with Phase 1 foundation and Phase 2 accounting implemented; see
 IMPLEMENTATION_STATUS.md for evidence and remaining gates. The master specification is the product contract. This document
 selects implementation defaults; capacity figures below are planning limits, not
-benchmarks. Frontend and phases 2–8 remain unimplemented.
+benchmarks. Frontend and phases 3–8 remain unimplemented. The Phase 2 transaction
+contracts, limits and implemented scope are detailed in CREDITS_AND_MARGIN.md.
 
 ## Components and boundaries
 
@@ -85,7 +86,7 @@ Use expand/migrate/contract for changes with existing data. Run one migration jo
 before application rollout, never from every worker. Back up before destructive
 changes; financial rollback normally restores compatible code or uses a forward
 fix, not deletion of ledger rows. Phase 1 adds revision 39bc6d102a49 for identity/auth;
-financial and job schemas remain future work.
+Phase 2 adds revision dd9634e4866b for financial schemas; job schemas remain future work.
 
 ## Identity and API contract
 
@@ -141,7 +142,8 @@ balances and open reservations; discrepancies stop affected financial operations
 | RESERVE | -n | +n | A >= n; unique reservation/job |
 | SETTLE | 0 | -n | held reservation, deliverable verified, once |
 | RELEASE | +n | -n | held reservation, final failure/cancel, once |
-| REFUND/reversal | -n | 0 | recover only unspent credits under policy |
+| REFUND of GRANT/reversal | -n | 0 | recover only unspent credits under policy |
+| REFUND of SETTLE | +n | 0 | restore credits up to the original settled charge |
 | ADMIN_ADJUST | signed n | 0 | RBAC, reason, nonnegative result |
 
 Reservation: HELD -> SETTLED or RELEASED, never both. MVP whole-job charge only

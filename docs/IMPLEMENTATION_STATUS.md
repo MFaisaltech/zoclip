@@ -1,11 +1,12 @@
 # ZoClip implementation status
 
-Phase 1 foundation is implemented; local PostgreSQL-backed checks are recorded below.
+Phases 1–2 are implemented; local PostgreSQL-backed checks are recorded below.
 Latest infrastructure verification: 2026-10-10; Docker build/Compose startup,
 container PostgreSQL migrations, official Linux Redis and both RQ workers PASS.
-All 49 tests pass against Docker PostgreSQL/Redis. See the final verification below;
+Phase 2 final suite: **115 passed, 0 failed, 0 skipped**, against Docker PostgreSQL/Redis.
+See the Phase 2 verification at the end of this document;
 earlier follow-ups are historical evidence, superseded by this completed local gate.
-Phase 2 has not started. At the Phase 0 audit on 2026-10-09, the repository contained only
+Phase 3 remains unstarted. At the Phase 0 audit on 2026-10-09, the repository contained only
 `docs/ZOCLIP_BACKEND_MASTER_SPEC.md` and `docs/ZOCLIP_CODEX_PHASED_PROMPTS.md`.
 There was no AGENTS.md, application, dependency manifest, Compose configuration,
 migration, API schema, test suite or frontend. Existing input documents preserved.
@@ -18,7 +19,7 @@ no live provider requests, benchmarks or deployment have been performed.
 |---|---|---|
 | 0 Repository blueprint | Documentation complete | AGENTS.md, ARCHITECTURE.md, DECISIONS.md and this status; consistency review against complete master spec and PROMPT 0 |
 | 1 Foundation/auth | PASS — local development gate verified | Docker build/startup, health, PostgreSQL migrations, Linux Redis/both RQ workers, 49 tests, lint/type/contract checks pass; live Google/email and production remain unverified |
-| 2 Ledger/budgets | NOT STARTED | Actual PostgreSQL concurrent spend/idempotency/reconciliation tests, versioned quotes and atomic budget admission |
+| 2 Ledger/budgets | PASS — local development gate verified | 115 tests including independent PostgreSQL financial races/duplicates/rollback/isolation, quotes/allowances, all expense budgets; lint/type/contract/migrations and updated Linux container smoke pass |
 | 3 Ingestion/queue | NOT STARTED | Real chunk upload/direct allowed URL, SSRF/IDOR/disk tests, durable dispatch/recovery, no AI charges |
 | 4 AI suggestions | NOT STARTED | Mock-tested adapters plus opt-in configured real transcription/validated suggestions; rendering still absent |
 | 5 Render/editor | NOT STARTED | Actual captioned vertical MP4, revision rerender, isolation and exactly-once settlement; representative QA |
@@ -372,3 +373,168 @@ These are separate deployment/integration limitations, not claims of live servic
 The 3.80 GiB Docker allocation and low C: space are unsuitable evidence for the
 8-GB target's capacity or the future 20-GB media-headroom gate. Production readiness
 remains unclaimed. No git commit was created.
+
+## Phase 2 — credits, plans and expense protection — 2026-10-10
+
+**Gate 2: PASS for local development.** Implemented PROMPT 2 only, after explicit
+user authorization. Final full suite: **115 passed, 0 failed, 0 skipped, 2 warnings
+in 53.78s**. Critical financial/concurrency tests passed against actual Linux Docker
+PostgreSQL, not SQLite. No Phase 3 ingestion/jobs/outbox, media processing, provider
+calls, payments, remote server access or frontend work was implemented. Existing
+Phase 1 migration/authentication and architecture were preserved.
+
+### Files and schema
+
+Created:
+
+- src/zoclip/credits/__init__.py, models.py, schemas.py, service.py, routes.py
+- alembic/versions/dd9634e4866b_phase2_credits_budgets.py
+- tests/test_credits.py
+- docs/CREDITS_AND_MARGIN.md
+
+Changed:
+
+- src/zoclip/main.py: register credit/plan/staff routes, permit Idempotency-Key in CORS
+- src/zoclip/core/db.py: request ID correlation in session.info for financial audits
+- src/zoclip/core/config.py: accurate fail-closed automatic-trial/live-payment message
+- alembic/env.py: import financial metadata; support caller-supplied connection for
+  independently migrated disposable concurrency-test schemas
+- tests/test_config.py: contract now requires credits, continues to exclude payments/uploads
+- scripts/container_smoke.py: add Linux PostgreSQL financial/idempotency/reconcile/rollback smoke
+- .github/workflows/backend.yml: generalize Phase 1 names to backend; retain full suite/container smoke
+- .env.example: document DB-managed financial configuration; no new environment variables
+- docs/openapi.json, API_HANDOFF.md, ARCHITECTURE.md, DECISIONS.md, this status, README.md
+
+Revision **dd9634e4866b**, parent **39bc6d102a49**, adds twelve tables:
+wallets, wallet_transactions, credit_reservations, credit_quotes, plans,
+plan_price_versions, user_entitlements, cost_rate_versions, cost_policy_versions,
+system_limits, spend_attempts, provider_usage. UUIDs, UTC timestamps, FK/unique
+indexes, nonnegative balances/amounts and state/delta checks are present. Existing
+admin_audit_logs is reused; Phase 1 schema is not rewritten. Seven append-only
+financial tables have UPDATE/DELETE/TRUNCATE rejection triggers. Downgrade refuses
+populated ledger/expense history instead of erasing it. Empty-schema up/down/up is
+tested; use forward fixes/backups for real financial databases.
+
+Migration seeds catalog identities only (Free, Creator, Pro, Business, topup) and
+a disabled singleton expense policy. **No commercial prices, credits, rates,
+budgets or paid entitlements are seeded.** No dependency/uv.lock change was needed.
+All environment names remain unchanged. New financial configuration is versioned
+PostgreSQL data supplied by authenticated, audited admin routes.
+
+### Implemented behavior and security evidence
+
+| Requirement | Actual implementation / evidence |
+|---|---|
+| Atomic append-only accounting | service.lock_wallet/entry/reconcile; target user then SELECT FOR UPDATE wallet; ledger+balances same caller transaction; database CHECKs/triggers |
+| GRANT, RESERVE, SETTLE, RELEASE, REFUND, ADMIN_ADJUST | Integer operations; stable owner-scoped operation keys and payload hashes; ten-duplicate test reconciles all operations |
+| Credit quote/reserve/settle agreement | Versioned free 15-minute Quote; integer duration/features/output/edit formula; stale/expired/foreign quote rejection; unique quote/job links; reserved charge settles exactly once |
+| Parallel wallet spend | Ten committed independent connections contend for five credits: exactly five holds, five insufficient_credits, available=0/reserved=5 |
+| Duplicate grants/settlements/refunds | Ten simultaneous duplicates per operation produce one record/effect; settlement versus release race has one winner; reconciliation exact |
+| Failures and restoration | Failure after ledger insertion rolls back wallet/reservation; later same-key retry works. Constraint failure after settlement restores HELD and retry settles once |
+| Refund safety | Settled-charge refunds restore credits; grant reversals reclaim only spendable credits; original references/cumulative cap; holds cannot be consumed; no negative balances |
+| Plan lifecycle | Immutable versioned PKR prices/credits/rules, prepaid 30-day sequential access, no auto-renewal; each manual allowance once, Free once, topup preserves plan; paid plan takes precedence; access expires while credits roll over |
+| Expiry/trials | No credit expiry/EXPIRE. Automatic trial enablement rejected until missing abuse controls exist; no customer claim/grant endpoint |
+| Customer quotas | Plan duration <=7200 seconds, output/edit/concurrency limits, UTC daily/monthly credits including holds; released failures restore quota |
+| Expense foundation | Five positive versioned rates (minutes/input tokens/output tokens/CPU seconds/GB-days), model labels, bounded units and token assumptions; Decimal estimates and actuals |
+| Budget protection | Serialized PostgreSQL admission across job/user/global daily/monthly USD ceilings, global held-job capacity and retry cap; all dimensions and cross-user race tested |
+| Paid-call retry safety | Unique spend admission returns fresh=True once, nine duplicates False; HELD/UNKNOWN blocks blind retries; unresolved exposure retained over month boundary |
+| Sunk costs/overruns | Append-only actual usage, failed-job costs retained despite credit release; overrun opens breaker; disabled accounts still allow release/cost reconciliation |
+| Multi-tenancy/RBAC/CSRF | /me owner predicates, foreign quote/reservation/expense/refund rejection, customer cannot call admin or internal staff mutation; Origin+CSRF+Idempotency-Key and strict input models; no browser prices/balances accepted |
+| Auditability | Staff reason/actor kept in private immutable ledger/config/audits; requests correlate audit IDs; customer history omits staff metadata and operation hashes/keys |
+| OpenAPI | Generated actual routes/schema validates and matches export; no upload/payment routes; typed bounded history, balance, plan, entitlement, quote, staff configuration and metrics |
+
+Service methods never commit, enqueue or call a provider. The next phases must
+compose their job/outbox/output changes in the same financial transaction and
+derive quote inputs from authoritative probed media. This is a contract, not an
+implemented job/worker processing lifecycle. No real payment can be created or
+verified; manual staff benefits are explicitly audited, not disguised purchases.
+
+### Exact commands and outcomes
+
+The previously stopped Phase 1 verification project supplied the test infrastructure
+only: its PostgreSQL/Redis services were started; a new **zoclip_phase2_test** database
+was created. No existing application/Phase 1 test data was migrated or deleted.
+Test environment used development placeholders:
+
+```text
+TEST_DATABASE_URL=postgresql+psycopg://zoclip:CHANGE_ME@127.0.0.1:63555/zoclip_phase2_test
+TEST_REDIS_URL=redis://127.0.0.1:63554/15
+```
+
+| Command/check | Observed result |
+|---|---|
+| alembic upgrade 39bc6d102a49, revision --autogenerate -m phase2_credits_budgets | PASS on new disposable database; generated dd9634e4866b, reviewed/added seeds, triggers and safe downgrade |
+| alembic upgrade head; alembic check | PASS, no new upgrade operations detected |
+| .venv/Scripts/ruff.exe check src tests scripts alembic | PASS, all checks passed |
+| .venv/Scripts/ruff.exe format --check src tests scripts alembic | PASS, 34 files already formatted |
+| .venv/Scripts/mypy.exe src | PASS, 23 source files |
+| .venv/Scripts/python.exe scripts/export_openapi.py | PASS, regenerated from actual code; contract validation/snapshot passed in suite |
+| .tools/uv/uv.exe lock --check --offline | PASS, resolved 71 packages; existing workspace-local cache/Python, no lock change |
+| .venv/Scripts/python.exe -m pytest -q --tb=short --basetemp=var/phase2-verification/pytest-tmp -o cache_dir=var/phase2-verification/pytest-cache | **115 passed, 0 failed, 0 skipped, 2 warnings in 53.78s**, exit 0 |
+| Session migration fixture | Upgrade head -> downgrade base -> upgrade head -> schema drift check PASS on disposable database |
+| Independent concurrency schemas | Fresh real Alembic migrations per generated schema; independent committed connections; cleanup drops only generated financial_test UUID schemas, no trigger bypass |
+| Docker build --tag zoclip-phase2:verify --progress plain . | PASS, frozen existing production dependencies, non-root application image |
+| Phase 2 Compose config --quiet / up --no-build --detach --wait --wait-timeout 180 | PASS, migration exits 0, API/DB/Redis healthy, both Linux workers running |
+| Phase 2 API python scripts/container_smoke.py | PASS: readiness, PostgreSQL head, grant/idempotency/reconcile/rollback, Redis PING, real ai/render results 42 |
+| Phase 2 API alembic current / alembic check | PASS: dd9634e4866b (head), no new upgrade operations |
+| Container health inspection | All five running services OOMKilled=false, RestartCount=0 before intentional stop |
+| Compose/CI PyYAML parse | PASS; additionally actual Docker Compose config/start succeeded |
+| git diff --check / explicit new-file whitespace | PASS, line-ending notices only; all eight new source/migration/test/document files passed whitespace/newline checks |
+| Phase 2 Compose stop; Phase 1 Compose stop db redis | PASS; stopped all temporary services, retained images/containers/volumes, no pruning/deletion |
+
+The two warnings are the existing Starlette/Authlib HTTPX deprecations. Initial
+restricted test invocations had Windows temporary-directory/ACL setup errors;
+one test closure initially referenced the wrong reservation. The test was fixed,
+normal local execution permission resolved pytest ACL behavior, and full reruns
+passed 102, then 113, finally **115** after review regressions. Failed/setup runs
+are not counted as successful gate evidence. Docker pipe access also required the
+same local tool escalation used in Phase 1. No external paid APIs were invoked.
+
+The new isolated project uses base compose.yaml and ignored override
+var/phase2-verification/compose.verify.yaml, matching the previous low-memory
+verification caps (DB 512m, migrate 256m, API 512m, workers 384m each). Its services
+use new volumes zoclip-phase2-verify_postgres_data, _redis_data and _mailbox; Phase 1
+volumes were preserved. PostgreSQL/Redis loopback ports observed were 64407/64406
+for this separate application project; API loopback 8000. Base Compose still has
+no public PostgreSQL/Redis ports. Application image:
+sha256:608d5fe776e95316ba6970476478b2156b4314b7e8a3f45b5b622b25b1fdda24.
+
+Reproduce the application-container smoke (development placeholders only):
+
+```powershell
+$composeArgs = @('--project-name', 'zoclip-phase2-verify', '--env-file', '.env.example',
+  '-f', 'compose.yaml', '-f', 'var/phase2-verification/compose.verify.yaml')
+docker compose @composeArgs up --no-build --detach --wait --wait-timeout 180
+docker compose @composeArgs exec -T api python scripts/container_smoke.py
+docker compose @composeArgs exec -T api alembic check
+docker compose @composeArgs stop
+```
+
+The override is intentionally ignored; copy the documented Phase 1 override and
+replace zoclip-phase1:verify with zoclip-phase2:verify to recreate it. Test ports
+may change after restart; discover them with docker port. Tests ran on Windows
+Python against real Linux PostgreSQL/Redis; the application and regular RQ workers
+ran inside Linux containers. A full Linux pytest run and GitHub Actions execution
+were **not** claimed. Docker smoke grant rows were explicitly rolled back.
+
+### Remaining limitations and readiness for Phase 3
+
+- **Ready for explicitly authorized PROMPT 3. Phase 3 has not started.** It must
+  implement authoritative owned/probed media metadata, durable jobs/outbox/leases,
+  dispatch/recovery and cancellation, composed with these transaction contracts.
+- Automatic trials, device/IP abuse controls, timeout reconciliation tooling and
+  job hold expiration/recovery are not live. No unknown provider hold is auto-freed.
+- Approved retail prices, actual provider/model rates, commercial quotas/budgets,
+  measured unit economics and margin approval remain unset. Paid-work admission
+  fails closed. No economic/profit guarantee, revenue or invoice reconciliation.
+- No payment integration or real paid-credit award path; Phase 6 remains untouched.
+  Staff awards/adjustments require existing server-provisioned admin roles; no
+  customer or public admin bootstrap/role elevation was added.
+- Runtime/migration DB role separation, live Google/email, TLS/Contabo deployment,
+  backups/restore, retention and load/capacity measurements remain separate gates.
+  Schema owner/superuser can bypass triggers. No production readiness claim.
+- The prior low-C-drive/3.80-GiB Docker constraints remain capacity limitations,
+  not financial-test blockers or evidence of future 120-minute media capacity.
+
+No git commit was created. Suggested commit:
+feat: add atomic credit ledger plans and expense budget protection

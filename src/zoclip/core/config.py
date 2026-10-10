@@ -68,7 +68,9 @@ class Settings(BaseSettings):
         ):
             raise ValueError("GOOGLE_REDIRECT_URI must equal the API callback URL")
         if self.enable_live_payments or self.enable_trial_credits:
-            raise ValueError("Payments and trial credits are not implemented in Phase 1")
+            raise ValueError(
+                "Live payments and automatic trials remain disabled pending verification"
+            )
         if self.app_env == "production":
             if not self.cookie_secure or self.email_mode == "development":
                 raise ValueError("Production requires secure cookies and forbids development email")

@@ -48,4 +48,5 @@ def build_engine(url: str) -> Engine:
 
 def get_db(request: Request) -> Generator[Session, None, None]:
     with request.app.state.session_factory() as db:
+        db.info["request_id"] = request.state.request_id
         yield db

@@ -1,6 +1,6 @@
 # ZoClip decision register
 
-Phase 0 decisions, with Phase 1 additions below. Accepted means design default;
+Phase 0 decisions, with Phase 1–2 additions below. Accepted means design default;
 implementation evidence lives in IMPLEMENTATION_STATUS.md. No payment/AI provider
 integration, current fee or model availability claim is made.
 
@@ -86,3 +86,37 @@ Phase 1 infrastructure follow-up (2026-10-10): local Windows-port Redis/RQ and
 PostgreSQL tests are supplemental evidence only. Official Linux Docker build,
 startup and both worker entrypoints remain pending. The user will install Docker
 Desktop/WSL2 locally; Contabo access/configuration is not authorized. No Phase 2 work.
+
+## Phase 2 decisions (2026-10-10)
+
+- D19: Credit expiry disabled, unrestricted rollover. Prepaid access lasts 30 days,
+  sequential renewal periods, no auto-renewal or proration. Each explicit manual
+  entitlement award grants its versioned allowance once immediately. Top-ups do
+  not replace paid access; Free grants never override active paid access.
+- D20: Catalog identity only is seeded (four plans plus topup). Prices, quotas,
+  rates and budget policy require audited staff configuration. Unapproved prices
+  are usable in dev/test, blocked for new production quotes/reservations.
+- D21: No automatic trial grant or customer claim endpoint. Enabling the existing
+  trial setting fails closed until missing device/IP and abuse review controls exist.
+- D22: REFUND explicitly distinguishes settled-charge restoration from unspent
+  grant reversal via its immutable original ledger reference; both are capped.
+  It is not a gateway currency refund or a chargeback workflow.
+- D23: Lock order is target user -> wallet -> global system_limits. Global expense
+  admission uses one PostgreSQL row mutex and SQL aggregates initially. Every
+  paid/compute/storage admission includes existing holds, unknowns, retry costs
+  and sunk actual costs. Unknown exposure does not disappear at a UTC boundary.
+- D24: An expense admission replay never authorizes reexecution; fresh=True only
+  after commit permits a future side effect. Unknown outcomes require evidence.
+  Actual overruns are retained and open the breaker. Disabled accounts still
+  allow financial cleanup while blocking new spending.
+- D25: Methods own no commits/queue/provider effects. Phase 3 must atomically
+  compose reserve with job/outbox; Phase 5 composes output completion with settle.
+  Advisory frontend duration is revalidated against probed owned metadata there.
+- D26: Migration dd9634e4866b preserves Phase 1 and adds immutable financial history.
+  Downgrade refuses populated ledger/expense history. Runtime DB role separation
+  remains a production rollout requirement; no schema-owner bypass protection is claimed.
+
+Phase 1 Docker-pending notes above are historical; the final Phase 1 status records
+its completed local gate. Phase 2 execution and exact verification follow in
+IMPLEMENTATION_STATUS.md. No payment/provider integration or commercial approval
+has been inferred from this financial foundation.

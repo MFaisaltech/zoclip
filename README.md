@@ -1,16 +1,16 @@
 # ZoClip backend
 
-Phase 1 only: FastAPI/PostgreSQL authentication foundation. No credits, billing,
-uploads, AI processing or clip rendering yet. See `docs/IMPLEMENTATION_STATUS.md`
+Phases 1–2: FastAPI/PostgreSQL authentication, credits, plans and expense protection.
+No payments, uploads, AI processing or clip rendering yet. See `docs/IMPLEMENTATION_STATUS.md`
 for actual checks and remaining gates. No paid provider calls are made.
 
 ## Local Docker setup
 
 Requires Docker Engine with Compose v2. These commands are provided for a Docker
-host; Docker is absent from the current development environment, so container
-build/start has not been verified here.
+host. Local Docker build/start and the isolated infrastructure gate are recorded
+in the implementation status; this is not a production deployment claim.
 
-For local Windows installation and the pending isolated container checks, follow
+For local Windows installation and isolated container checks, follow
 [WINDOWS_DOCKER_SETUP.md](docs/WINDOWS_DOCKER_SETUP.md). Contabo remains untouched.
 
 ```sh
@@ -26,7 +26,7 @@ curl --fail http://localhost:8000/health/ready
 
 The migration service runs once before API/workers. Database/Redis have no host
 ports; API binds host loopback only. One worker listens on `ai`, one on `render`;
-neither has product tasks in Phase 1. App containers run as UID 10001 with dropped
+neither has media/product tasks yet. App containers run as UID 10001 with dropped
 capabilities. Persistent volumes hold DB, Redis and development mailbox data.
 Do not run `down --volumes` against data you need.
 
@@ -89,3 +89,19 @@ Google is disabled unless all three GOOGLE variables are supplied privately and
 the callback URI is registered. No SMTP adapter is claimed; the email interface
 currently has disabled and development-only implementations. See the auth handoff
 for configuration and security details.
+
+## Credits and plans
+
+Read [CREDITS_AND_MARGIN.md](docs/CREDITS_AND_MARGIN.md) and
+[API_HANDOFF.md](docs/API_HANDOFF.md) for the actual Phase 2 routes, staff configuration
+and caller-owned financial transaction contracts. The migration seeds catalog
+names only; all prices, allowances, rules and cost budgets are unset. New accounts
+have no automatic credits. Paid work is disabled until a complete audited policy
+and rates exist. Prices remain unapproved until explicitly reviewed.
+
+Expiry is disabled; unused credits carry over. Access is prepaid 30 days without
+automatic renewal. No customer purchase or payment callback can grant credits in
+this phase. Financial tests use fictional staff grants/rates and no paid APIs.
+Concurrency tests migrate/drop generated schemas within the disposable _test DB;
+the test DB role must be allowed to create schemas. Never grant that privilege to
+the production runtime role just to run tests.

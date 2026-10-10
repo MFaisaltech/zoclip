@@ -1,7 +1,7 @@
 name: backend
 on: [push, pull_request]
 jobs:
-  phase1:
+  backend:
     runs-on: ubuntu-24.04
     services:
       postgres:
@@ -37,11 +37,11 @@ jobs:
       - run: git diff --exit-code -- docs/openapi.json
       - run: uv run pytest -q
       - run: docker compose --env-file .env.example config --quiet
-      - run: docker build --tag zoclip-phase1 .
-      - name: Start isolated Phase 1 containers
-        run: docker compose --project-name zoclip-phase1-ci --env-file .env.example up --build --detach --wait --wait-timeout 180
+      - run: docker build --tag zoclip-backend .
+      - name: Start isolated backend containers
+        run: docker compose --project-name zoclip-backend-ci --env-file .env.example up --build --detach --wait --wait-timeout 180
       - name: Check actual API, database, Redis and both workers
-        run: docker compose --project-name zoclip-phase1-ci --env-file .env.example exec -T api python scripts/container_smoke.py
+        run: docker compose --project-name zoclip-backend-ci --env-file .env.example exec -T api python scripts/container_smoke.py
       - name: Stop isolated containers
         if: always()
-        run: docker compose --project-name zoclip-phase1-ci --env-file .env.example down
+        run: docker compose --project-name zoclip-backend-ci --env-file .env.example down

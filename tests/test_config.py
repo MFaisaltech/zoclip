@@ -52,4 +52,6 @@ def test_openapi_is_valid_and_matches_export():
     validate(schema)
     assert schema == json.loads(Path("docs/openapi.json").read_text())
     assert "/api/v1/me" in schema["paths"]
-    assert "/api/v1/me/credits" not in schema["paths"]
+    assert "/api/v1/me/credits" in schema["paths"]
+    assert "/api/v1/billing/orders" not in schema["paths"]
+    assert "/api/v1/uploads" not in schema["paths"]
