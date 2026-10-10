@@ -5,6 +5,7 @@ import json
 import os
 import time
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -38,8 +39,10 @@ from zoclip.credits.schemas import (
 from zoclip.media.models import Job, SourceVideo, StorageObject
 
 
-def main() -> None:
+def main(*, rendering: bool = False) -> None:
     settings = Settings()  # type: ignore[call-arg]
+    if rendering and os.environ.get("ZOCLIP_RENDER_SIMULATOR_SMOKE") != "1":
+        raise RuntimeError("Explicit local rendering simulator opt-in required")
     if (
         settings.app_env != "development"
         or os.environ.get("ZOCLIP_AI_SIMULATOR_SMOKE") != "1"
@@ -79,7 +82,7 @@ def main() -> None:
                     reframe_credits=0,
                     max_source_seconds=7200,
                     max_outputs=1,
-                    max_edits=0,
+                    max_edits=1 if rendering else 0,
                     max_concurrent_jobs=1,
                     daily_credits=10,
                     monthly_credits=10,
@@ -127,8 +130,8 @@ def main() -> None:
                     rate_ids=rates,
                     input_tokens_per_second=1,
                     max_output_tokens=128,
-                    render_cpu_seconds_per_output=1,
-                    storage_gb_days_per_output=1,
+                    render_cpu_seconds_per_output=520 if rendering else 1,
+                    storage_gb_days_per_output=2 if rendering else 1,
                     max_attempts_per_job=20,
                 ),
                 reason="Fictional simulator budget",
@@ -170,6 +173,8 @@ def main() -> None:
         )
         with urllib.request.urlopen(request, timeout=15) as response:
             raw_response = response.read()
+            if response.headers.get_content_type() == "video/mp4":
+                return raw_response
             return json.loads(raw_response) if raw_response else {}
 
     def wait(job_id: str, state: str) -> dict:
@@ -210,15 +215,16 @@ def main() -> None:
         ingest = api(f"/uploads/{upload['id']}/complete", "POST")
         wait(ingest["id"], "COMPLETED")
         video = api("/videos/" + video_id)
-        for _repetition in range(2):
+        for _repetition in range(1 if rendering else 2):
             quote = api(
                 "/jobs/quote",
                 "POST",
                 {
                     "source_seconds": video["metadata_json"]["duration_seconds"],
                     "output_count": 1,
-                    "captions": False,
-                    "reframe": False,
+                    "captions": rendering,
+                    "reframe": rendering,
+                    "edit_count": 1 if rendering else 0,
                 },
             )
             job = api(f"/videos/{video_id}/generate", "POST", {"quote_id": quote["id"]})
@@ -252,9 +258,72 @@ def main() -> None:
                     )
                     == 0
                 )
-            api("/jobs/" + job["id"] + "/cancel", "POST")
-            api("/jobs/" + job["id"] + "/cancel", "POST")
-            assert api("/me/credits")["available_credits"] == 2
+            if rendering:
+                clip = api("/clips", "POST", {"suggestion_id": suggestions["items"][0]["id"]})
+                selection_key = uuid4().hex
+                with ThreadPoolExecutor(2) as pool:
+                    tasks = [
+                        pool.submit(
+                            api,
+                            f"/jobs/{job['id']}/renders",
+                            "POST",
+                            {"clip_ids": [clip["id"]]},
+                            {"Idempotency-Key": selection_key},
+                        )
+                        for _ in range(2)
+                    ]
+                    selections = [task.result() for task in tasks]
+                assert selections[0]["id"] == selections[1]["id"]
+                wait(job["id"], "COMPLETED")
+                exported = api(f"/clips/{clip['id']}/download")
+                assert exported[4:8] == b"ftyp" and len(exported) > 10000
+                Path("/tmp/phase5-demo.mp4").write_bytes(exported)
+                prefs = clip["preferences"] | {"start_ms": 250, "end_ms": 2000, "preset": "bold"}
+                revised = api(f"/clips/{clip['id']}", "PATCH", prefs, {"If-Match": '"1"'})
+                export_key = uuid4().hex
+                with ThreadPoolExecutor(2) as pool:
+                    tasks = [
+                        pool.submit(
+                            api,
+                            f"/clips/{clip['id']}/render",
+                            "POST",
+                            {"revision": revised["revision"]},
+                            {"Idempotency-Key": export_key},
+                        )
+                        for _ in range(2)
+                    ]
+                    exports = [task.result() for task in tasks]
+                extra = exports[0]
+                assert extra["id"] == exports[1]["id"]
+                wait(extra["id"], "COMPLETED")
+                Path("/tmp/phase5-edited.mp4").write_bytes(api(f"/clips/{clip['id']}/download"))
+                outputs = api(f"/clips/{clip['id']}/renders")
+                assert len(outputs) == 2 and all(o["state"] == "COMPLETE" for o in outputs)
+                assert all(
+                    (o["metadata"]["width"], o["metadata"]["height"]) == (720, 1280)
+                    for o in outputs
+                )
+                assert api("/me/credits")["available_credits"] == 1
+                with Session(engine) as db:
+                    assert (
+                        db.scalar(
+                            select(func.count())
+                            .select_from(CreditTransaction)
+                            .where(
+                                CreditTransaction.user_id == owner_id,
+                                CreditTransaction.operation == "SETTLE",
+                            )
+                        )
+                        == 1
+                    )
+                print(
+                    "PASS: real render RQ, 720x1280 MP4 download, caption revision, "
+                    "prepaid single-clip rerender, one SETTLE"
+                )
+            else:
+                api("/jobs/" + job["id"] + "/cancel", "POST")
+                api("/jobs/" + job["id"] + "/cancel", "POST")
+                assert api("/me/credits")["available_credits"] == 2
         api("/videos/" + video_id, "DELETE")
         deadline = time.monotonic() + 30
         while time.monotonic() < deadline:
@@ -287,21 +356,21 @@ def main() -> None:
             raise AssertionError("Privacy cleanup did not complete")
         with Session(engine) as db:
             wallet = money.lock_wallet(db, owner_id)
-            assert (wallet.available, wallet.reserved) == (2, 0)
-            assert (
-                db.scalar(
-                    select(func.count())
-                    .select_from(ProviderUsage)
-                    .join(SpendAttempt, SpendAttempt.id == ProviderUsage.attempt_id)
-                    .where(SpendAttempt.user_id == owner_id)
-                )
-                == 3
-            )
+            assert (wallet.available, wallet.reserved) == ((1, 0) if rendering else (2, 0))
+            assert db.scalar(
+                select(func.count())
+                .select_from(ProviderUsage)
+                .join(SpendAttempt, SpendAttempt.id == ProviderUsage.attempt_id)
+                .where(SpendAttempt.user_id == owner_id)
+            ) == (7 if rendering else 3)
         print("PASS: real API/upload/outbox/Linux RQ/FFmpeg/HTTPS simulators; timings/suggestions")
-        print(
-            "PASS: cache reuse, three usage records, held credits/no settlement, "
-            "cancel once, privacy cleanup"
-        )
+        if not rendering:
+            print(
+                "PASS: cache reuse, three usage records, held credits/no settlement, "
+                "cancel once, privacy cleanup"
+            )
+        else:
+            print("PASS: seven cost receipts, bounded prepaid edit, private source/output cleanup")
     finally:
         with Session(engine) as db:
             db.get(User, owner_id).status = "disabled"

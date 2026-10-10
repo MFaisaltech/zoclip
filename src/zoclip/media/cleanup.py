@@ -16,6 +16,9 @@ from zoclip.media.storage import LocalStorage
 
 
 def cleanup(factory: sessionmaker, storage: LocalStorage) -> int:
+    from zoclip.rendering.cleanup import cleanup_outputs
+
+    cleanup_outputs(factory, storage)
     now = utcnow()
     with factory() as db:
         ids = list(
@@ -72,6 +75,9 @@ def cleanup(factory: sessionmaker, storage: LocalStorage) -> int:
             for job in db.scalars(select(Job).where(Job.video_id == video.id)):
                 finalize_pending(db, job, storage)
             storage.delete(obj.id)
+            from zoclip.rendering.cleanup import erase_revisions
+
+            erase_revisions(db, video.id)
             for suggestion in db.scalars(
                 select(ClipSuggestion).where(ClipSuggestion.video_id == video.id)
             ):

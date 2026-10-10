@@ -43,6 +43,8 @@ class Settings(BaseSettings):
     media_allowed_import_hosts: list[str] = []
     ffprobe_binary: str = "ffprobe"
     ffmpeg_binary: str = "ffmpeg"
+    render_deadline_seconds: int = Field(default=240, ge=10, le=300)
+    render_max_bytes: int = Field(default=256 * 1024**2, ge=1024**2, le=512 * 1024**2)
     ai_enabled: bool = False
     deepgram_api_key: SecretStr = SecretStr("")
     deepgram_model: str = Field(default="", pattern=r"^[a-zA-Z0-9._-]{0,60}$")

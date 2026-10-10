@@ -124,3 +124,18 @@ reservation amount (null for a legacy checkpoint without that value), independen
 of later catalog changes. See INGESTION_HANDOFF.md for exact stage semantics.
 GenerateInput accepts quote_id; the path supplies video_id. Both generation routes
 use the same normalized payload/key and cannot create duplicate reservations.
+
+## Phase 5 rendering
+
+See [RENDERING_HANDOFF.md](RENDERING_HANDOFF.md) for complete revision, quota,
+financial, framing and cleanup contracts. Added POST/GET `/clips`, GET/PATCH
+`/clips/{id}`, POST `/jobs/{id}/renders`, POST `/clips/{id}/render`,
+GET `/clips/{id}/renders` and private GET `/clips/{id}/download?revision=1`.
+PATCH requires quoted integer `If-Match` (e.g. `"1"`), Origin and CSRF; CORS now
+allows PATCH and If-Match. Selection and re-render require Idempotency-Key.
+Draft creation is idempotent by candidate UUID. Revision preferences are complete
+replacement DTOs; text uses absolute source word timestamps. Actual schema is in
+openapi.json. Rendering jobs expose RENDER_QUEUED/RENDERING and completed 100%;
+other unknown percentages stay null. Suggestions remain candidate DTOs with
+rendered=false; authoritative export status is the clips/renders endpoint.
+Real provider acceptance remains pending; production is not approved.

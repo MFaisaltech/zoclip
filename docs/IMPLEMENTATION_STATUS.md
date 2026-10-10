@@ -900,3 +900,31 @@ logs, JUnit reports, test databases, private test CA material and tooling remain
 ignored and unstaged. Only reviewed source, tests, configuration examples and
 documentation enter the checkpoint. No real paid call, push, deployment or Phase 5
 is authorized or performed by this checkpoint.
+
+## Phase 5 — authorized local implementation
+
+Continues Phase 4 checkpoint 13a886e without replacing prior phases. Implemented
+private clip/revision/output tables and forward migration a580f314c921, explicit
+candidate selection, constrained FFmpeg H.264/AAC exports, literal-text animated
+captions, sampled CPU face focus with documented fallback, single-clip edits and
+private exports. Existing PostgreSQL outbox, credit reservations, capacity locks,
+spend budgets, retries, cancellation and cleanup now cover rendering. Details,
+configuration and limitations: RENDERING_HANDOFF.md.
+
+Focused synthetic tests exercised actual PostgreSQL/native FFmpeg and found/fixed
+Windows fsync handling; corrected fixture expectations and private DELETE's 204
+status. Focused frame/audio markers and original audio offset checks pass.
+**Phase 5 local mock/fixture gate: PASS.** Full Linux pytest: 275 passed, 0 failed,
+0 errors, 0 skipped (376.30s). Includes all 237 Phase 1–4 tests and 38 new rendering
+cases. Ruff/format PASS (final 86 Python files); mypy PASS (56 src files); locked
+73-package resolution PASS. PostgreSQL upgrade/base/upgrade, schema drift and
+populated downgrade guards PASS. Actual Redis/RQ, Docker/Linux FFmpeg, HTTPS
+simulators, private upload/render/download/edit, prepaid costs/one settlement,
+duplicate concurrent requests and cleanup PASS. Linux parent-death boundary PASS.
+Running image matches all 56 source hashes and the generated OpenAPI (48 paths).
+See PHASE5_VERIFICATION.md for commands, evidence, actual demo paths and boundaries.
+
+Phase 4 real Deepgram/Gemini provider gate remains **PENDING**. Production readiness
+remains **NOT APPROVED**. Long representative benchmarks and face/Urdu/subjective
+quality QA remain unrun. No paid call, push, deployment or Phase 6 was performed.
+The user authorized a local Phase 5 commit conditional on this local gate passing.

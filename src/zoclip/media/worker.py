@@ -49,7 +49,15 @@ def claim(db: Session, job_id: UUID, generation: int) -> tuple[UUID, UUID] | Non
         db.scalar(
             select(func.count())
             .select_from(Job)
-            .where(Job.state.in_({"RUNNING", "CANCEL_REQUESTED"}))
+            .where(
+                Job.state.in_({"RUNNING", "CANCEL_REQUESTED"}),
+                Job.checkpoint["render_selection"].as_boolean().is_(True)
+                if job.checkpoint.get("render_selection")
+                else or_(
+                    Job.checkpoint["render_selection"].as_boolean().is_(None),
+                    Job.checkpoint["render_selection"].as_boolean().is_(False),
+                ),
+            )
         )
         or 0
     ) >= 1:
@@ -91,6 +99,7 @@ def run_job(
         token, owner = claimed
         job = db.get(Job, job_id)
         kind, payload = job.kind, dict(job.payload)
+        render_selected = bool(job.checkpoint.get("render_selection"))
         video = service.required(db, SourceVideo, job.video_id)
         object_id = video.object_id
         if kind == "VALIDATE":
@@ -106,6 +115,11 @@ def run_job(
             ]
         db.rollback()  # No transaction during files, DNS, HTTP or ffprobe.
     try:
+        if kind == "RENDER" or render_selected:
+            from zoclip.rendering.worker import run as render
+
+            render(job_id, owner, token, factory, settings, storage)
+            return
         if kind == "PROCESS":
             from zoclip.ai.worker import run
 
@@ -288,10 +302,12 @@ def dispatch(factory: sessionmaker, redis: Redis, *, limit: int = 10) -> int:
             if not row:
                 break
             token, row_id, job_id, generation = uuid4(), row.id, row.job_id, row.generation
+            delivery_job = db.get(Job, job_id)
+            queue = "render" if delivery_job.checkpoint.get("render_selection") else "ai"
             row.dispatch_token, row.dispatch_until = token, now + timedelta(seconds=30)
             db.commit()
         # Random delivery ID avoids Redis registry collisions; claim deduplicates.
-        Queue("ai", connection=redis).enqueue(
+        Queue(queue, connection=redis).enqueue(
             "zoclip.media.worker.execute",
             str(job_id),
             generation,
@@ -329,7 +345,11 @@ def recover(factory: sessionmaker, storage: LocalStorage | None = None) -> int:
             if job.state not in {"RUNNING", "CANCEL_REQUESTED"} or job.lease_until >= utcnow():
                 continue
             # PROCESS recovery replays checkpoints, never fresh admission keys for a lost call.
-            if job.state == "CANCEL_REQUESTED":
+            if job.checkpoint.get("render_selection"):
+                from zoclip.rendering.worker import handle_error as render_error
+
+                render_error(db, job, TimeoutError("worker_lost"))
+            elif job.state == "CANCEL_REQUESTED":
                 if job.kind == "PROCESS":
                     from zoclip.ai.worker import finalize_pending
 

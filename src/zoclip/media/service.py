@@ -83,7 +83,7 @@ def event(db: Session, job: Job, state: str, code: str | None = None) -> None:
         },
         "CANCEL_REQUESTED": {"CANCELED"},
         "WAITING_ENGINE": {"CANCELED", "FAILED", "QUEUED"},
-        "SUGGESTIONS_READY": {"CANCELED", "FAILED"},
+        "SUGGESTIONS_READY": {"CANCELED", "FAILED", "QUEUED"},
     }
     if job.state != state and state not in allowed.get(job.state, set()):
         raise ApiError(409, "invalid_transition", "Job transition is forbidden.")
@@ -362,6 +362,10 @@ def process(
 
 
 def terminate(db: Session, job: Job, state: str, code: str | None = None) -> None:
+    if job.checkpoint.get("render_selection"):
+        from zoclip.rendering.worker import finalize
+
+        finalize(db, job)
     if job.kind == "PROCESS":
         from zoclip.ai.worker import finalize_pending
 
@@ -382,7 +386,7 @@ def terminate(db: Session, job: Job, state: str, code: str | None = None) -> Non
     obj = required(db, StorageObject, video.object_id)
     if job.kind == "PROCESS":
         obj.reserved_bytes = obj.materialized_bytes
-    elif state != "COMPLETED":
+    elif job.kind != "RENDER" and state != "COMPLETED":
         if video.state != "DELETED":
             video.state = "FAILED"
         upload = db.scalar(select(UploadSession).where(UploadSession.video_id == video.id))

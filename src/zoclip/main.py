@@ -27,6 +27,7 @@ from zoclip.core.db import build_engine
 from zoclip.core.errors import ApiError, Problem, problem_response
 from zoclip.credits.routes import router as credits_router
 from zoclip.media.routes import router as media_router
+from zoclip.rendering.routes import router as rendering_router
 
 logger = logging.getLogger("zoclip.requests")
 
@@ -146,6 +147,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(credits_router)
     app.include_router(media_router)
     app.include_router(ai_router)
+    app.include_router(rendering_router)
     app.add_exception_handler(ApiError, problem_response)  # type: ignore[arg-type]
 
     @app.exception_handler(RequestValidationError)
@@ -195,8 +197,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         CORSMiddleware,
         allow_origins=[settings.public_app_url],
         allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE"],
-        allow_headers=["Content-Type", "X-CSRF-Token", "Idempotency-Key", "X-Content-SHA256"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+        allow_headers=[
+            "Content-Type",
+            "X-CSRF-Token",
+            "Idempotency-Key",
+            "X-Content-SHA256",
+            "If-Match",
+        ],
         expose_headers=["X-Request-ID"],
     )
     app.add_middleware(RequestBoundary, production=settings.app_env == "production")

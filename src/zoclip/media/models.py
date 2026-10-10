@@ -95,7 +95,7 @@ class Job(IdentityMixin, Base):
     __tablename__ = "jobs"
     __table_args__ = (
         UniqueConstraint("user_id", "operation_key"),
-        CheckConstraint("kind IN ('VALIDATE','IMPORT','PROCESS')", name="kind"),
+        CheckConstraint("kind IN ('VALIDATE','IMPORT','PROCESS','RENDER')", name="kind"),
         CheckConstraint(
             "state IN ('QUEUED','RUNNING','WAITING_ENGINE','CANCEL_REQUESTED',"
             "'CANCELED','FAILED','COMPLETED','SUGGESTIONS_READY')",
@@ -123,25 +123,31 @@ class Job(IdentityMixin, Base):
 
     @property
     def stage(self) -> str:
+        if self.checkpoint.get("render_selection") and self.state in {"RUNNING", "QUEUED"}:
+            return "RENDERING" if self.state == "RUNNING" else "RENDER_QUEUED"
         if self.state == "RUNNING":
             if self.kind == "PROCESS":
                 return self.checkpoint.get("ai_stage", "ENGINE_PENDING")
             return {"VALIDATE": "VALIDATING", "IMPORT": "IMPORTING", "PROCESS": "ENGINE_PENDING"}[
                 self.kind
             ]
-        if self.state == "COMPLETED" and self.kind != "PROCESS":
+        if self.state == "COMPLETED" and self.kind in {"VALIDATE", "IMPORT"}:
             return "SOURCE_READY"
         return self.state
 
     @property
     def progress_percent(self) -> int | None:
         # Only the completed ingestion milestone has a measurable percentage.
-        return 100 if self.state == "COMPLETED" and self.kind != "PROCESS" else None
+        return 100 if self.state == "COMPLETED" else None
 
     @property
     def estimated_credits(self) -> int | None:
         # Persist the accepted reservation amount, never recompute from current prices.
-        return self.checkpoint.get("estimated_credits") if self.kind == "PROCESS" else 0
+        return (
+            self.checkpoint.get("estimated_credits", 0)
+            if self.kind == "RENDER"
+            else (self.checkpoint.get("estimated_credits") if self.kind == "PROCESS" else 0)
+        )
 
 
 class JobEvent(IdentityMixin, Base):

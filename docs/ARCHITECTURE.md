@@ -253,6 +253,13 @@ are Phase 7 deliverables. Benchmark 10/30/60/120-minute media before capacity cl
 
 ## Phase 3 implementation boundary
 
+Phase 5 adds `rendering` for private clips, immutable preference revisions and
+verified render outputs. Approved PROCESS selections continue their existing
+reservation; single-clip subsequent RENDER jobs use prepaid bounded edit allowance
+or a fresh accepted quote. PostgreSQL fences publication/settlement; the existing
+outbox now dispatches to separate ai/render queues. See RENDERING_HANDOFF.md for
+resource boundaries, accurate timestamp handling, cleanup and tracking limitations.
+
 media owns private storage, uploads, imports, constrained probing and durable
 source/job records. workers.maintenance runs dispatch/recovery/retention; ai runs
 real ingestion and the explicit WAITING_ENGINE processing placeholder. The Storage

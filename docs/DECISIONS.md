@@ -198,3 +198,24 @@ and known operational limitations are recorded in IMPLEMENTATION_STATUS.md.
   The user subsequently authorized a local Phase 4 checkpoint commit based on the
   passing mock/fixture gate. Production readiness is NOT APPROVED; the checkpoint
   does not waive real-provider verification or authorize Phase 5.
+
+## Phase 5 decisions (2026-10-10)
+
+- D45: Explicit immutable selection continues the original job/HELD reservation.
+  One selected clip per lease, all verified before exactly-once settlement; partial
+  failures release fully and hide partial exports. Separate render queue and one
+  render claim globally; one AI/ingestion claim can coexist.
+- D46: Non-destructive integer-ms revisions, quoted features, If-Match conflicts,
+  bounded exports/prepaid edits. Prepaid render/storage expense alone may use the
+  original settled evidence after durable server approval. Failed edits retain
+  expense but restore allowance; a refunded original cannot fund prepaid work.
+- D47: Exact selected-interval transcoding, H.264/AAC 720x1280, common seek-relative
+  audio/video times, generated literal-text ASS, three presets and allowlisted fonts.
+  Full output decode and bounded timing validation precede publication/settlement.
+- D48: CPU OpenCV Haar sampling (24 frames/20s), face-size/prior-focus weighting,
+  smoothing and explicit center fallback; no active-speaker identification claim.
+  Locked OpenCV/NumPy and packaged font families; no external vision spend.
+- D49: Fenced atomic output promotion and revalidation after lost DB acknowledgment;
+  per-output three bounded local attempts, measured child CPU or conservative lost
+  worker ceiling, integer retention units, existing all-scope spend/capacity guards.
+  Source revocation/TTL governs revisions and outputs; audit/financial history stays.

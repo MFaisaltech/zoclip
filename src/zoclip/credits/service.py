@@ -687,7 +687,14 @@ def configure_policy(db: Session, data: PolicyInput, key: str, actor_id: UUID) -
 
 
 def admit_spend(
-    db: Session, user_id: UUID, reservation_id: UUID, rate_id: UUID, units: int, key: str
+    db: Session,
+    user_id: UUID,
+    reservation_id: UUID,
+    rate_id: UUID,
+    units: int,
+    key: str,
+    *,
+    prepaid_render_job: UUID | None = None,
 ) -> tuple[SpendAttempt, bool]:
     """Return (attempt, fresh). Execute only after commit and ONLY when fresh.
 
@@ -714,13 +721,38 @@ def admit_spend(
     if not reservation:
         fail("not_found", "Reservation not found.", 404)
     assert reservation is not None
-    if reservation.state != "HELD":
+    prepaid = False
+    if prepaid_render_job is not None:
+        from zoclip.media.models import Job
+        from zoclip.rendering.models import Clip, RenderOutput
+
+        job = db.get(Job, prepaid_render_job)
+        output = db.scalar(select(RenderOutput).where(RenderOutput.job_id == prepaid_render_job))
+        clip = db.get(Clip, output.clip_id) if output else None
+        parent = db.get(Job, clip.job_id) if clip else None
+        prepaid = bool(
+            job
+            and output
+            and parent
+            and job.user_id == user_id
+            and job.kind == "RENDER"
+            and job.state == "RUNNING"
+            and job.checkpoint.get("included_edit") is True
+            and job.reservation_id is None
+            and parent.reservation_id == reservation_id
+            and reservation.state == "SETTLED"
+        )
+    if reservation.state != "HELD" and not prepaid:
         fail("reservation_final", "Paid work requires an active credit reservation.")
     _, policy, limits = locked_limits(db)
     rates = configured_rates(db, limits)
     rate = next((r for r in rates.values() if r.id == rate_id), None)
     if not rate or type(units) is not int or not 1 <= units <= rate.max_units:
         fail("rate_limit", "Configured bounded rate and valid units required.", 503)
+    if prepaid_render_job is not None and (
+        not prepaid or rate.component not in {"render", "storage"}
+    ):
+        fail("reservation_final", "Only a durable prepaid render may use settled credit evidence.")
     if rate.component == "gemini_output" and units > limits.max_output_tokens:
         fail("rate_limit", "Configured output token ceiling exceeded.", 503)
     previous_attempts = list(
