@@ -54,4 +54,4 @@ def test_openapi_is_valid_and_matches_export():
     assert "/api/v1/me" in schema["paths"]
     assert "/api/v1/me/credits" in schema["paths"]
     assert "/api/v1/billing/orders" not in schema["paths"]
-    assert "/api/v1/uploads" not in schema["paths"]
+    assert "/api/v1/uploads" in schema["paths"]

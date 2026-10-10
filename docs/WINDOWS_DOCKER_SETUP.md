@@ -1,4 +1,8 @@
-# Windows Docker Desktop / WSL2 setup and pending Phase 1 checks
+# Windows Docker Desktop / WSL2 setup - historical Phase 1 instructions
+
+The pending statements below describe the original setup handoff. Local Docker
+Phases 1 through 3 verification is recorded in IMPLEMENTATION_STATUS.md; current ingestion
+and disk requirements are in INGESTION_HANDOFF.md. Contabo remains untouched.
 
 Prepared 2026-10-10. These installation and Docker commands have **not** been run.
 The user will install Docker locally first. Contabo access and changes are outside

@@ -3,6 +3,7 @@ from zoclip.auth import models  # noqa: F401
 from zoclip.core.config import Settings
 from zoclip.core.db import Base, build_engine
 from zoclip.credits import models as credits_models  # noqa: F401
+from zoclip.media import models as media_models  # noqa: F401
 
 settings = Settings()
 target_metadata = Base.metadata

@@ -1,0 +1,60 @@
+services:
+  db:
+    mem_limit: 512m
+    ports: ["127.0.0.1::5432"]
+  redis:
+    mem_limit: 128m
+    ports: ["127.0.0.1::6379"]
+  migrate:
+    image: ${PHASE3_TEST_IMAGE:-zoclip-phase3:completion}
+    mem_limit: 256m
+  api:
+    image: ${PHASE3_TEST_IMAGE:-zoclip-phase3:completion}
+    mem_limit: 512m
+    volumes:
+      - "./var/phase3-completion/media:/app/var/media"
+      - "./var/phase3-completion/tls/ca.pem:/verify/ca.pem:ro"
+      - "./tests/fixtures/source.mp4:/verify/source.mp4:ro"
+    environment:
+      SSL_CERT_FILE: /verify/ca.pem
+      MEDIA_ALLOWED_IMPORT_HOSTS: '["media.phase3.test","wrong.phase3.test"]'
+    extra_hosts: ["media.phase3.test:93.184.216.10", "wrong.phase3.test:93.184.216.10"]
+    networks: [default, https-fixture]
+    ports: !override ["127.0.0.1::8000"]
+  worker-ai:
+    image: ${PHASE3_TEST_IMAGE:-zoclip-phase3:completion}
+    mem_limit: 384m
+    volumes:
+      - "./var/phase3-completion/media:/app/var/media"
+      - "./var/phase3-completion/tls/ca.pem:/verify/ca.pem:ro"
+    environment:
+      SSL_CERT_FILE: /verify/ca.pem
+      MEDIA_ALLOWED_IMPORT_HOSTS: '["media.phase3.test","wrong.phase3.test"]'
+    extra_hosts: ["media.phase3.test:93.184.216.10", "wrong.phase3.test:93.184.216.10"]
+    networks: [default, https-fixture]
+  worker-render:
+    image: ${PHASE3_TEST_IMAGE:-zoclip-phase3:completion}
+    mem_limit: 384m
+    volumes: ["./var/phase3-completion/media:/app/var/media"]
+  maintenance:
+    image: ${PHASE3_TEST_IMAGE:-zoclip-phase3:completion}
+    mem_limit: 192m
+    volumes: ["./var/phase3-completion/media:/app/var/media"]
+  https-fixture:
+    image: ${PHASE3_TEST_IMAGE:-zoclip-phase3:completion}
+    command: [python, /verify/https_fixture.py, serve, /verify/tls, --fixture, /verify/source.mp4]
+    volumes:
+      - "./scripts/https_fixture.py:/verify/https_fixture.py:ro"
+      - "./var/phase3-completion/tls:/verify/tls:ro"
+      - "./tests/fixtures/source.mp4:/verify/source.mp4:ro"
+    mem_limit: 64m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    networks:
+      https-fixture:
+        ipv4_address: 93.184.216.10
+networks:
+  https-fixture:
+    internal: true
+    ipam:
+      config: [{subnet: 93.184.216.0/24}]

@@ -54,6 +54,8 @@ def app(migrated_database: str, tmp_path: Path):
         email_mode="development",
         dev_mailbox_dir=str(tmp_path / "mailbox"),
         auth_rate_limit=100,
+        media_root=str(tmp_path / "media"),
+        media_part_bytes=65536,
     )
     application = create_app(settings)
     engine = build_engine(migrated_database)

@@ -1,4 +1,4 @@
-# API handoff — Phases 1–2
+# API handoff - Phases 1 through 3
 
 The implemented contract is [openapi.json](openapi.json), generated with
 `uv run python scripts/export_openapi.py` from `zoclip.main.create_app` without
@@ -64,7 +64,7 @@ exists; job accounting is an internal transaction contract.
 
 Initial catalog price values and current policy are null. Price/rate/allowance
 configuration is not seeded with invented commerce. No subscription auto-renewal,
-checkout, payment verification, uploads, processing or output endpoint is implied.
+checkout, payment verification or output endpoint is implied.
 Automatic trials are disabled and cannot be toggled on until anti-abuse controls exist.
 Use decimal strings for staff USD inputs; floats are rejected. See actual schema for
 every required rule/limit field and [CREDITS_AND_MARGIN.md](CREDITS_AND_MARGIN.md) for
@@ -74,5 +74,46 @@ Additional documented errors: 409 insufficient_credits, idempotency_conflict,
 quote_expired, quote_stale, plan_limit, usage_limit, concurrency_limit,
 reservation_exists/reservation_final; 503 plan_unconfigured, price_unapproved,
 spending_disabled, rates_unconfigured, budget_exceeded, uncertain_spend,
-accounting_mismatch. Internal errors appear only where the corresponding contract
-is consumed in later phases; they do not imply an existing customer job-start route.
+accounting_mismatch. Phase 3 generation now consumes the internal reservation
+contract and its admission errors; no payment or paid-provider endpoint is implied.
+
+## Private ingestion and jobs
+
+See [INGESTION_HANDOFF.md](INGESTION_HANDOFF.md) for complete request examples,
+states, retries, capacity and operational limits. Actual generated DTOs are
+UploadInput/UploadView, PartView, ImportInput, ProcessInput, JobView, EventView and
+VideoView. Customer DTOs omit private paths, import URLs, worker tokens and payloads.
+
+| Method/path under /api/v1 | Behavior |
+|---|---|
+| POST /uploads | Admit private bounded upload; idempotent |
+| GET /uploads/{id} | Own session and received part numbers |
+| PUT /uploads/{id}/parts/{number} | Stream exact-size binary chunk with X-Content-SHA256 |
+| POST /uploads/{id}/complete | 202 durable async assembly/validation job |
+| DELETE /uploads/{id} | Revoke source, cancel safely and schedule cleanup |
+| POST /videos/import-url | 202 allowlisted, rights-attested direct HTTPS import |
+| GET /videos; GET /videos/{id} | Own retained assets and actual validated metadata |
+| GET /videos/{id}/content | Owner-authorized private attachment; no public path/range |
+| DELETE /videos/{id} | Immediate access revocation, lease-aware cleanup |
+| POST /videos/{id}/generate | Canonical quote-bound atomic reservation/job/outbox; WAITING_ENGINE in Phase 3 |
+| POST /jobs | Backward-compatible alias with video_id and quote_id; shared job idempotency namespace |
+| GET /jobs; GET /jobs/{id} | Own durable states, attempts and heartbeat; null queue position |
+| GET /jobs/{id}/events | Own immutable state events |
+| POST /jobs/{id}/cancel | Idempotent cancellation; live worker acknowledgment before release |
+
+CORS now permits GET/POST/PUT/DELETE and Content-Type, X-CSRF-Token,
+Idempotency-Key and X-Content-SHA256. Every mutation needs Origin/CSRF and an active
+verified session. JSON admissions/completion also require Idempotency-Key.
+Listings accept limit 1-100 and an exclusive owned before UUID.
+Errors include unsupported_source, unsafe_source, integrity_failed, upload_busy,
+incomplete_upload, duration_exceeded, plan_duration_exceeded, insufficient_capacity
+(507), queue_full/ingestion_limit/processing_limit (429), and Phase 2 credit errors.
+Completion of ingestion does not imply completion of a requested clip deliverable.
+
+JobView includes updated_at, stage, nullable progress_percent and nullable
+estimated_credits. Only completed ingestion reports 100 percent; other states
+return null. Ingestion has zero credit cost. PROCESS reports its persisted accepted
+reservation amount (null for a legacy checkpoint without that value), independent
+of later catalog changes. See INGESTION_HANDOFF.md for exact stage semantics.
+GenerateInput accepts quote_id; the path supplies video_id. Both generation routes
+use the same normalized payload/key and cannot create duplicate reservations.

@@ -1,7 +1,8 @@
 # Credits, plans and expense admission — Phase 2
 
 PostgreSQL is authoritative. Phase 2 supplies accounting contracts and API routes;
-there are no processing jobs, paid provider adapters, payments or uploads yet.
+Phase 3 now consumes them through private ingestion and durable processing requests.
+Paid provider adapters and payments remain unimplemented.
 No retail price, real model ID, provider rate, margin or benchmark is asserted.
 The migration seeds Free, Creator, Pro, Business and one configurable top-up
 catalog entry **without any price versions, allowances or rates**. The initial
@@ -184,3 +185,23 @@ history, allowances, quotes and all expense-budget dimensions without providers.
 Concurrency tests migrate isolated schemas and drop only their generated schemas;
 they never disable immutability triggers. See IMPLEMENTATION_STATUS.md for exact
 commands and observed results rather than inferring verification from test files.
+
+## Phase 3 consumer
+
+The original Phase 2 service and migration are unchanged. media.service.process
+revalidates the owned READY source's probed rounded-up duration against the quote,
+then composes reserve, job and outbox in one caller-owned transaction. Capacity,
+queue or quota failure rolls back the hold and every new row. The PostgreSQL owner
+lock and operation hash serialize simultaneous creation and deduplicate retries.
+
+Phase 3 workers never settle a production request: PROCESS stops at WAITING_ENGINE
+without a deliverable. Explicit cancellation, terminal failure or the 24h waiting
+timeout invokes the same idempotent release contract. A live worker's cancellation
+must acknowledge or expire its fence before release. An explicit deterministic
+mock engine lives only in the tests and verifies settlement replay; it is absent
+from the application and container product tasks. No paid provider was invoked.
+
+Source bytes, hashes and authoritative duration are stored for future accounting.
+Local I/O measurements are not fabricated USD invoices; configured provider-call
+admission and uncertain-outcome handling remain mandatory for Phase 4 adapters.
+See INGESTION_HANDOFF.md for media state, retention and lease details.

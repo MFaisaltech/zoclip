@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from contextlib import asynccontextmanager
 from typing import Any
 from uuid import uuid4
@@ -24,6 +25,7 @@ from zoclip.core.config import Settings
 from zoclip.core.db import build_engine
 from zoclip.core.errors import ApiError, Problem, problem_response
 from zoclip.credits.routes import router as credits_router
+from zoclip.media.routes import router as media_router
 
 logger = logging.getLogger("zoclip.requests")
 
@@ -62,10 +64,14 @@ class RequestBoundary:
             await send(message)
 
         try:
-            # Phase 1 JSON bodies only. Enforce the limit even without Content-Length.
+            # Only the exact authenticated chunk endpoint streams a larger body.
+            # Its handler enforces its admitted part length, checksum and deadline.
             messages: list[Message] = []
             size = 0
-            if scope["method"] in {"POST", "PUT", "PATCH"}:
+            chunk_route = scope["method"] == "PUT" and re.fullmatch(
+                r"/api/v1/uploads/[a-fA-F0-9-]{36}/parts/[0-9]+", scope["path"]
+            )
+            if scope["method"] in {"POST", "PUT", "PATCH"} and not chunk_route:
                 while True:
                     message = await receive()
                     if message["type"] == "http.disconnect":
@@ -117,7 +123,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "application/problem+json": {"schema": {"$ref": "#/components/schemas/Problem"}}
             },
         }
-        for status in (400, 401, 403, 404, 409, 413, 422, 429, 503)
+        for status in (400, 401, 403, 404, 408, 409, 413, 422, 429, 503, 507)
     }
     app = FastAPI(
         title="ZoClip API",
@@ -137,6 +143,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(router)
     app.include_router(google_router)
     app.include_router(credits_router)
+    app.include_router(media_router)
     app.add_exception_handler(ApiError, problem_response)  # type: ignore[arg-type]
 
     @app.exception_handler(RequestValidationError)
@@ -186,8 +193,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         CORSMiddleware,
         allow_origins=[settings.public_app_url],
         allow_credentials=True,
-        allow_methods=["GET", "POST"],
-        allow_headers=["Content-Type", "X-CSRF-Token", "Idempotency-Key"],
+        allow_methods=["GET", "POST", "PUT", "DELETE"],
+        allow_headers=["Content-Type", "X-CSRF-Token", "Idempotency-Key", "X-Content-SHA256"],
         expose_headers=["X-Request-ID"],
     )
     app.add_middleware(RequestBoundary, production=settings.app_env == "production")

@@ -21,6 +21,19 @@ x-app: &app
     ENABLE_LIVE_PAYMENTS: ${ENABLE_LIVE_PAYMENTS:-false}
     ENABLE_TRIAL_CREDITS: ${ENABLE_TRIAL_CREDITS:-false}
     PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-disabled}
+    MEDIA_ROOT: /app/var/media
+    MEDIA_MAX_BYTES: ${MEDIA_MAX_BYTES:-4294967296}
+    MEDIA_PART_BYTES: ${MEDIA_PART_BYTES:-8388608}
+    MEDIA_HEADROOM_BYTES: ${MEDIA_HEADROOM_BYTES:-21474836480}
+    MEDIA_RETAINED_BYTES: ${MEDIA_RETAINED_BYTES:-42949672960}
+    MEDIA_ALLOWED_IMPORT_HOSTS: ${MEDIA_ALLOWED_IMPORT_HOSTS:-[]}
+    MEDIA_INGESTION_LIMIT: ${MEDIA_INGESTION_LIMIT:-2}
+    MEDIA_USER_INGESTION_LIMIT: ${MEDIA_USER_INGESTION_LIMIT:-1}
+    MEDIA_PENDING_LIMIT: ${MEDIA_PENDING_LIMIT:-10}
+    MEDIA_USER_PROCESSING_LIMIT: ${MEDIA_USER_PROCESSING_LIMIT:-1}
+    MEDIA_UPLOAD_TTL_SECONDS: ${MEDIA_UPLOAD_TTL_SECONDS:-86400}
+    MEDIA_RETENTION_SECONDS: ${MEDIA_RETENTION_SECONDS:-604800}
+    FFPROBE_BINARY: ${FFPROBE_BINARY:-ffprobe}
   init: true
   cap_drop: [ALL]
   security_opt: [no-new-privileges:true]
@@ -63,7 +76,7 @@ services:
   api:
     <<: *app
     ports: ["127.0.0.1:8000:8000"]
-    volumes: [mailbox:/app/var/mailbox]
+    volumes: [mailbox:/app/var/mailbox, media:/app/var/media]
     mem_limit: 768m
     cpus: 1.0
     restart: unless-stopped
@@ -77,6 +90,7 @@ services:
       retries: 3
   worker-ai:
     <<: *app
+    volumes: [media:/app/var/media]
     environment:
       <<: *environment
       WORKER_QUEUE: ai
@@ -89,6 +103,7 @@ services:
       redis: {condition: service_healthy}
   worker-render:
     <<: *app
+    volumes: [media:/app/var/media]
     environment:
       <<: *environment
       WORKER_QUEUE: render
@@ -100,7 +115,19 @@ services:
       migrate: {condition: service_completed_successfully}
       redis: {condition: service_healthy}
 
+  maintenance:
+    <<: *app
+    volumes: [media:/app/var/media]
+    command: [python, -m, zoclip.workers.maintenance]
+    mem_limit: 256m
+    cpus: 0.5
+    restart: unless-stopped
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+
 volumes:
   postgres_data:
   redis_data:
   mailbox:
+  media:

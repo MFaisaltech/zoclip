@@ -14,7 +14,7 @@ def main() -> None:
     if queue not in {"ai", "render"}:
         raise ValueError("Only ai and render queues supported")
     connection = Redis.from_url(settings.redis_url.get_secret_value())
-    # No product tasks are registered in Phase 1. Keep Redis private: RQ payloads
+    # Phase 3 registers ingestion on ai; render awaits Phase 5. Keep Redis private: RQ payloads
     # are trusted server messages, not input accepted from customers.
     Worker([Queue(queue, connection=connection)], connection=connection).work()
 

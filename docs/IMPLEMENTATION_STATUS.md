@@ -1,12 +1,19 @@
 # ZoClip implementation status
 
+Current Phase 3 status (2026-10-10): **PASS - local development acceptance gate**.
+Final Linux suite: **183 passed, 0 failed, 0 skipped**. Windows: **182 passed,
+0 failed, 1 skipped** (symlink privilege; exercised successfully on Linux).
+Exact-current-source security/API/recovery verification is recorded in the final section.
+Phase 4 has not started. Earlier phase narratives below are historical checkpoints,
+not the current phase status. No deployment, push or paid provider call is authorized.
+
 Phases 1–2 are implemented; local PostgreSQL-backed checks are recorded below.
 Latest infrastructure verification: 2026-10-10; Docker build/Compose startup,
 container PostgreSQL migrations, official Linux Redis and both RQ workers PASS.
 Phase 2 final suite: **115 passed, 0 failed, 0 skipped**, against Docker PostgreSQL/Redis.
 See the Phase 2 verification at the end of this document;
 earlier follow-ups are historical evidence, superseded by this completed local gate.
-Phase 3 remains unstarted. At the Phase 0 audit on 2026-10-09, the repository contained only
+At the Phase 0 audit on 2026-10-09, the repository contained only
 `docs/ZOCLIP_BACKEND_MASTER_SPEC.md` and `docs/ZOCLIP_CODEX_PHASED_PROMPTS.md`.
 There was no AGENTS.md, application, dependency manifest, Compose configuration,
 migration, API schema, test suite or frontend. Existing input documents preserved.
@@ -20,7 +27,7 @@ no live provider requests, benchmarks or deployment have been performed.
 | 0 Repository blueprint | Documentation complete | AGENTS.md, ARCHITECTURE.md, DECISIONS.md and this status; consistency review against complete master spec and PROMPT 0 |
 | 1 Foundation/auth | PASS — local development gate verified | Docker build/startup, health, PostgreSQL migrations, Linux Redis/both RQ workers, 49 tests, lint/type/contract checks pass; live Google/email and production remain unverified |
 | 2 Ledger/budgets | PASS — local development gate verified | 115 tests including independent PostgreSQL financial races/duplicates/rollback/isolation, quotes/allowances, all expense budgets; lint/type/contract/migrations and updated Linux container smoke pass |
-| 3 Ingestion/queue | NOT STARTED | Real chunk upload/direct allowed URL, SSRF/IDOR/disk tests, durable dispatch/recovery, no AI charges |
+| 3 Ingestion/queue | PASS - local development gate verified | 183 Linux tests, real upload/controlled HTTPS import, SSRF/TLS/IDOR, concurrent deletion/credits, crash recovery, Docker/RQ/migrations and exact-source/schema checks; no AI charges |
 | 4 AI suggestions | NOT STARTED | Mock-tested adapters plus opt-in configured real transcription/validated suggestions; rendering still absent |
 | 5 Render/editor | NOT STARTED | Actual captioned vertical MP4, revision rerender, isolation and exactly-once settlement; representative QA |
 | 6 Payments | NOT STARTED | Verified sandbox credits once; spoof grants zero; merchant live status separately evidenced |
@@ -258,9 +265,9 @@ and LanmanServer running/Automatic. Windows 10's normal support ended in 2025;
 current OS servicing/Docker support eligibility needs resolution, not an assumed
 compatibility promise. No upgrade or feature enablement was attempted.
 
-**Readiness:** non-Docker Phase 1 checks pass. Phase 1 infrastructure gate remains
-partial; Phase 2 remains pending and unstarted until local Docker installation and
-the documented container checks actually succeed and the user authorizes Phase 2.
+**Historical readiness before Docker installation:** non-Docker Phase 1 checks
+passed, its infrastructure gate was partial and Phase 2 had not started. The
+subsequent Docker and Phase 2 checkpoint sections supersede that earlier status.
 
 ## Phase 1 Docker infrastructure verification — 2026-10-10
 
@@ -519,9 +526,9 @@ were **not** claimed. Docker smoke grant rows were explicitly rolled back.
 
 ### Remaining limitations and readiness for Phase 3
 
-- **Ready for explicitly authorized PROMPT 3. Phase 3 has not started.** It must
-  implement authoritative owned/probed media metadata, durable jobs/outbox/leases,
-  dispatch/recovery and cancellation, composed with these transaction contracts.
+- At the Phase 2 checkpoint, PROMPT 3 was the next authorized phase. Its media,
+  durable job/outbox/lease and accounting composition now exists; see the final
+  Phase 3 completion section for its actual verification status.
 - Automatic trials, device/IP abuse controls, timeout reconciliation tooling and
   job hold expiration/recovery are not live. No unknown provider hold is auto-freed.
 - Approved retail prices, actual provider/model rates, commercial quotas/budgets,
@@ -536,5 +543,262 @@ were **not** claimed. Docker smoke grant rows were explicitly rolled back.
 - The prior low-C-drive/3.80-GiB Docker constraints remain capacity limitations,
   not financial-test blockers or evidence of future 120-minute media capacity.
 
-No git commit was created. Suggested commit:
-feat: add atomic credit ledger plans and expense budget protection
+Phase 2 was subsequently committed as e97c866. Its financial implementation and
+existing migrations remain unchanged by Phase 3.
+
+
+## Phase 3 saved implementation before interruption (historical, 2026-10-10)
+
+Phase 2 was reverified BEFORE Phase 3 edits: 115 passed, 0 failed, 0 skipped,
+2 existing deprecation warnings, 54.88s. Ruff, formatting (34 files), mypy (23
+sources), lock (71 packages), OpenAPI snapshot, PostgreSQL migration cycle/drift,
+container readiness/financial rollback and both actual RQ worker smokes passed.
+The first container readiness probe preceded API startup; retry after healthy
+passed. Verified Phase 2 was checkpointed as e97c866. No secrets/temp files were
+staged. Phase 1/2 migrations and src/zoclip/credits have no changes from it.
+
+### Implemented behavior and files
+
+- Private UUID storage, bounded streamed/resumable chunks, exact lengths and
+  checksums, reorder/dedup, asynchronous atomic assembly, retention and orphan sweep.
+- Owner-scoped assets, uploads, jobs/events/listings/download/delete/cancel endpoints;
+  existing active verified session, CSRF, throttling and structured errors preserved.
+- Direct HTTPS exact-host allowlist (empty by default), deadline-bounded DNS,
+  reject any unsafe answer, pinned numeric connection/peer validation, hostname TLS,
+  each redirect checked, byte/MIME/magic/time guards. No platform scraping/DRM bypass.
+- Real constrained ffprobe: MP4/WebM, supported audio/video, bounded dimensions,
+  sampled packets, actual finite duration <=120 minutes and current plan cap.
+- PostgreSQL storage admission, global/user/queue limits, source/disk commitments,
+  durable jobs/events/outbox, bounded retry, fixed leases/fences/heartbeats/recovery.
+- Atomic Phase 2 reservation + job/outbox; rollback on later admission failure;
+  production PROCESS stops WAITING_ENGINE with no fake deliverable/settlement.
+  Cancellation/failure/24h waiting timeout releases once. Mock engine is test-only.
+- Shared private Compose storage, one AI/render worker and maintenance; real
+  ingestion container smoke. No paid API, trial, payment or future-phase feature.
+
+Created files:
+
+- alembic/versions/7e3fcb0834e3_phase3_private_media_jobs.py
+- src/zoclip/media/__init__.py, models.py, schemas.py, storage.py, service.py,
+  routes.py, importer.py, resolve_host.py, probe.py, probe_runner.py, worker.py,
+  cleanup.py
+- src/zoclip/workers/maintenance.py
+- scripts/ingestion_smoke.py
+- tests/test_media.py, tests/fixtures/source.mp4, tests/fixtures/README.md
+- docs/INGESTION_HANDOFF.md
+
+Changed files:
+
+- .env.example, .github/workflows/backend.yml, Dockerfile, compose.yaml, README.md
+- alembic/env.py, src/zoclip/core/config.py, src/zoclip/main.py,
+  src/zoclip/workers/run.py (queue comment)
+- tests/conftest.py, tests/test_config.py
+- docs/API_HANDOFF.md, docs/ARCHITECTURE.md, docs/DECISIONS.md,
+  docs/CREDITS_AND_MARGIN.md, docs/IMPLEMENTATION_STATUS.md,
+  docs/WINDOWS_DOCKER_SETUP.md (historical marker), docs/openapi.json
+
+Migration 7e3fcb0834e3 follows dd9634e4866b. Nine tables: storage_pool,
+storage_objects, projects, source_videos, upload_sessions, upload_parts, jobs,
+job_events, job_outbox. Singleton storage mutex seeded; job events reject UPDATE,
+DELETE/TRUNCATE. Downgrade refuses populated jobs; financial history is untouched.
+No prices, allowances, provider rates, payments or trial credits are seeded.
+
+### Observed verification
+
+Windows complete suite: 170 passed, 0 failed, 0 skipped, 2 existing warnings,
+85.22s. Disposable Docker PostgreSQL 17 and Redis DB 15, real Windows ffprobe 9.0.2.
+Command: .venv/Scripts/python.exe -m pytest -q --tb=short
+--basetemp=var/phase3-verification/windows-final-tmp
+-o cache_dir=var/phase3-verification/pytest-cache, with TEST_DATABASE_URL,
+TEST_REDIS_URL and FFPROBE_BINARY set privately to disposable local tooling.
+
+The final Linux suite result was not recorded before the interruption. This old
+170-test Windows result does not cover the final current-source suite; use the
+completion verification below instead.
+Prior development failures were fixed (lease-conflict assertion, idempotent cleanup,
+Windows exec wrapper). Linux reruns exposed a cached old local-project wheel;
+the final invocation explicitly selects /workspace/src with PYTHONPATH and a
+separate PYTHONPYCACHEPREFIX. No failed/stale run is counted as passing evidence.
+
+Other observed checks:
+
+| Check | Result |
+|---|---|
+| Ruff check src tests scripts alembic | PASS |
+| Ruff format --check src tests scripts alembic | PASS, 51 files |
+| mypy src | PASS, 36 source files |
+| uv lock --check --offline | PASS, 71 packages; no Python dependency changes |
+| pytest migration fixture | PostgreSQL upgrade -> base -> upgrade and drift check passed |
+| Docker build zoclip-phase3:verify | PASS |
+| Base and isolated override Compose config --quiet | PASS |
+| Isolated Compose up --no-build --wait --wait-timeout 180 | PASS; migrate exits 0, dependencies/API healthy, workers and maintenance running |
+| container_smoke.py | PASS readiness/head, PostgreSQL financial grant replay/reconcile/rollback, Redis, actual ai/render workers both return 42 |
+| ingestion_smoke.py with ZOCLIP_ISOLATED_SMOKE=1 | PASS actual chunk API -> PG outbox -> Linux RQ -> constrained ffprobe -> private exact download; delete/maintenance cleanup/capacity restored |
+| Container alembic check | PASS, no new upgrade operations |
+| Running container OpenAPI vs docs/openapi.json | Exact match, 39 paths |
+| git diff --check | PASS |
+
+Linux image digest:
+sha256:d11f7bf9fd6065348840ed223321df94e5b0b3bec4d0d2a5bb390422a61e46ba.
+Linux ffprobe: 5.1.9-0+deb12u1 (Bookworm), gcc12 hardened distro build.
+Windows tooling is ignored; archive SHA-256 matched its HTTPS-published checksum
+60f467265b1e312373dbcd92200c2618a74850f98d3d078e94296bb3fa2047ba.
+Synthetic fixture SHA-256:
+ea5bc3fccd80e962bdac9ea44e91dde6bc69890d001ab003a9b777236e7ca7d2.
+
+Container commands use --project-name zoclip-phase3-verify --env-file .env.example
+-f compose.yaml -f var/phase3-verification/compose.verify.yaml. The ignored override
+binds media to the larger private D: workspace, preserves the 20 GiB headroom floor
+and lowers only verification memory caps. It uses development placeholders only.
+The ingestion smoke leaves fictional immutable audit/job history in its isolated DB;
+private source files are removed and its temporary authenticated session is revoked.
+No Contabo access, deployment, push or paid provider calls occurred.
+
+### Security evidence and remaining boundaries
+
+Tests cover ten simultaneous job requests yielding one reservation/job, concurrent
+media admission, insufficient credit, storage/queue failure after reserve rolling
+back, cancellation without early release, duplicate release/settlement, financial
+reconciliation, invalid durations and malformed media, active fence protection,
+recovery generation, retry, Redis outage/lost acknowledgment/redelivery, immutable
+events, streaming size/checksum failures and restoration, Alice/Bob isolation,
+private downloads, path keys, forbidden address families, mixed DNS answers,
+rebinding/redirects, numeric peer and TLS-host pinning, MIME/magic/byte caps and
+capacity/expiry cleanup. Phase 2's full independent PostgreSQL financial races
+remain in the complete suite. No test uses a paid provider.
+
+New environment settings and exact defaults are in INGESTION_HANDOFF.md and
+.env.example; all Compose-supported settings are forwarded explicitly. Import hosts
+and commercial quota/rate/budget decisions still require operator configuration.
+
+Remaining limitations: no real AI/transcript/suggestions/rendering/payments/frontend;
+no live public direct-URL smoke or live Google/email/provider credential test;
+no full-frame malware certification or representative long-media load measurements;
+no production backup/restore, DB role separation or VPS rollout evidence. Local
+storage has no cloud adapter, multipart parallel writers or byte-range download.
+Retention policies remain provisional commercial/privacy defaults. Capacity
+estimates must be reviewed against Phase 5's actual render bounds before enabling
+rendering. CI workflow was updated but remote GitHub Actions has not run here.
+These are explicit future/production gates, not claims that those capabilities exist.
+
+## Phase 3 authorized completion verification (2026-10-10, current)
+
+Resumed the saved implementation after the read-only recovery audit; no restart,
+reset or discarded work. Phase 2 checkpoint e97c866 is preserved. Phase 1/2
+migrations, financial implementation, dependency lock and existing auth/credit/
+Google test files are unchanged. No Contabo access, deployment, GitHub push,
+paid API requests or Phase 4 implementation occurred.
+
+### Completed corrections and contracts
+
+- Download/deletion authorization now serializes under owner/wallet/storage locks
+  and refreshes the source under row lock before READY/expiry validation/open.
+  A committed deletion that wins the lock returns 404 for the waiting download.
+  An already-authorized descriptor may finish; failed commit closes the descriptor.
+- A real two-thread PostgreSQL regression preloads a stale READY row, commits
+  deletion on an independent connection, then verifies the download is denied.
+- Cross-owner PUT part, POST complete, DELETE upload and both generation routes
+  return 404 without parts, source-state changes or credit holds. Existing
+  auth/CSRF/private download/list/event isolation checks remain intact.
+- The symlink test creates a real link and rejects it. Linux ran it successfully;
+  Windows lacks symlink privilege and skips only that test.
+- Linux directory fsync persists renames/removals before DB receipt commit.
+  Fault injection covers before promotion, after promotion/before commit,
+  committed/lost acknowledgment and a rolled-back part receipt. Lease recovery
+  safely revalidates unpublished sources; terminal publication deduplicates;
+  parts/orphans clean up without a false receipt or duplicated financial effects.
+- Equal retry jitter is bounded and test-injectable. Three claims remain the
+  hard limit; exhaustion is terminal and cleanup restores storage admission.
+- Canonical POST /videos/{id}/generate accepts quote_id. POST /jobs remains a
+  compatible alias with normalized shared idempotency and one reservation/job.
+- Job responses include stage, updated_at, nullable progress_percent and
+  estimated_credits. PROCESS snapshots accepted reserved credits and preserves
+  them across WAITING_ENGINE. Ingestion costs zero; only completed ingestion
+  reports 100 percent. Unknown progress/legacy missing estimates stay null.
+- Added scripts/https_fixture.py, scripts/verify_phase3.py,
+  compose.phase3-test.yaml and docs/PHASE3_VERIFICATION.md for repeatable isolated
+  verification. Updated the existing ingestion smoke and all relevant handoffs.
+
+### Exact final verification results
+
+| Check | Actual result |
+|---|---|
+| Windows full pytest | 182 passed, 0 failed, 1 skipped, 2 existing deprecation warnings; 103.31s |
+| Linux full pytest against mounted current src | 183 passed, 0 failed, 0 skipped, 2 existing deprecation warnings; 94.49s |
+| Ruff check src tests scripts alembic | PASS on Windows and Linux |
+| Ruff format --check src tests scripts alembic | PASS, 53 files |
+| mypy src | PASS, 36 source files on Windows and Linux |
+| uv lock --check --offline | PASS, 71 packages; lock unchanged |
+| PostgreSQL migration fixture | PASS empty upgrade -> base -> upgrade and schema drift |
+| Populated Phase 3 downgrade guard | PASS; refuses dd9634e4866b downgrade without erasing jobs/revision |
+| Phase 2 financial concurrency/idempotency tests | PASS, preserved full suite; ten concurrent job reservations and cancellations also pass |
+| Actual Redis/RQ integration | PASS real Redis DB 15, redelivery/failure/recovery integration and actual ai/render worker smoke results 42 |
+| Docker build zoclip-phase3:completion | PASS |
+| Base and verification Compose config --quiet | PASS |
+| Isolated Compose up --no-build --detach --wait --wait-timeout 180 | PASS; migration exits 0, API/dependencies healthy, workers/maintenance/fixture running |
+| Linux container_smoke.py | PASS readiness/head, PostgreSQL financial rollback/reconcile, Redis and both real RQ workers |
+| Linux ingestion_smoke.py, explicit isolated/HTTPS opt-ins | PASS chunk upload -> durable outbox -> actual RQ -> constrained ffprobe -> exact private download -> deletion/maintenance capacity restoration |
+| Actual controlled HTTPS imports through API/outbox/RQ | PASS source and redirect exact bytes; wrong MIME, oversize and private redirect rejected |
+| Actual HTTPS transport check | PASS trusted test CA; wrong hostname, untrusted CA, absent allowlist and private address rejected |
+| Running container alembic check | PASS, no new upgrade operations |
+| Generated/validated OpenAPI and running image comparison | PASS exact match, 40 paths |
+| Running image vs working src hashes | PASS all 36 application Python files match |
+| git diff --check | PASS |
+
+Windows command: .venv/Scripts/python.exe -m pytest -q --tb=short
+--basetemp=var/phase3-completion/windows-full-tmp -p no:cacheprovider.
+TEST_DATABASE_URL targeted the new disposable zoclip_phase3_completion_test DB;
+TEST_REDIS_URL targeted real local Redis DB 15; FFPROBE_BINARY targeted the
+ignored Windows 9.0.2 tooling. These were test-only connections/credentials.
+
+Linux command: docker compose --project-name zoclip-phase3-completion
+--env-file .env.example -f compose.yaml -f compose.phase3-test.yaml run --rm
+--no-deps --user 0 -v D:/zoclip:/workspace -w /workspace
+-e TEST_DATABASE_URL=postgresql+psycopg://zoclip:CHANGE_ME@db:5432/zoclip_phase3_linux_test
+-e TEST_REDIS_URL=redis://redis:6379/15 api python scripts/verify_phase3.py.
+Full output is retained locally in ignored var/phase3-completion/linux-final.log.
+The runner selects /workspace/src explicitly and installs the exact lock. Root
+is limited to this disposable dependency/test runner; API and actual worker
+containers run UID 10001 with dropped capabilities. Exact Docker/HTTPS commands
+and the test-only CA/network boundary are in PHASE3_VERIFICATION.md.
+
+Earlier failed attempts are superseded, not counted as passing: sandbox Windows
+temporary-directory permission errors were resolved by the authorized unsandboxed
+test run; Linux cache permission/missing-wheel errors were resolved in its isolated
+runner; the first completed Linux suite had 182 passes/one config-test failure from
+inherited development Compose cookie/email settings. Secure test-runner defaults
+fixed that environment leakage without weakening tests or production validation.
+The corrected full Linux rerun above is the final result.
+
+Image ID: sha256:2af39927ab401bc32827a112675bb1a4ece32e6bc82af9aaa6d02bcca44ba170.
+Linux ffprobe 5.1.9-0+deb12u1 (Bookworm), gcc 12. Synthetic fixture SHA-256 remains
+ea5bc3fccd80e962bdac9ea44e91dde6bc69890d001ab003a9b777236e7ca7d2.
+
+Migration chain: 39bc6d102a49 -> dd9634e4866b -> 7e3fcb0834e3. No additional
+completion migration is needed: new status properties are derived, and accepted
+credit estimates use the existing private checkpoint JSON. Financial constraints,
+ledger operations and prior migration contents were preserved.
+
+### Remaining limits and next phase
+
+Phase 3 is PASS for local development acceptance, not production readiness.
+Controlled HTTPS uses real TLS/sockets in an internal Docker test namespace with
+a synthetic globally classified destination and disposable trusted CA. It does
+not claim a public-Internet origin or public DNS/CDN integration was tested. No
+SSRF/private-IP exception or TLS verification bypass was added. Import allowlist
+remains empty by default in deployment configuration.
+
+Unrun: physical power-loss/disk-controller tests, public-Internet origins,
+representative 10/30/60/120-minute load/capacity measurements, backups/restores,
+Ubuntu/Contabo rollout and remote GitHub Actions. Runtime/migration DB privilege
+separation, approved commercial limits/retention, live Google/email and real
+provider/payment integrations remain their established production/future gates.
+Local storage has no remote adapter or range downloads. Parser checks sample
+packets rather than exhaustively decoding every frame. The two existing
+Authlib/Starlette httpx deprecations remain documented warnings.
+
+The next implementation phase is PROMPT 4 only after explicit authorization.
+No AI engine, transcript, suggestion, rendered output or gateway success is claimed.
+All Phase 3 acceptance checks passed; a descriptive local Git commit is authorized.
+The completion verification Compose project was stopped after checks; its volumes
+were preserved and pre-existing local Docker projects were left running unchanged.

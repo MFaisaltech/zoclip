@@ -29,6 +29,19 @@ class Settings(BaseSettings):
     enable_live_payments: bool = False
     enable_trial_credits: bool = False
     payment_provider: Literal["disabled", "mock"] = "disabled"
+    media_root: str = "var/media"
+    media_max_bytes: int = Field(default=4 * 1024**3, ge=1, le=4 * 1024**3)
+    media_part_bytes: int = Field(default=8 * 1024**2, ge=65536, le=8 * 1024**2)
+    media_headroom_bytes: int = Field(default=20 * 1024**3, ge=20 * 1024**3)
+    media_retained_bytes: int = Field(default=40 * 1024**3, ge=1)
+    media_ingestion_limit: int = Field(default=2, ge=1, le=2)
+    media_user_ingestion_limit: int = Field(default=1, ge=1, le=1)
+    media_pending_limit: int = Field(default=10, ge=1, le=100)
+    media_user_processing_limit: int = Field(default=1, ge=1, le=1)
+    media_upload_ttl_seconds: int = Field(default=86400, ge=300, le=86400)
+    media_retention_seconds: int = Field(default=604800, ge=300, le=604800)
+    media_allowed_import_hosts: list[str] = []
+    ffprobe_binary: str = "ffprobe"
 
     @property
     def google_enabled(self) -> bool:
@@ -71,6 +84,11 @@ class Settings(BaseSettings):
             raise ValueError(
                 "Live payments and automatic trials remain disabled pending verification"
             )
+        if any(
+            not h or h != h.lower() or any(c in h for c in "/:*@\\") or h.endswith(".")
+            for h in self.media_allowed_import_hosts
+        ):
+            raise ValueError("Import allowlist requires exact lowercase DNS hostnames")
         if self.app_env == "production":
             if not self.cookie_secure or self.email_mode == "development":
                 raise ValueError("Production requires secure cookies and forbids development email")

@@ -1,7 +1,7 @@
 # ZoClip backend
 
-Phases 1–2: FastAPI/PostgreSQL authentication, credits, plans and expense protection.
-No payments, uploads, AI processing or clip rendering yet. See `docs/IMPLEMENTATION_STATUS.md`
+Phases 1 through 3: authentication, credit accounting, private video ingestion and durable queues.
+No payments, AI processing or clip rendering yet. See `docs/IMPLEMENTATION_STATUS.md`
 for actual checks and remaining gates. No paid provider calls are made.
 
 ## Local Docker setup
@@ -26,8 +26,9 @@ curl --fail http://localhost:8000/health/ready
 
 The migration service runs once before API/workers. Database/Redis have no host
 ports; API binds host loopback only. One worker listens on `ai`, one on `render`;
-neither has media/product tasks yet. App containers run as UID 10001 with dropped
-capabilities. Persistent volumes hold DB, Redis and development mailbox data.
+the AI queue now handles validation/imports and the explicit processing-unavailable state. App containers run as UID 10001 with dropped
+capabilities. Persistent volumes hold DB, Redis, private media and development mailbox data.
+The maintenance service handles outbox dispatch, recovery and retention.
 Do not run `down --volumes` against data you need.
 
 `.env.example` explicitly enables HTTP-compatible local cookies and development
@@ -105,3 +106,37 @@ this phase. Financial tests use fictional staff grants/rates and no paid APIs.
 Concurrency tests migrate/drop generated schemas within the disposable _test DB;
 the test DB role must be allowed to create schemas. Never grant that privilege to
 the production runtime role just to run tests.
+
+## Private video ingestion
+
+Read [INGESTION_HANDOFF.md](docs/INGESTION_HANDOFF.md) for chunk/resume checksums,
+direct-URL host configuration, job states, cancellation, capacity and recovery.
+A real 20 GiB disk headroom floor applies; shared private bind mounts can be used
+when Docker Desktop's internal volume is too small. Imports default disabled
+until exact authorized media hosts are configured. Sources must be MP4/WebM with
+supported audio/video streams and at most 120 minutes, validated with ffprobe.
+
+POST /api/v1/uploads -> streamed PUT parts -> POST complete -> poll job -> READY.
+POST /api/v1/videos/import-url follows the same durable background validation.
+POST /api/v1/jobs atomically reserves Phase 2 credits and stops at WAITING_ENGINE;
+there is no production mock processing, AI call or settlement. Cancel restores
+the hold, and maintenance cancels these waiting requests after 24h.
+
+The full suite requires ffprobe on PATH (or FFPROBE_BINARY), PostgreSQL and Redis.
+The small synthetic fixture is committed; tests never fetch public user media.
+For an explicitly disposable development Compose project with sufficient disk:
+
+```sh
+docker compose --project-name zoclip-ingestion-check --env-file .env.example up --build --detach --wait --wait-timeout 180
+docker compose --project-name zoclip-ingestion-check --env-file .env.example exec -T api python scripts/container_smoke.py
+docker compose --project-name zoclip-ingestion-check --env-file .env.example exec -T -e ZOCLIP_ISOLATED_SMOKE=1 api python scripts/ingestion_smoke.py
+docker compose --project-name zoclip-ingestion-check --env-file .env.example stop
+```
+
+The ingestion smoke configures fictional Free quotas and creates immutable test
+audit/job history in that isolated database; it must never run on customer data.
+No automatic trials, payment success or paid credits are created.
+
+For the complete Linux suite and an actual TLS-verified controlled HTTPS import,
+use [PHASE3_VERIFICATION.md](docs/PHASE3_VERIFICATION.md) and the explicitly
+test-only `compose.phase3-test.yaml`. That override must not be used for deployment.

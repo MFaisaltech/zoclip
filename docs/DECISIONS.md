@@ -1,6 +1,6 @@
 # ZoClip decision register
 
-Phase 0 decisions, with Phase 1–2 additions below. Accepted means design default;
+Phase 0 decisions, with Phase 1 through 3 additions below. Accepted means design default;
 implementation evidence lives in IMPLEMENTATION_STATUS.md. No payment/AI provider
 integration, current fee or model availability claim is made.
 
@@ -120,3 +120,50 @@ Phase 1 Docker-pending notes above are historical; the final Phase 1 status reco
 its completed local gate. Phase 2 execution and exact verification follow in
 IMPLEMENTATION_STATUS.md. No payment/provider integration or commercial approval
 has been inferred from this financial foundation.
+
+## Phase 3 decisions (2026-10-10)
+
+- D27: Fixed-size zero-based streamed chunks, exact lengths and SHA-256, reordered
+  parts and safe repeats. One bounded writer per upload; 60-second stream deadline,
+  180-second lease and fixed 24h upload expiry. No multipart whole-file buffering.
+- D28: Private UUID filesystem objects shared by API/workers/maintenance. PostgreSQL
+  singleton admission protects remaining disk commitments and global/user quotas;
+  actual free-space headroom cannot be configured below 20 GiB. Capacity envelopes
+  are conservative and require Phase 5 validation before any rendering.
+- D29: Exact host allowlist is empty by default. HTTPS/443, bounded DNS subprocess,
+  numeric socket pin, actual peer check, original-hostname TLS validation, per-hop
+  redirect checks, MIME/magic/byte/deadline guards and ffprobe. No platform adapters.
+- D30: Validation/import completion means READY source only. PROCESS requests reserve
+  under the existing Phase 2 contract and enter WAITING_ENGINE. No production mock
+  deliverable or settlement. Waiting holds cancel after 24h; customers can cancel.
+- D31: PostgreSQL jobs/events/outbox with fixed 900s worker fences, 660s RQ timeout,
+  periodic heartbeats, max three claims and bounded transient retries. One task
+  is active at a time even if extra AI workers are started. Repeated queue messages
+  cannot reexecute a claimed/terminal job. Pending deliveries replay after Redis loss.
+- D32: Access revocation precedes cleanup; active writers/leases delay physical
+  deletion and resource release. Orphan sweep only touches generated UUID files
+  older than an hour. Immutable financial and job audit records are retained.
+- D33: MP4/WebM only, one supported video plus audio, bounded dimensions, sampled
+  nonempty packets and finite duration <=120 minutes plus the current plan cap.
+  ffprobe uses Linux resource limits and file-only protocols, no shell. This is
+  validation, not a claim of full-frame decoding, malware certification or measured
+  120-minute throughput. Ubuntu/Linux remains the worker runtime.
+- D34: Download authorization and deletion serialize under the same owner/storage
+  locks. Refresh READY/expiry under lock before opening; an already-authorized
+  descriptor may finish, but deletion that wins the lock prevents a new open.
+- D35: Linux fsyncs containing directories after promotion/removal before the DB
+  receipt commits. Crash recovery retains parts until committed validation,
+  revalidates unpublished sources, and deduplicates committed/lost-ack publication.
+- D36: Canonical POST /videos/{id}/generate and compatible POST /jobs share
+  idempotency. Credit estimates snapshot accepted reservations. Unknown progress
+  stays null; completed ingestion alone reports 100. Future engine stages are deferred.
+- D37: Transient retry uses bounded equal jitter, max three claims. Randomness is
+  injectable in tests; it cannot increase attempts or authorize paid requests.
+- D38: HTTPS verification uses an isolated internal Docker network with a synthetic
+  globally classified address and a disposable trusted test CA. Production IP
+  validation, peer pinning and TLS hostname checks remain enabled. This verifies
+  real HTTPS transport without claiming public-Internet source availability.
+
+Phase 2 was reverified before edits (115 tests, all local gates) and checkpointed
+as e97c866. No prior migration or financial contract was rewritten. Phase 3 evidence
+and known operational limitations are recorded in IMPLEMENTATION_STATUS.md.

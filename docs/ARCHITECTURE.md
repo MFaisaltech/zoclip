@@ -1,9 +1,9 @@
 # ZoClip architecture blueprint
 
-Status: Phase 0 design with Phase 1 foundation and Phase 2 accounting implemented; see
+Status: Phase 0 design with Phases 1 through 3 implemented; see
 IMPLEMENTATION_STATUS.md for evidence and remaining gates. The master specification is the product contract. This document
 selects implementation defaults; capacity figures below are planning limits, not
-benchmarks. Frontend and phases 3–8 remain unimplemented. The Phase 2 transaction
+benchmarks. Frontend and phases 4 through 8 remain unimplemented. The Phase 2 transaction
 contracts, limits and implemented scope are detailed in CREDITS_AND_MARGIN.md.
 
 ## Components and boundaries
@@ -86,7 +86,9 @@ Use expand/migrate/contract for changes with existing data. Run one migration jo
 before application rollout, never from every worker. Back up before destructive
 changes; financial rollback normally restores compatible code or uses a forward
 fix, not deletion of ledger rows. Phase 1 adds revision 39bc6d102a49 for identity/auth;
-Phase 2 adds revision dd9634e4866b for financial schemas; job schemas remain future work.
+Phase 2 adds revision dd9634e4866b for financial schemas; Phase 3 adds
+7e3fcb0834e3 for private ingestion/jobs/outbox/capacity. See INGESTION_HANDOFF.md
+for the implemented state/lease contract; subsequent AI/render states remain planned.
 
 ## Identity and API contract
 
@@ -248,3 +250,22 @@ off-server media cost need approval. Alert on disk, queues, worker heartbeat,
 provider spend, payment anomalies and failure rates. UFW, TLS renewal, non-root
 containers, dropped capabilities, restricted mounts and trusted proxy configuration
 are Phase 7 deliverables. Benchmark 10/30/60/120-minute media before capacity claims.
+
+## Phase 3 implementation boundary
+
+media owns private storage, uploads, imports, constrained probing and durable
+source/job records. workers.maintenance runs dispatch/recovery/retention; ai runs
+real ingestion and the explicit WAITING_ENGINE processing placeholder. The Storage
+protocol preserves a future remote-adapter seam. No cloud dependency exists.
+PG storage_pool serializes disk/job admission after owner/financial locks. Process
+creation commits credit hold/job/outbox atomically. No DB locks span streaming,
+HTTP or subprocesses. See INGESTION_HANDOFF.md for precise deadlines and quotas.
+Ingestion COMPLETED is source readiness; whole-job settlement is still deferred.
+
+Generation uses canonical POST /videos/{id}/generate; POST /jobs remains a
+compatible normalized alias. Job progress is null without a measurable milestone,
+and credit estimates snapshot accepted reservations. Download open authorization
+and deletion use the same PostgreSQL locks and refreshed source state. Linux
+directory fsync makes media renames/deletions durable before database receipts.
+Controlled HTTPS and disposable Linux verification use the explicit test override
+compose.phase3-test.yaml; that network/CA configuration is not a deployment default.
