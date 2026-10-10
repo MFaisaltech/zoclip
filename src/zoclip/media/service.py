@@ -26,7 +26,7 @@ from zoclip.media.models import (
 from zoclip.media.schemas import ImportInput, ProcessInput, UploadInput
 from zoclip.media.storage import LocalStorage
 
-ACTIVE = {"QUEUED", "RUNNING", "CANCEL_REQUESTED", "WAITING_ENGINE"}
+ACTIVE = {"QUEUED", "RUNNING", "CANCEL_REQUESTED", "WAITING_ENGINE", "SUGGESTIONS_READY"}
 TERMINAL = {"COMPLETED", "FAILED", "CANCELED"}
 
 
@@ -73,9 +73,17 @@ def capacity(db: Session, settings: Settings, storage: LocalStorage, additional:
 def event(db: Session, job: Job, state: str, code: str | None = None) -> None:
     allowed = {
         "QUEUED": {"RUNNING", "CANCELED", "FAILED"},
-        "RUNNING": {"COMPLETED", "FAILED", "WAITING_ENGINE", "CANCEL_REQUESTED", "QUEUED"},
+        "RUNNING": {
+            "COMPLETED",
+            "FAILED",
+            "WAITING_ENGINE",
+            "CANCEL_REQUESTED",
+            "QUEUED",
+            "SUGGESTIONS_READY",
+        },
         "CANCEL_REQUESTED": {"CANCELED"},
-        "WAITING_ENGINE": {"CANCELED", "FAILED"},
+        "WAITING_ENGINE": {"CANCELED", "FAILED", "QUEUED"},
+        "SUGGESTIONS_READY": {"CANCELED", "FAILED"},
     }
     if job.state != state and state not in allowed.get(job.state, set()):
         raise ApiError(409, "invalid_transition", "Job transition is forbidden.")
@@ -354,6 +362,10 @@ def process(
 
 
 def terminate(db: Session, job: Job, state: str, code: str | None = None) -> None:
+    if job.kind == "PROCESS":
+        from zoclip.ai.worker import finalize_pending
+
+        finalize_pending(db, job, None)
     if job.reservation_id:
         money.finish(
             db,
@@ -383,7 +395,7 @@ def cancel_job(db: Session, owner: UUID, job_id: UUID) -> Job:
     job = owned(db, Job, owner, job_id, lock=True)
     if job.state == "RUNNING":
         event(db, job, "CANCEL_REQUESTED")
-    elif job.state in {"QUEUED", "WAITING_ENGINE"}:
+    elif job.state in {"QUEUED", "WAITING_ENGINE", "SUGGESTIONS_READY"}:
         terminate(db, job, "CANCELED")
     return job
 
@@ -399,7 +411,7 @@ def delete_video(db: Session, owner: UUID, video_id: UUID) -> SourceVideo:
     ):
         if job.state == "RUNNING":
             event(db, job, "CANCEL_REQUESTED")
-        elif job.state in {"QUEUED", "WAITING_ENGINE"}:
+        elif job.state in {"QUEUED", "WAITING_ENGINE", "SUGGESTIONS_READY"}:
             terminate(db, job, "CANCELED")
     if upload and upload.state == "OPEN":
         upload.state = "CANCELED"

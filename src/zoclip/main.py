@@ -17,6 +17,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from zoclip.ai.routes import router as ai_router
 from zoclip.auth.email import build_email
 from zoclip.auth.google import GoogleOIDC
 from zoclip.auth.google import router as google_router
@@ -144,6 +145,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(google_router)
     app.include_router(credits_router)
     app.include_router(media_router)
+    app.include_router(ai_router)
     app.add_exception_handler(ApiError, problem_response)  # type: ignore[arg-type]
 
     @app.exception_handler(RequestValidationError)

@@ -98,7 +98,7 @@ class Job(IdentityMixin, Base):
         CheckConstraint("kind IN ('VALIDATE','IMPORT','PROCESS')", name="kind"),
         CheckConstraint(
             "state IN ('QUEUED','RUNNING','WAITING_ENGINE','CANCEL_REQUESTED',"
-            "'CANCELED','FAILED','COMPLETED')",
+            "'CANCELED','FAILED','COMPLETED','SUGGESTIONS_READY')",
             name="state",
         ),
         CheckConstraint("attempts >= 0 AND generation >= 0", name="attempts"),
@@ -124,6 +124,8 @@ class Job(IdentityMixin, Base):
     @property
     def stage(self) -> str:
         if self.state == "RUNNING":
+            if self.kind == "PROCESS":
+                return self.checkpoint.get("ai_stage", "ENGINE_PENDING")
             return {"VALIDATE": "VALIDATING", "IMPORT": "IMPORTING", "PROCESS": "ENGINE_PENDING"}[
                 self.kind
             ]

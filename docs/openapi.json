@@ -9270,6 +9270,458 @@
         }
       }
     },
+    "/api/v1/videos/{video_id}/transcript": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Get Transcript",
+        "operationId": "get_transcript_api_v1_videos__video_id__transcript_get",
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "video_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Video Id"
+            }
+          },
+          {
+            "name": "job_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "507": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/videos/{video_id}/suggestions": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Get Suggestions",
+        "operationId": "get_suggestions_api_v1_videos__video_id__suggestions_get",
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "video_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Video Id"
+            }
+          },
+          {
+            "name": "job_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Job Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 20,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestionsView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "507": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health/live": {
       "get": {
         "tags": [
@@ -11031,6 +11483,148 @@
         ],
         "title": "SessionView"
       },
+      "SuggestionView": {
+        "properties": {
+          "start_sec": {
+            "type": "number",
+            "title": "Start Sec"
+          },
+          "end_sec": {
+            "type": "number",
+            "title": "End Sec"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "hook": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Hook"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason"
+          },
+          "score": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Score"
+          },
+          "keywords": {
+            "items": {
+              "type": "string",
+              "maxLength": 60,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Keywords"
+          },
+          "hashtags": {
+            "items": {
+              "type": "string",
+              "maxLength": 60,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Hashtags"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "rank": {
+            "type": "integer",
+            "title": "Rank"
+          },
+          "job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Job Id"
+          },
+          "transcript_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Transcript Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "start_sec",
+          "end_sec",
+          "title",
+          "hook",
+          "reason",
+          "score",
+          "keywords",
+          "hashtags",
+          "id",
+          "rank",
+          "job_id",
+          "transcript_id"
+        ],
+        "title": "SuggestionView"
+      },
+      "SuggestionsView": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Job Id"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "stage": {
+            "type": "string",
+            "title": "Stage"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestionView"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "rendered": {
+            "type": "boolean",
+            "title": "Rendered",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "job_id",
+          "state",
+          "stage",
+          "error_code",
+          "items"
+        ],
+        "title": "SuggestionsView"
+      },
       "TokenInput": {
         "properties": {
           "token": {
@@ -11135,6 +11729,100 @@
           "created_at"
         ],
         "title": "TransactionView"
+      },
+      "TranscriptData": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 1000000,
+            "title": "Text"
+          },
+          "words": {
+            "items": {
+              "$ref": "#/components/schemas/Word"
+            },
+            "type": "array",
+            "maxItems": 40000,
+            "title": "Words"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence"
+          },
+          "duration_seconds": {
+            "type": "number",
+            "maximum": 7201.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Duration Seconds"
+          },
+          "utterances": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "maxItems": 10000,
+            "title": "Utterances"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "text",
+          "words",
+          "confidence",
+          "duration_seconds"
+        ],
+        "title": "TranscriptData"
+      },
+      "TranscriptView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "video_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Video Id"
+          },
+          "job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Job Id"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/TranscriptData"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "video_id",
+          "job_id",
+          "model",
+          "language",
+          "created_at",
+          "data"
+        ],
+        "title": "TranscriptView"
       },
       "UploadInput": {
         "properties": {
@@ -11309,6 +11997,61 @@
           "reserved_credits"
         ],
         "title": "WalletView"
+      },
+      "Word": {
+        "properties": {
+          "word": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Word"
+          },
+          "punctuated_word": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Punctuated Word"
+          },
+          "start": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Start"
+          },
+          "end": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "End"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence"
+          },
+          "speaker": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speaker"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "word",
+          "punctuated_word",
+          "start",
+          "end",
+          "confidence"
+        ],
+        "title": "Word"
       }
     },
     "securitySchemes": {

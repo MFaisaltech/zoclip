@@ -8,6 +8,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 
+from zoclip.ai.models import AIRequest, ClipSuggestion, Transcript
 from zoclip.core.db import utcnow
 from zoclip.media import service
 from zoclip.media.models import Job, SourceVideo, StorageObject, UploadPart, UploadSession
@@ -34,7 +35,10 @@ def cleanup(factory: sessionmaker, storage: LocalStorage) -> int:
         waiting = list(
             db.scalars(
                 select(Job.id)
-                .where(Job.state == "WAITING_ENGINE", Job.updated_at < now - timedelta(days=1))
+                .where(
+                    Job.state.in_({"WAITING_ENGINE", "SUGGESTIONS_READY"}),
+                    Job.updated_at < now - timedelta(days=1),
+                )
                 .limit(100)
             )
         )
@@ -63,7 +67,29 @@ def cleanup(factory: sessionmaker, storage: LocalStorage) -> int:
             ):
                 db.commit()  # Cancellation request persisted; live worker still owns disk.
                 continue
+            from zoclip.ai.worker import finalize_pending
+
+            for job in db.scalars(select(Job).where(Job.video_id == video.id)):
+                finalize_pending(db, job, storage)
             storage.delete(obj.id)
+            for suggestion in db.scalars(
+                select(ClipSuggestion).where(ClipSuggestion.video_id == video.id)
+            ):
+                db.delete(suggestion)
+            db.flush()
+            for transcript in db.scalars(select(Transcript).where(Transcript.video_id == video.id)):
+                # Identical owner/source reuse can link another job to this transcript.
+                for suggestion in db.scalars(
+                    select(ClipSuggestion).where(ClipSuggestion.transcript_id == transcript.id)
+                ):
+                    db.delete(suggestion)
+                db.flush()
+                db.delete(transcript)
+            for request in db.scalars(select(AIRequest).where(AIRequest.video_id == video.id)):
+                storage.delete(request.id)
+                request.response = None  # Retain cost references/hashes, remove private text.
+            for job in db.scalars(select(Job).where(Job.video_id == video.id)):
+                job.checkpoint = {k: v for k, v in job.checkpoint.items() if k != "candidates"}
             if upload:
                 for part in db.scalars(select(UploadPart).where(UploadPart.upload_id == upload.id)):
                     storage.delete(part.id)
@@ -110,6 +136,7 @@ def cleanup(factory: sessionmaker, storage: LocalStorage) -> int:
                     )
                 )
                 and not db.get(UploadPart, key)
+                and not db.get(AIRequest, key)
             ):
                 storage.delete(key)
     return count

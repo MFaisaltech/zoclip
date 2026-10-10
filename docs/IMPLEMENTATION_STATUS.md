@@ -1,11 +1,19 @@
 # ZoClip implementation status
 
-Current Phase 3 status (2026-10-10): **PASS - local development acceptance gate**.
-Final Linux suite: **183 passed, 0 failed, 0 skipped**. Windows: **182 passed,
-0 failed, 1 skipped** (symlink privilege; exercised successfully on Linux).
-Exact-current-source security/API/recovery verification is recorded in the final section.
-Phase 4 has not started. Earlier phase narratives below are historical checkpoints,
-not the current phase status. No deployment, push or paid provider call is authorized.
+Current Phase 4 checkpoint status (2026-10-10):
+- **Phase 4 local mock/fixture gate: PASS.**
+- **Phase 4 real Deepgram/Gemini provider gate: PENDING.**
+- **Production readiness: NOT APPROVED.**
+
+The user explicitly authorized a local Phase 4 checkpoint commit based on the
+passing local gate. This authorization does not waive real-provider verification.
+Final Linux suite: **237 passed, 0 failed, 0 skipped**. Windows: **236 passed,
+0 failed, 1 skipped** (symlink privilege; passes on Linux). Existing Phase 1–3
+functionality remains covered. Runtime PostgreSQL/Redis/Linux RQ/FFmpeg/HTTPS
+simulators, migrations, lint/type and running OpenAPI/source matching pass.
+See [PHASE4_VERIFICATION.md](PHASE4_VERIFICATION.md) and the final Phase 4 section
+for exact evidence. Earlier phase narratives are historical checkpoints.
+No deployment, push, real paid provider call or Phase 5 work is authorized.
 
 Phases 1–2 are implemented; local PostgreSQL-backed checks are recorded below.
 Latest infrastructure verification: 2026-10-10; Docker build/Compose startup,
@@ -28,7 +36,7 @@ no live provider requests, benchmarks or deployment have been performed.
 | 1 Foundation/auth | PASS — local development gate verified | Docker build/startup, health, PostgreSQL migrations, Linux Redis/both RQ workers, 49 tests, lint/type/contract checks pass; live Google/email and production remain unverified |
 | 2 Ledger/budgets | PASS — local development gate verified | 115 tests including independent PostgreSQL financial races/duplicates/rollback/isolation, quotes/allowances, all expense budgets; lint/type/contract/migrations and updated Linux container smoke pass |
 | 3 Ingestion/queue | PASS - local development gate verified | 183 Linux tests, real upload/controlled HTTPS import, SSRF/TLS/IDOR, concurrent deletion/credits, crash recovery, Docker/RQ/migrations and exact-source/schema checks; no AI charges |
-| 4 AI suggestions | NOT STARTED | Mock-tested adapters plus opt-in configured real transcription/validated suggestions; rendering still absent |
+| 4 AI suggestions | Local mock/fixture gate PASS; real-provider gate PENDING | User-authorized local checkpoint; 237 Linux tests, actual FFmpeg/RQ/HTTPS simulators and expense/recovery/cancel/API checks; production NOT APPROVED; rendering absent |
 | 5 Render/editor | NOT STARTED | Actual captioned vertical MP4, revision rerender, isolation and exactly-once settlement; representative QA |
 | 6 Payments | NOT STARTED | Verified sandbox credits once; spoof grants zero; merchant live status separately evidenced |
 | 7 Operations | NOT STARTED | Compose/runbooks, resource/failure/security drills, encrypted backup restore, monitoring; VPS verification separately recorded |
@@ -802,3 +810,93 @@ No AI engine, transcript, suggestion, rendered output or gateway success is clai
 All Phase 3 acceptance checks passed; a descriptive local Git commit is authorized.
 The completion verification Compose project was stopped after checks; its volumes
 were preserved and pre-existing local Docker projects were left running unchanged.
+
+## Phase 4 resumption and final local evidence — 2026-10-10
+
+User authorized auditing and completing the existing uncommitted Phase 4, preserving
+Phase 1–3, with mocked/controlled verification only. No live paid calls, deployment,
+push, Phase 5 or commit without Phase 4 acceptance. Baseline remains `e67832a`.
+
+The existing saved Linux log showed 233 passing tests and lint/type checks; that
+suite completed. Running disposable Phase 4 containers and successful simulator
+worker logs were also present. Stale status docs and missing final handoff did not
+establish a completed phase. No evidence proves why the prior session ended.
+Estimated implementation completeness at audit: 85–90%, with acceptance/handoff
+unfinished. That saved log is preserved; prior Windows temp directories are not
+counted as successful verification.
+
+Completed existing implementation rather than replacing it. Added cancellation
+expense reconciliation for lost/saved responses, proven-unsent admission voiding,
+consistent recovery lock ordering and bounded local retry backoff. Four added
+regression cases cover cancellation/crash boundaries, nondispatch and multi-chunk
+cache reuse. Known synthetic provider placeholders are rejected in production.
+Added opt-in live-smoke tooling with mandatory paid switches (not run), exact
+runtime matching and durable command/status/JUnit evidence. See
+[AI_HANDOFF.md](AI_HANDOFF.md) for configuration, models/rate binding, API examples,
+privacy, retry policies and limits; [PHASE4_VERIFICATION.md](PHASE4_VERIFICATION.md)
+contains the full audit, commands and acceptance boundaries.
+
+Actual final checks:
+
+- Linux full suite: **237 passed, 0 failed, 0 skipped**, 202.49s.
+- Windows full suite: **236 passed, 0 failed, 1 skipped**, 226.93s. Only
+  test_storage_rejects_path_traversal_and_symlinks skips for missing Windows
+  privilege; Linux passes it. Both have two existing HTTPX deprecation warnings.
+- Exact Linux modules: AI 54, auth 19, config/OpenAPI 10, credits 66, Google 19,
+  infrastructure 1, media 68. All Phase 1–3 regressions remain in this suite.
+- Ruff lint/format PASS (69 Python files); mypy PASS (45 src files); uv lock
+  --check --offline PASS (71 packages), lock/dependency versions unchanged.
+- PostgreSQL upgrade/base/upgrade, schema drift and populated financial/job/AI
+  downgrade guards PASS in pytest. Running container alembic check PASS.
+- Docker build/base+override config/startup PASS; actual PostgreSQL/Redis and
+  both Linux RQ workers PASS. Full API/upload/outbox/RQ/FFmpeg/HTTPS simulator
+  smoke PASS including reuse, usage, no SETTLE, cancellation and privacy cleanup.
+- Phase 3 actual upload/private download/controlled HTTPS/SSRF/TLS/retention/
+  capacity smoke PASS. Runtime image matches all 45 source hashes; generated
+  OpenAPI validates and equals running API, 42 paths. git diff --check PASS.
+- Live smoke invoked without paid opt-ins rejects before DB/network, as required.
+  One simulator smoke initially used the wrong opt-in and was rejected before
+  requests; corrected invocation PASS. No final test failure remains.
+
+Evidence: ignored var/phase4-verification/{linux-final.log,pytest.xml,
+gate-status.json,windows-final.log,windows-pytest.xml,container-smoke.log,
+ai-smoke-final.log,ingestion-smoke.log,https-transport.log,runtime-match.log}.
+JUnit records individual parameterized test results. The gate-status marker
+reports only the local lint/type/pytest runner's pass, not live Gate 4 or deployment.
+
+Migration chain now ends `39bc6d102a49 -> dd9634e4866b -> 7e3fcb0834e3 ->
+91731e381b3a`; original prior revisions preserved. New migration adds AI request,
+transcript/suggestion tables and SUGGESTIONS_READY, and refuses destructive
+downgrade with provider history. AI settings remain disabled by default with
+empty env-only keys/models; staff must configure versioned rates and all budgets.
+No price, real model availability or commercial authorization is inferred.
+
+At the audit handoff, **local mock/fixture gate PASS; full specification Gate 4 UNRUN**. It
+requires a real configured transcription and useful suggestions, prohibited by
+the current no-paid-call instruction. Consequently **no commit was created**.
+No production readiness is claimed. Live account/model/rate acceptance, subjective
+quality, representative throughput, Ubuntu/VPS deployment, backups/restores and
+remote CI remain unrun. Unknown provider costs require trusted reconciliation
+evidence; no automatic invoice reconciliation UI is included. Long transcripts
+may hit configured chunk/attempt budgets safely. Rendering/editor/settlement is
+still Phase 5 and has not begun. Next work requires an explicit decision about
+live Gate 4 or accepting a local-only phase gate; no paid credentials are needed
+to inspect the completed mock verification.
+
+Only zoclip-phase4-verify test services were stopped after verification; volumes
+and evidence were preserved, other Docker projects left unchanged. HEAD remains
+`e67832a0d2f356a222011daa87d237cbe58a4b76`; all Phase 4 changes remain reviewable
+and uncommitted.
+
+### Authorized local checkpoint
+
+The user subsequently authorized a descriptive local Phase 4 checkpoint commit
+based on the passing mock/fixture gate. Current status: **local mock/fixture gate
+PASS; real Deepgram/Gemini provider gate PENDING; production readiness NOT APPROVED**.
+The historical no-commit statements above describe the earlier handoff only.
+Application sources are checked against all 45 recorded verified SHA-256 hashes
+before staging; Phase 1–3 auth and prior migrations remain preserved. Verification
+logs, JUnit reports, test databases, private test CA material and tooling remain
+ignored and unstaged. Only reviewed source, tests, configuration examples and
+documentation enter the checkpoint. No real paid call, push, deployment or Phase 5
+is authorized or performed by this checkpoint.

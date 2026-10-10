@@ -747,6 +747,82 @@ def admit_spend(
     return row, True
 
 
+def admit_gemini_spend(
+    db: Session,
+    user_id: UUID,
+    reservation_id: UUID,
+    input_rate_id: UUID,
+    output_rate_id: UUID,
+    input_units: int,
+    output_units: int,
+    key: str,
+) -> tuple[list[SpendAttempt], bool]:
+    """Atomically admit both dimensions of ONE Gemini request, never two side effects.
+
+    No existing HELD/UNKNOWN is bypassed. Both rows commit or neither does.
+    Replays must contain the identical pair and never authorize execution.
+    """
+    lock_wallet(db, user_id)
+    old = list(
+        db.scalars(
+            select(SpendAttempt).where(
+                SpendAttempt.reservation_id == reservation_id,
+                SpendAttempt.user_id == user_id,
+                SpendAttempt.operation_key.in_([key + ":input", key + ":output"]),
+            )
+        )
+    )
+    expected = {
+        key + ":input": (input_rate_id, input_units),
+        key + ":output": (output_rate_id, output_units),
+    }
+    if old:
+        if len(old) != 2:
+            fail(
+                "accounting_mismatch", "Incomplete provider admission requires reconciliation.", 503
+            )
+        for attempt in old:
+            rate_id, units = expected[attempt.operation_key]
+            same(attempt.payload_hash, fingerprint([str(rate_id), units]))
+        return sorted(old, key=lambda a: a.operation_key), False
+    _, policy, limits = locked_limits(db)
+    rates = configured_rates(db, limits)
+    if (rates["gemini_input"].id, rates["gemini_output"].id) != (input_rate_id, output_rate_id):
+        fail("rates_unconfigured", "Gemini input/output rate pair required.", 503)
+    prior = list(
+        db.scalars(select(SpendAttempt).where(SpendAttempt.reservation_id == reservation_id))
+    )
+    if len(prior) + 2 > limits.max_attempts_per_job:
+        fail("attempt_limit", "Job expense attempt cap reached.", 503)
+    # Original admission checks the reservation, unknown exposure and every budget.
+    first, fresh = admit_spend(
+        db, user_id, reservation_id, input_rate_id, input_units, key + ":input"
+    )
+    assert fresh
+    rate = rates["gemini_output"]
+    if type(output_units) is not int or not 1 <= output_units <= min(
+        rate.max_units, limits.max_output_tokens
+    ):
+        fail("rate_limit", "Configured output token ceiling exceeded.", 503)
+    predicted = rate.unit_usd * output_units
+    check_budgets(
+        db, limits, user_id, reservation_id, predicted
+    )  # Includes first, still uncommitted.
+    second = SpendAttempt(
+        user_id=user_id,
+        reservation_id=reservation_id,
+        rate_id=rate.id,
+        policy_id=policy.id,
+        operation_key=key + ":output",
+        payload_hash=fingerprint([str(rate.id), output_units]),
+        units=output_units,
+        estimated_usd=predicted,
+    )
+    db.add(second)
+    db.flush()
+    return [first, second], True
+
+
 def record_spend(
     db: Session, user_id: UUID, attempt_id: UUID, *, units: int | None, outcome: str, evidence: str
 ) -> SpendAttempt:

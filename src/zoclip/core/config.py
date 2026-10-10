@@ -42,6 +42,36 @@ class Settings(BaseSettings):
     media_retention_seconds: int = Field(default=604800, ge=300, le=604800)
     media_allowed_import_hosts: list[str] = []
     ffprobe_binary: str = "ffprobe"
+    ffmpeg_binary: str = "ffmpeg"
+    ai_enabled: bool = False
+    deepgram_api_key: SecretStr = SecretStr("")
+    deepgram_model: str = Field(default="", pattern=r"^[a-zA-Z0-9._-]{0,60}$")
+    deepgram_version: str = Field(default="", pattern=r"^[a-zA-Z0-9._-]{0,60}$")
+    deepgram_language: str = Field(default="en", pattern=r"^[a-zA-Z0-9-]{2,20}$")
+    ai_approved_languages: list[str] = ["en"]
+    deepgram_diarize: bool = False
+    deepgram_utterances: bool = False
+    deepgram_mip_opt_out: bool = True
+    gemini_api_key: SecretStr = SecretStr("")
+    gemini_model: str = Field(default="", pattern=r"^[a-zA-Z0-9._-]{0,100}$")
+    ai_provider_timeout_seconds: int = Field(default=120, ge=1, le=180)
+    ai_calls_per_minute: int = Field(default=6, ge=1, le=60)
+    ai_chunk_bytes: int = Field(default=16000, ge=1000, le=32000)
+    ai_max_chunks: int = Field(default=32, ge=1, le=64)
+    ai_max_output_tokens: int = Field(default=2048, ge=128, le=8192)
+    ai_max_candidates: int = Field(default=10, ge=1, le=20)
+    ai_min_clip_seconds: int = Field(default=15, ge=1, le=60)
+    ai_max_clip_seconds: int = Field(default=90, ge=1, le=180)
+
+    @property
+    def ai_configured(self) -> bool:
+        return self.ai_enabled and bool(
+            self.deepgram_api_key.get_secret_value()
+            and self.deepgram_model
+            and self.deepgram_version
+            and self.gemini_api_key.get_secret_value()
+            and self.gemini_model
+        )
 
     @property
     def google_enabled(self) -> bool:
@@ -49,6 +79,12 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_deployment(self) -> Self:
+        if self.deepgram_language not in self.ai_approved_languages:
+            raise ValueError("Deepgram language must be explicitly approved")
+        if self.ai_min_clip_seconds > self.ai_max_clip_seconds:
+            raise ValueError("AI clip duration bounds are invalid")
+        if self.ai_enabled and not self.ai_configured:
+            raise ValueError("AI enablement requires both provider keys and pinned models/version")
         db = make_url(self.database_url.get_secret_value())
         if db.drivername != "postgresql+psycopg":
             raise ValueError("DATABASE_URL must use postgresql+psycopg")
@@ -90,6 +126,14 @@ class Settings(BaseSettings):
         ):
             raise ValueError("Import allowlist requires exact lowercase DNS hostnames")
         if self.app_env == "production":
+            for secret in (self.deepgram_api_key, self.gemini_api_key):
+                if secret.get_secret_value() and (
+                    len(secret.get_secret_value()) < 20
+                    or secret.get_secret_value()
+                    .lower()
+                    .startswith(("change", "test", "placeholder", "synthetic", "fictional", "set_"))
+                ):
+                    raise ValueError("Production provider keys must be configured privately")
             if not self.cookie_secure or self.email_mode == "development":
                 raise ValueError("Production requires secure cookies and forbids development email")
             if self.payment_provider != "disabled":

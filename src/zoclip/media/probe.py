@@ -87,6 +87,7 @@ def probe(path: Path, executable: str = "ffprobe") -> dict:
             raise ApiError(422, "duration_exceeded", "Input duration exceeds 120 minutes.")
         return {
             "duration_seconds": int(duration.to_integral_value(rounding=ROUND_CEILING)),
+            "duration_ms": int((duration * 1000).to_integral_value(rounding=ROUND_CEILING)),
             "width": v["width"],
             "height": v["height"],
             "video_codec": v["codec_name"],

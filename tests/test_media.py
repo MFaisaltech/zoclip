@@ -1176,7 +1176,11 @@ def test_populated_phase3_downgrade_refuses_to_erase_history(media, video_bytes)
             command.downgrade(config, "dd9634e4866b")
     with factory() as db:
         assert db.get(Job, jid).state == "COMPLETED"
-        assert db.scalar(text("SELECT version_num FROM alembic_version")) == "7e3fcb0834e3"
+        from alembic.script import ScriptDirectory
+
+        assert db.scalar(text("SELECT version_num FROM alembic_version")) == (
+            ScriptDirectory.from_config(config).get_current_head()
+        )
 
 
 def test_cleanup_deleted_history_does_not_starve_new_assets(media):

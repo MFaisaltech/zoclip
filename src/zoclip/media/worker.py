@@ -107,19 +107,9 @@ def run_job(
         db.rollback()  # No transaction during files, DNS, HTTP or ffprobe.
     try:
         if kind == "PROCESS":
-            with factory() as db:
-                job = current(db, owner, job_id, token)
-                if job.state == "CANCEL_REQUESTED":
-                    service.terminate(db, job, "CANCELED")
-                else:
-                    service.event(db, job, "WAITING_ENGINE", "processing_unavailable")
-                    job.checkpoint = {
-                        **job.checkpoint,
-                        "source_validated": True,
-                        "engine": "unavailable",
-                    }
-                    job.lease_token, job.lease_until = None, None
-                db.commit()
+            from zoclip.ai.worker import run
+
+            run(job_id, owner, token, factory, settings, storage)
             return
         with factory() as db:
             job = current(db, owner, job_id, token)
@@ -217,12 +207,22 @@ def run_job(
             db.commit()
     except Exception as exc:
         with factory() as db:
+            if kind == "PROCESS":
+                financial.lock_wallet(db, owner, active_required=False)
             try:
                 job = current(db, owner, job_id, token)
             except ApiError:
                 return  # Expired worker cannot publish, retry or release someone else's hold.
             if job.state == "CANCEL_REQUESTED":
+                if kind == "PROCESS":
+                    from zoclip.ai.worker import finalize_pending
+
+                    finalize_pending(db, job, storage)
                 service.terminate(db, job, "CANCELED")
+            elif kind == "PROCESS":
+                from zoclip.ai.worker import handle_error
+
+                handle_error(db, job, storage, exc)
             elif isinstance(exc, (OSError, TimeoutError)) and job.attempts < 3:
                 service.event(db, job, "QUEUED", "source_temporarily_unavailable")
                 job.generation += 1
@@ -310,7 +310,7 @@ def dispatch(factory: sessionmaker, redis: Redis, *, limit: int = 10) -> int:
     return delivered
 
 
-def recover(factory: sessionmaker) -> int:
+def recover(factory: sessionmaker, storage: LocalStorage | None = None) -> int:
     with factory() as db:
         ids = list(
             db.scalars(
@@ -322,13 +322,23 @@ def recover(factory: sessionmaker) -> int:
     for job_id in ids:
         with factory() as db:
             initial = db.get(Job, job_id)
+            if initial.kind == "PROCESS":
+                financial.lock_wallet(db, initial.user_id, active_required=False)
             service.mutex(db, initial.user_id, cleanup=True)
             job = service.owned(db, Job, initial.user_id, job_id, lock=True)
             if job.state not in {"RUNNING", "CANCEL_REQUESTED"} or job.lease_until >= utcnow():
                 continue
-            # Phase 3 has no uncertain remote paid side effects; files remain private.
+            # PROCESS recovery replays checkpoints, never fresh admission keys for a lost call.
             if job.state == "CANCEL_REQUESTED":
+                if job.kind == "PROCESS":
+                    from zoclip.ai.worker import finalize_pending
+
+                    finalize_pending(db, job, storage)
                 service.terminate(db, job, "CANCELED")
+            elif job.kind == "PROCESS":
+                from zoclip.ai.worker import handle_error
+
+                handle_error(db, job, None, TimeoutError("worker_lost"), recovering=True)
             elif job.attempts >= 3:
                 service.terminate(db, job, "FAILED", "worker_lost")
             else:

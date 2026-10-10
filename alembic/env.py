@@ -1,4 +1,5 @@
 from alembic import context
+from zoclip.ai import models as ai_models  # noqa: F401
 from zoclip.auth import models  # noqa: F401
 from zoclip.core.config import Settings
 from zoclip.core.db import Base, build_engine

@@ -110,6 +110,13 @@ incomplete_upload, duration_exceeded, plan_duration_exceeded, insufficient_capac
 (507), queue_full/ingestion_limit/processing_limit (429), and Phase 2 credit errors.
 Completion of ingestion does not imply completion of a requested clip deliverable.
 
+Phase 4 adds owner-scoped GET /videos/{id}/transcript and
+GET /videos/{id}/suggestions; optional job_id selects an owned PROCESS job.
+Suggestions accepts limit 1..20. Configured processing advances to
+SUGGESTIONS_READY, with rendered=false and no credit settlement. Disabled AI
+stays WAITING_ENGINE. See [AI_HANDOFF.md](AI_HANDOFF.md) for DTOs, paid-call
+protection, caching, cancellation, privacy, configuration and unrun live Gate 4.
+
 JobView includes updated_at, stage, nullable progress_percent and nullable
 estimated_credits. Only completed ingestion reports 100 percent; other states
 return null. Ingestion has zero credit cost. PROCESS reports its persisted accepted

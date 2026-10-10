@@ -1,5 +1,6 @@
 """Linux-only disposable Phase 1–3 regression runner, never a deployment command."""
 
+import json
 import os
 import subprocess
 import sys
@@ -18,7 +19,9 @@ def main() -> None:
     ):
         raise RuntimeError("Linux, disposable PostgreSQL _test DB and Redis DB 15 required")
     root = Path.cwd()
-    output_dir = root / "var/phase3-completion"
+    output_dir = Path(
+        os.environ.get("ZOCLIP_VERIFICATION_OUTPUT", str(root / "var/phase3-completion"))
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
     os.environ.update(
         # Compose's HTTP/development-email settings must not leak into config tests.
@@ -59,10 +62,16 @@ def main() -> None:
             "--basetemp=/tmp/phase3-tests",
             "-p",
             "no:cacheprovider",
+            "--junitxml=" + str(output_dir / "pytest.xml"),
         ],
     ]
     with (output_dir / "linux-final.log").open("w", encoding="utf-8") as output:
+        status_path = output_dir / "gate-status.json"
+        status_path.write_text(json.dumps({"state": "running"}), encoding="utf-8")
         for command in commands:
+            label = "COMMAND: " + " ".join(command)
+            print(label, flush=True)
+            output.write(label + "\n")
             result = subprocess.run(
                 command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
             )
@@ -70,7 +79,14 @@ def main() -> None:
             output.write(result.stdout)
             output.flush()
             if result.returncode:
+                status_path.write_text(
+                    json.dumps(
+                        {"state": "failed", "command": command, "exit_code": result.returncode}
+                    ),
+                    encoding="utf-8",
+                )
                 raise SystemExit(result.returncode)
+        status_path.write_text(json.dumps({"state": "passed"}), encoding="utf-8")
 
 
 if __name__ == "__main__":

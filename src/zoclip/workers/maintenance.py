@@ -6,6 +6,7 @@ import time
 from redis import Redis
 from sqlalchemy.orm import sessionmaker
 
+from zoclip.ai.worker import resume_waiting
 from zoclip.core.config import Settings
 from zoclip.core.db import build_engine
 from zoclip.media.cleanup import cleanup
@@ -24,8 +25,9 @@ def main() -> None:
     try:
         while True:
             try:
-                recover(factory)
+                recover(factory, storage)
                 cleanup(factory, storage)
+                resume_waiting(factory, settings)
                 dispatch(factory, redis)
             except Exception as exc:
                 logging.error("maintenance_failed class=%s", type(exc).__name__)

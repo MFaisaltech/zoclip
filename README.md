@@ -1,8 +1,13 @@
 # ZoClip backend
 
-Phases 1 through 3: authentication, credit accounting, private video ingestion and durable queues.
-No payments, AI processing or clip rendering yet. See `docs/IMPLEMENTATION_STATUS.md`
-for actual checks and remaining gates. No paid provider calls are made.
+Phases 1 through 4: authentication, credit accounting, private video ingestion,
+durable jobs, transcript and AI suggestion processing. AI is disabled by default;
+local verification uses mocks and isolated HTTPS simulators. Live Gate 4 remains
+PENDING. Local mock/fixture gate: PASS. Production readiness: NOT APPROVED.
+The user authorized a local checkpoint based on mock/fixture evidence only.
+No payments or clip rendering yet. See
+[IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) and
+[AI_HANDOFF.md](docs/AI_HANDOFF.md) for actual checks and remaining gates.
 
 ## Local Docker setup
 
@@ -26,7 +31,8 @@ curl --fail http://localhost:8000/health/ready
 
 The migration service runs once before API/workers. Database/Redis have no host
 ports; API binds host loopback only. One worker listens on `ai`, one on `render`;
-the AI queue now handles validation/imports and the explicit processing-unavailable state. App containers run as UID 10001 with dropped
+the AI queue handles validation/imports and configured AI stages (WAITING_ENGINE
+when disabled). App containers run as UID 10001 with dropped
 capabilities. Persistent volumes hold DB, Redis, private media and development mailbox data.
 The maintenance service handles outbox dispatch, recovery and retention.
 Do not run `down --volumes` against data you need.

@@ -1,8 +1,9 @@
 # ZoClip decision register
 
-Phase 0 decisions, with Phase 1 through 3 additions below. Accepted means design default;
-implementation evidence lives in IMPLEMENTATION_STATUS.md. No payment/AI provider
-integration, current fee or model availability claim is made.
+Phase 0 decisions, with Phase 1 through 4 additions below. Accepted means design default;
+implementation evidence lives in IMPLEMENTATION_STATUS.md. AI REST adapters have
+local simulator verification; live account/model acceptance remains unverified.
+No payment integration or current commercial fee claim is made.
 
 | ID | Decision/default | Rationale / revisit gate |
 |---|---|---|
@@ -167,3 +168,33 @@ has been inferred from this financial foundation.
 Phase 2 was reverified before edits (115 tests, all local gates) and checkpointed
 as e97c866. No prior migration or financial contract was rewritten. Phase 3 evidence
 and known operational limitations are recorded in IMPLEMENTATION_STATUS.md.
+
+## Phase 4 decisions (2026-10-10)
+
+- D39: REST adapters use locked HTTPX, fixed official HTTPS destinations, header
+  keys, no redirects or implicit retries. Models/versions are operator supplied,
+  disabled by default. Deepgram options fingerprint binds reviewed rates; Gemini
+  input/output rates bind the configured model. No account availability is assumed.
+- D40: Each claim makes at most one paid request after committed admission.
+  Gemini input/output holds are one atomic pair. Fsynced private receipts permit
+  recovery without another paid call; missing evidence retains UNKNOWN exposure.
+  Only confirmed 429 rejection or proven local nondispatch is treated as zero usage.
+  5xx/timeouts/auth errors are conservative unknowns requiring evidence, not retries.
+- D41: Source/owner/options/prompt-scoped caching; bounded overlapping transcript
+  chunks with absolute word times; validated/ranked/nonoverlapping suggestions.
+  Empty/bad output fails without invented content. Semantic usefulness needs QA.
+- D42: Suggestions remain SUGGESTIONS_READY with HELD credits and null progress;
+  no render, output or SETTLE. Customer cancellation or 24h intermediate-hold expiry
+  releases once. No Phase 5 work is authorized by this intermediate lifecycle.
+- D43: Cancellation/crash recovery reconciles persisted responses or retains
+  UNKNOWN before cleanup. Proven unsent admissions void. In-flight provider calls
+  cannot be recalled. Privacy cleanup erases text/receipts/candidates while keeping
+  financial usage/reference/hash history. Runtime media lock order is user/wallet,
+  storage pool/job when needed, then system_limits; never system_limits -> storage.
+- D44: Local gate uses PostgreSQL/Redis, actual FFmpeg/RQ and isolated HTTPS
+  simulators with fictional keys/models/rates. Opt-in live smoke reuses normal
+  admitted jobs and all budget controls, never fabricates credits. Current user
+  prohibits live paid calls; the real Deepgram/Gemini provider gate remains PENDING.
+  The user subsequently authorized a local Phase 4 checkpoint commit based on the
+  passing mock/fixture gate. Production readiness is NOT APPROVED; the checkpoint
+  does not waive real-provider verification or authorize Phase 5.
