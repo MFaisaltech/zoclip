@@ -1,0 +1,228 @@
+name: zoclip-private
+x-logging: &logging
+  driver: json-file
+  options: {max-size: 10m, max-file: "3"}
+x-env: &environment
+  APP_ENV: production
+  PUBLIC_APP_URL: ${PUBLIC_APP_URL:?Set exact HTTPS frontend origin}
+  API_PUBLIC_URL: ${API_PUBLIC_URL:?Set exact HTTPS API origin}
+  ALLOWED_HOSTS: ${ALLOWED_HOSTS:?Set explicit API host list}
+  COOKIE_SECURE: "true"
+  EMAIL_MODE: disabled
+  PAYMENT_PROVIDER: disabled
+  ENABLE_LIVE_PAYMENTS: "false"
+  ENABLE_TRIAL_CREDITS: "false"
+  AI_ENABLED: "false"
+  REDIS_URL: redis://redis:6379/0
+  MEDIA_ROOT: /app/var/media
+  MEDIA_ALLOWED_IMPORT_HOSTS: "[]"
+  MEDIA_MAX_BYTES: "4294967296"
+  MEDIA_HEADROOM_BYTES: "21474836480"
+  MEDIA_RETAINED_BYTES: "42949672960"
+  MEDIA_PENDING_LIMIT: "10"
+  MEDIA_INGESTION_LIMIT: "2"
+  OMP_NUM_THREADS: "2"
+  OPENBLAS_NUM_THREADS: "1"
+x-app: &app
+  image: ${APP_IMAGE:?Set reviewed immutable application image}
+  environment: *environment
+  user: "10001:10001"
+  init: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  read_only: true
+  tmpfs: ["/tmp:rw,noexec,nosuid,size=128m"]
+  pids_limit: 128
+  logging: *logging
+  secrets:
+    - source: runtime_database_url
+      target: database_url
+  volumes: [media:/app/var/media]
+  networks: [data, queue]
+  restart: unless-stopped
+  stop_grace_period: 60s
+  depends_on:
+    migrate: {condition: service_completed_successfully}
+    redis: {condition: service_healthy}
+services:
+  db:
+    image: postgres:17-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826
+    user: "999:999"
+    environment:
+      POSTGRES_USER: zoclip_bootstrap
+      POSTGRES_DB: zoclip
+      POSTGRES_PASSWORD_FILE: /run/secrets/bootstrap_password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    command: [postgres, -c, max_connections=40, -c, shared_buffers=256MB, -c, work_mem=4MB, -c, log_statement=none, -c, log_min_error_statement=panic]
+    secrets: [bootstrap_password, migrate_password, runtime_password]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init.sh:/docker-entrypoint-initdb.d/10-zoclip.sh:ro
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=64m", "/var/run/postgresql:rw,nosuid,size=16m"]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 1536m
+    cpus: 0.75
+    pids_limit: 128
+    networks: [data]
+    restart: unless-stopped
+    logging: *logging
+    healthcheck:
+      test: [CMD, pg_isready, -U, zoclip_bootstrap, -d, zoclip]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  redis:
+    image: redis:7.4-bookworm@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85
+    user: "999:999"
+    command: [redis-server, --appendonly, "yes", --maxmemory, 192mb, --maxmemory-policy, noeviction]
+    volumes: [redis_data:/data]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 0.25
+    pids_limit: 64
+    networks: [queue]
+    restart: unless-stopped
+    logging: *logging
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  migrate:
+    <<: *app
+    command: [python, scripts/migrate.py]
+    mem_limit: 512m
+    cpus: 0.5
+    restart: "no"
+    volumes: []
+    networks: [data]
+    secrets:
+      - source: migrate_database_url
+        target: database_url
+    depends_on:
+      db: {condition: service_healthy}
+  api:
+    <<: *app
+    command: [uvicorn, "zoclip.main:create_app", --factory, --host, "0.0.0.0", --port, "8000", --limit-concurrency, "32", --no-access-log, --proxy-headers, --forwarded-allow-ips, "${PROXY_ADDRESS:-172.30.70.10}"]
+    mem_limit: 768m
+    cpus: 0.75
+    networks: [data, queue, edge]
+    secrets:
+      - source: runtime_database_url
+        target: database_url
+      - reporting_policy
+    healthcheck:
+      test: [CMD, python, -c, "import os,urllib.request;from urllib.parse import urlsplit;urllib.request.urlopen(urllib.request.Request('http://localhost:8000/health/ready',headers={'Host':urlsplit(os.environ['API_PUBLIC_URL']).netloc}),timeout=5)"]
+      interval: 15s
+      timeout: 6s
+      retries: 3
+  worker-ai:
+    <<: *app
+    command: [python, -m, zoclip.workers.run]
+    environment: {<<: *environment, WORKER_QUEUE: ai, WORKER_NAME: zoclip-ai}
+    mem_limit: 1024m
+    cpus: 0.75
+    networks: [data, queue, egress]
+    healthcheck:
+      test: [CMD, python, -m, zoclip.ops.health, worker]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  worker-render:
+    <<: *app
+    command: [python, -m, zoclip.workers.run]
+    environment: {<<: *environment, WORKER_QUEUE: render, WORKER_NAME: zoclip-render}
+    mem_limit: 2048m
+    cpus: 2.0
+    pids_limit: 256
+    healthcheck:
+      test: [CMD, python, -m, zoclip.ops.health, worker]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  maintenance:
+    <<: *app
+    command: [python, -m, zoclip.workers.maintenance]
+    mem_limit: 256m
+    cpus: 0.25
+    healthcheck:
+      test: [CMD, python, -m, zoclip.ops.health, maintenance]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  proxy:
+    image: ${NGINX_IMAGE:?Set reviewed Nginx image digest}
+    user: "101:101"
+    entrypoint: [nginx, -g, "daemon off;"]
+    ports:
+      - "127.0.0.1:${STAGING_HTTPS_PORT:-8443}:8443"
+      - "127.0.0.1:${STAGING_ADMIN_PORT:-8444}:8444"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx-server.conf:/etc/nginx/zoclip-server.conf:ro
+      - ./nginx-proxy.conf:/etc/nginx/zoclip-proxy.conf:ro
+    secrets: [tls_certificate, tls_key]
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=32m"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    cpus: 0.25
+    pids_limit: 64
+    networks:
+      edge: {ipv4_address: "${PROXY_ADDRESS:-172.30.70.10}"}
+      ingress: {}
+    restart: unless-stopped
+    logging: *logging
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, nginx, -t]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  backup:
+    image: ${OPS_IMAGE:?Set reviewed backup tools image}
+    profiles: [tools]
+    user: "10001:10001"
+    command: [backup]
+    environment: {PGHOST: db, PGUSER: zoclip_migrate, PGDATABASE: zoclip, PGPASSFILE: /run/secrets/backup_pgpass}
+    secrets: [backup_pgpass, backup_recipient]
+    volumes: [media:/media:ro, "${BACKUP_DIR:?Set private ciphertext directory}:/backups"]
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=64m"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    cpus: 0.5
+    pids_limit: 64
+    networks: [data]
+    logging: *logging
+networks:
+  data: {internal: true}
+  queue: {internal: true}
+  edge:
+    internal: true
+    ipam:
+      config: [{subnet: "${EDGE_SUBNET:-172.30.70.0/24}"}]
+  egress: {}
+  ingress: {}
+volumes:
+  postgres_data:
+  redis_data:
+  media:
+secrets:
+  bootstrap_password: {file: "${PRIVATE_DIR:?Set private secrets directory}/bootstrap_password"}
+  migrate_password: {file: "${PRIVATE_DIR}/migrate_password"}
+  runtime_password: {file: "${PRIVATE_DIR}/runtime_password"}
+  runtime_database_url: {file: "${PRIVATE_DIR}/runtime_database_url"}
+  migrate_database_url: {file: "${PRIVATE_DIR}/migrate_database_url"}
+  tls_certificate: {file: "${PRIVATE_DIR}/tls_certificate"}
+  tls_key: {file: "${PRIVATE_DIR}/tls_key"}
+  backup_pgpass: {file: "${PRIVATE_DIR}/backup_pgpass"}
+  backup_recipient: {file: "${PRIVATE_DIR}/backup_recipient"}
+  reporting_policy: {file: "${PRIVATE_DIR}/reporting_policy"}

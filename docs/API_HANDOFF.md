@@ -171,3 +171,17 @@ billing and customer automatic-refund policy are absent. New errors include
 payments_disabled (503), invalid_payment_signature (401), invalid_payment_event
 (422), payment_mismatch, price_stale, price_unavailable, order_not_paid and
 refund_already_requested (409), plus existing idempotency/ownership errors.
+
+## Phase 7 private operations
+
+`GET /api/v1/admin/operations?start=2026-10-01T00:00:00Z&end=2026-11-01T00:00:00Z`
+returns the implemented OperationReport in openapi.json. Server admin/RBAC is
+required; each successful read appends an immutable audit. Dates must be aware
+UTC, start at calendar month midnight and end later within that same month.
+Decimal USD/economics are strings; PKR paisa/credits/usage/storage are integers.
+Optional economics stays null until private versioned assumptions are configured.
+See MONITORING_SECURITY.md for field semantics and limitations; this is an
+operations estimate, not an invoice or verified profit. Invalid period/policy422.
+Phase 7 customer proxy blocks all /admin paths; private listener still enforces
+the same cookie/RBAC/CSRF contracts. No privacy-erasure public route exists.
+Deploy profile disables AI/payments/email/Google/trial grants and all webhooks.

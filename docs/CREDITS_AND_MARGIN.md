@@ -2,7 +2,10 @@
 
 PostgreSQL is authoritative. Phase 2 supplies accounting contracts and API routes;
 Phase 3 now consumes them through private ingestion and durable processing requests.
-Paid provider adapters and payments remain unimplemented.
+Phases 4–6 add disabled-by-default paid provider adapters and signed development
+payment fixtures; live provider/merchant acceptance remains pending. Phase 7 adds
+an audited aggregate operations report with optional versioned decimal VPS/FX/
+margin assumptions; see MONITORING_SECURITY.md. No launch economics are inferred.
 No retail price, real model ID, provider rate, margin or benchmark is asserted.
 The migration seeds Free, Creator, Pro, Business and one configurable top-up
 catalog entry **without any price versions, allowances or rates**. The initial

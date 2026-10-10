@@ -1,0 +1,10 @@
+[Unit]
+Description=ZoClip local security and operations checks
+After=zoclip-private.service
+# Configure an approved OnFailure notifier before unattended staging.
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/zoclip
+ExecStart=/usr/bin/python3 deploy/check.py --env-file /etc/zoclip/staging.env --project zoclip-private --backup-dir /var/backups/zoclip --certificate /etc/zoclip/private/tls_certificate
+UMask=0077

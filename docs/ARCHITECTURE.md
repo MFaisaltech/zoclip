@@ -1,9 +1,11 @@
 # ZoClip architecture blueprint
 
-Status: Phase 0 design with Phases 1 through 3 implemented; see
+Status: Phase 0 design with Phases 1 through 6 locally verified and Phase 7
+private infrastructure prepared; see
 IMPLEMENTATION_STATUS.md for evidence and remaining gates. The master specification is the product contract. This document
 selects implementation defaults; capacity figures below are planning limits, not
-benchmarks. Frontend and phases 4 through 8 remain unimplemented. The Phase 2 transaction
+benchmarks. Frontend/Phase 8 remain unimplemented; live AI/payment and VPS gates
+remain pending. The Phase 2 transaction
 contracts, limits and implemented scope are detailed in CREDITS_AND_MARGIN.md.
 
 ## Components and boundaries
@@ -24,7 +26,8 @@ Render worker -> constrained FFmpeg/ffprobe and sampled CPU face detection
 Scheduler -> cleanup, reconciliation, recovery, outbox dispatch
 ```
 
-Only Nginx exposes production ports 80/443. Database and Redis have private
+Eventual public HTTPS requires separate approval. Phase 7 Nginx publishes only
+loopback8443/8444 for private staging (see DEPLOY_CONTABO.md). Database and Redis have private
 Compose networking and persistent volumes; no public host ports. API and workers
 share code but use separate processes and short synchronous DB transactions.
 No DB transaction remains open during network requests or media processing.

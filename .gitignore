@@ -15,3 +15,6 @@ dist/
 .coverage
 htmlcov/
 var/
+deploy/private/
+deploy/staging.env
+*.age

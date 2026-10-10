@@ -248,3 +248,38 @@ and known operational limitations are recorded in IMPLEMENTATION_STATUS.md.
 - D56: Migration 651ba28dacf9 appends billing tables and database term/evidence
   guards; populated downgrade refuses erasure. Existing financial rows/migrations
   remain intact. Revocations are separate from immutable Phase 2 entitlements.
+
+## Phase 7 decisions (2026-10-10)
+
+- D57: User authorization is private preparation only. Compose publishes two
+  loopback HTTPS listeners, customer excludes admin/docs/webhooks; no VPS/DNS/SSH
+  or public deployment. This narrows the earlier eventual80/443 design. AI/payment/
+  email/OIDC/trial are disabled; no live secrets or provider IO in local checks.
+- D58: Separate bootstrap/schema-owner/runtime PostgreSQL roles and mounted
+  SecretStr files. Runtime has no DDL/TRUNCATE/migration-version authority or
+  append-only UPDATE/DELETE. Application/DB/Redis/proxy run non-root, read-only,
+  bounded, drop capabilities, rotated logs; one trusted static proxy peer.
+- D59: One AI/one render worker, per-boot RQ identity with exact health receipt
+  avoids stale registry collision after SIGKILL. PostgreSQL fences remain source
+  of authority. Resource ceilings/40GiB media/20GiB headroom are planning limits;
+  no video throughput claim and no scaling without measurements.
+- D60: Quiesce all writers for consistent DB/media backups; stream age ciphertext,
+  atomic manifest/checksums, no local decryption identity in services. Restore only
+  separate empty targets; no destructive clean/downgrade. Real off-server retrieval,
+  maintenance window, retention/RPO/RTO, alert delivery require operator decisions.
+  Local100GB storage cannot hold a worst-case full backup alongside40GiB media;
+  capacity guard refuses, requiring smaller working set/approved scratch capacity.
+- D61: Monthly audited operations aggregates use recorded usage, integer PKR and
+  optional versioned decimal invoice/FX/target policy with hash; estimates remain
+  labeled. Duplicate notification fees count once; no invented price/profit.
+  Local monitor exit status is implemented, outbound notification not configured.
+- D62: Explicit staff erasure intent revokes/pseudonymizes auth, uses existing
+  lease-aware media deletion, preserves finance/immutable case audit; disabled
+  payment-risk status never implies consent to erasure. Migration7b37ea061d28
+  refuses populated downgrade. Backups/provider retention need separate cleanup.
+- D63: Rollout requires exact image and verified backup/new-empty-DB review marker.
+  New-empty approval also requires an actually empty public schema. Boot/backup
+  resume starts existing workload container IDs without running the migrator.
+  Image rollback additionally requires current-schema compatibility and never runs
+  an old migrator. Incompatible recovery is a separate empty-target restore with
+  privacy and post-backup financial/provider reconciliation before promotion.

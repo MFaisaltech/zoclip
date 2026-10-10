@@ -28,7 +28,7 @@ def main() -> None:
         APP_ENV="test",
         COOKIE_SECURE="true",
         EMAIL_MODE="disabled",
-        UV_CACHE_DIR=str(output_dir / "uv-cache"),
+        UV_CACHE_DIR=os.environ.get("ZOCLIP_VERIFICATION_CACHE", str(output_dir / "uv-cache")),
         UV_PROJECT_ENVIRONMENT="/tmp/verification-venv",
         UV_LINK_MODE="copy",
         PYTHONPATH=str(root / "src"),

@@ -1,0 +1,13 @@
+[Unit]
+Description=ZoClip quiesced encrypted backup (maintenance window)
+After=zoclip-private.service
+# Configure approved off-server transfer, verification and OnFailure before enabling.
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/zoclip
+ExecStart=/usr/bin/python3 deploy/manage.py backup --env-file /etc/zoclip/staging.env --project zoclip-private --execute-local
+# Success leaves writers stopped for checksum verification and off-server copy.
+# Follow BACKUP_RECOVERY.md; an operator restarts after the copy/verification gate.
+TimeoutStartSec=3600
+UMask=0077

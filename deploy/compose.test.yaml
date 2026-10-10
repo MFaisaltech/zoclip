@@ -1,0 +1,17 @@
+# Local regression runner only. Never attach this root test tool to customer data.
+services:
+  test-runner:
+    image: ${APP_IMAGE}
+    user: "0:0"
+    profiles: [tests]
+    working_dir: /workspace
+    command: [python, scripts/verify_phase7.py]
+    environment:
+      TEST_REDIS_URL: redis://redis:6379/15
+    secrets: [test_database_url]
+    volumes: ["../:/workspace"]
+    networks: [data, queue, egress]
+    mem_limit: 1536m
+    cpus: 2.0
+secrets:
+  test_database_url: {file: "${PRIVATE_DIR}/test_database_url"}

@@ -29,6 +29,7 @@ from zoclip.core.db import build_engine
 from zoclip.core.errors import ApiError, Problem, problem_response
 from zoclip.credits.routes import router as credits_router
 from zoclip.media.routes import router as media_router
+from zoclip.ops.routes import router as ops_router
 from zoclip.rendering.routes import router as rendering_router
 
 logger = logging.getLogger("zoclip.requests")
@@ -152,6 +153,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(ai_router)
     app.include_router(rendering_router)
     app.include_router(billing_router)
+    app.include_router(ops_router)
     app.add_exception_handler(ApiError, problem_response)  # type: ignore[arg-type]
 
     @app.exception_handler(RequestValidationError)

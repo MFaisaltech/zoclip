@@ -1,0 +1,10 @@
+[Unit]
+Description=Check ZoClip every minute
+
+[Timer]
+OnBootSec=2m
+OnUnitActiveSec=1m
+Unit=zoclip-monitor.service
+
+[Install]
+WantedBy=timers.target

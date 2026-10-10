@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Literal, Self
 from urllib.parse import urlsplit
 
@@ -7,7 +8,12 @@ from sqlalchemy.engine import make_url
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="forbid", hide_input_in_errors=True)
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="forbid",
+        hide_input_in_errors=True,
+        secrets_dir="/run/secrets" if Path("/run/secrets").is_dir() else None,
+    )
 
     app_env: Literal["development", "test", "production"] = "development"
     database_url: SecretStr

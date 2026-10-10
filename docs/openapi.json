@@ -13300,6 +13300,219 @@
         }
       }
     },
+    "/api/v1/admin/operations": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Operations",
+        "operationId": "operations_api_v1_admin_operations_get",
+        "security": [
+          {
+            "APIKeyCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "title": "Start"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "title": "End"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "507": {
+            "description": "Structured error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health/live": {
       "get": {
         "tags": [
@@ -14131,6 +14344,48 @@
         ],
         "title": "ClipView"
       },
+      "ComponentUsage": {
+        "properties": {
+          "component": {
+            "type": "string",
+            "enum": [
+              "deepgram",
+              "gemini_input",
+              "gemini_output",
+              "render",
+              "storage"
+            ],
+            "title": "Component"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "minute",
+              "token",
+              "cpu_second",
+              "gb_day"
+            ],
+            "title": "Unit"
+          },
+          "units": {
+            "type": "integer",
+            "title": "Units"
+          },
+          "actual_usd": {
+            "type": "string",
+            "title": "Actual Usd"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "component",
+          "unit",
+          "units",
+          "actual_usd"
+        ],
+        "title": "ComponentUsage"
+      },
       "ConsumptionRules": {
         "properties": {
           "credits_per_minute": {
@@ -14267,6 +14522,74 @@
           "csrf_token"
         ],
         "title": "CsrfResponse"
+      },
+      "Economics": {
+        "properties": {
+          "assumptions_version": {
+            "type": "string",
+            "title": "Assumptions Version"
+          },
+          "assumptions_sha256": {
+            "type": "string",
+            "title": "Assumptions Sha256"
+          },
+          "rate_source": {
+            "type": "string",
+            "title": "Rate Source"
+          },
+          "usd_pkr": {
+            "type": "string",
+            "title": "Usd Pkr"
+          },
+          "vps_allocated_usd": {
+            "type": "string",
+            "title": "Vps Allocated Usd"
+          },
+          "net_pkr": {
+            "type": "string",
+            "title": "Net Pkr"
+          },
+          "modeled_cost_pkr": {
+            "type": "string",
+            "title": "Modeled Cost Pkr"
+          },
+          "margin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Margin"
+          },
+          "below_target": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Below Target"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "assumptions_version",
+          "assumptions_sha256",
+          "rate_source",
+          "usd_pkr",
+          "vps_allocated_usd",
+          "net_pkr",
+          "modeled_cost_pkr",
+          "margin",
+          "below_target"
+        ],
+        "title": "Economics"
       },
       "EmailInput": {
         "properties": {
@@ -14628,6 +14951,114 @@
           "message"
         ],
         "title": "Message"
+      },
+      "OperationReport": {
+        "properties": {
+          "start": {
+            "type": "string",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "title": "End"
+          },
+          "usage": {
+            "items": {
+              "$ref": "#/components/schemas/ComponentUsage"
+            },
+            "type": "array",
+            "title": "Usage"
+          },
+          "actual_usd": {
+            "type": "string",
+            "title": "Actual Usd"
+          },
+          "failed_reservation_cost_usd": {
+            "type": "string",
+            "title": "Failed Reservation Cost Usd"
+          },
+          "held_or_unknown_usd_all_periods": {
+            "type": "string",
+            "title": "Held Or Unknown Usd All Periods"
+          },
+          "gross_paisa": {
+            "type": "integer",
+            "title": "Gross Paisa"
+          },
+          "reversed_paisa": {
+            "type": "integer",
+            "title": "Reversed Paisa"
+          },
+          "fee_paisa": {
+            "type": "integer",
+            "title": "Fee Paisa"
+          },
+          "job_states": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Job States"
+          },
+          "media_materialized_bytes": {
+            "type": "integer",
+            "title": "Media Materialized Bytes"
+          },
+          "media_reserved_bytes": {
+            "type": "integer",
+            "title": "Media Reserved Bytes"
+          },
+          "disk_free_bytes": {
+            "type": "integer",
+            "title": "Disk Free Bytes"
+          },
+          "oldest_pending_outbox_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oldest Pending Outbox At"
+          },
+          "economics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Economics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "limitations": {
+            "type": "string",
+            "title": "Limitations"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "start",
+          "end",
+          "usage",
+          "actual_usd",
+          "failed_reservation_cost_usd",
+          "held_or_unknown_usd_all_periods",
+          "gross_paisa",
+          "reversed_paisa",
+          "fee_paisa",
+          "job_states",
+          "media_materialized_bytes",
+          "media_reserved_bytes",
+          "disk_free_bytes",
+          "oldest_pending_outbox_at",
+          "economics",
+          "limitations"
+        ],
+        "title": "OperationReport"
       },
       "OrderInput": {
         "properties": {

@@ -1,5 +1,18 @@
 # ZoClip implementation status
 
+Current Phase 7 status (2026-10-11): **local infrastructure gate PASS; VPS UNVERIFIED**.
+Private infrastructure, least-privilege roles, TLS proxy, resource/retention
+controls, encrypted backup/recovery tools, operations report, privacy intents
+and runbooks are implemented. Full Linux regression: **334 passed, 0 failed, 0
+errors, 0 skipped**; separate backup security checks: **10 passed, 0 failed, 0
+errors, 0 skipped**. Actual private Compose, HTTPS, RQ, dependency outages,
+process crash recovery, encrypted database/media restore and controller safeguards
+pass. Final evidence is tracked
+in [PHASE7_VERIFICATION.md](PHASE7_VERIFICATION.md). No VPS/public deployment,
+live credentials, paid API, live payments, push or Phase 8 is authorized/performed.
+Production remains NOT APPROVED; Phase 4 live-provider and Phase 6 merchant gates
+remain pending. The Phase 6 sections below are historical checkpoints.
+
 Current Phase 6 implementation status (2026-10-10):
 - **Phase 6 local sandbox gate: PASS.**
 - **Real merchant sandbox/live gate: NOT LIVE.**
@@ -48,7 +61,7 @@ no live provider requests, benchmarks or deployment have been performed.
 | 4 AI suggestions | Local mock/fixture gate PASS; real-provider gate PENDING | User-authorized local checkpoint; 237 Linux tests, actual FFmpeg/RQ/HTTPS simulators and expense/recovery/cancel/API checks; production NOT APPROVED |
 | 5 Render/editor | Local mock/fixture gate PASS; representative QA pending | Commit 35032a0; 275 Linux tests, actual captioned MP4/private download/revision rerender, owner isolation and exactly-once settlement; live providers and representative quality/capacity gates remain pending |
 | 6 Payments | Local sandbox gate PASS; merchant gate NOT LIVE | 324 Linux tests, 59 focused native checks, actual signed sandbox HTTP; duplicate grants once, spoof grants zero; real merchant adapter disabled |
-| 7 Operations | NOT STARTED | Compose/runbooks, resource/failure/security drills, encrypted backup restore, monitoring; VPS verification separately recorded |
+| 7 Operations | PASS — local infrastructure gate; VPS unverified | 334 full Linux regression cases plus 10 separate backup security cases; actual private Compose/TLS/RQ/outages/crash recovery/encrypted restore/controller checks; off-server recovery and server gates pending; see PHASE7_VERIFICATION.md |
 | 8 Frontend handoff/audit | NOT STARTED | Actual generated validated OpenAPI, samples/v0 prompt, requirement evidence and release blockers; no frontend build |
 
 ## Phase 0 deliverables and verification

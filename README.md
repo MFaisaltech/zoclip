@@ -1,5 +1,12 @@
 # ZoClip backend
 
+Phase 7 private infrastructure is prepared in `deploy/`; its local acceptance
+gate is recorded in [PHASE7_VERIFICATION.md](docs/PHASE7_VERIFICATION.md).
+Use [DEPLOY_CONTABO.md](docs/DEPLOY_CONTABO.md),
+[BACKUP_RECOVERY.md](docs/BACKUP_RECOVERY.md) and
+[MONITORING_SECURITY.md](docs/MONITORING_SECURITY.md) for the private rollout.
+No VPS deployment, public exposure or production launch is authorized.
+
 Phases 1 through 6: authentication, credit accounting, private video ingestion,
 durable jobs, transcript and AI suggestions, captioned vertical MP4 rendering,
 revisioned editing, private exports and verified development sandbox billing.
@@ -43,8 +50,9 @@ Do not run `down --volumes` against data you need.
 mailbox. Production validation requires HTTPS, secure cookies, real allowed hosts
 and no development mailbox/mock payment mode. Production email is disabled in this
 phase; register/reset return `email_unconfigured`. Compose is a foundation, not a
-finished Contabo production rollout: TLS/Nginx, least-privilege DB roles, backups,
-restore, monitoring and deployment verification remain later gates.
+Contabo rollout. Phase 7's separate private Compose adds TLS/Nginx,
+least-privilege DB roles, encrypted backups and monitoring; remaining local/VPS
+verification is explicit in PHASE7_VERIFICATION.md.
 
 For a local development flow, use `/docs` or the steps in `docs/AUTH_HANDOFF.md`.
 Read verification/reset messages privately with:

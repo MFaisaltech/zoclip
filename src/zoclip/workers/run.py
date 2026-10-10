@@ -1,5 +1,7 @@
 import logging
 import os
+from pathlib import Path
+from uuid import uuid4
 
 from redis import Redis
 from rq import Queue, Worker
@@ -16,7 +18,16 @@ def main() -> None:
     connection = Redis.from_url(settings.redis_url.get_secret_value())
     # Phase 3 registers ingestion on ai; render awaits Phase 5. Keep Redis private: RQ payloads
     # are trusted server messages, not input accepted from customers.
-    Worker([Queue(queue, connection=connection)], connection=connection).work()
+    prefix = os.environ.get("WORKER_NAME")
+    worker = Worker(
+        [Queue(queue, connection=connection)],
+        connection=connection,
+        name=prefix + "-" + uuid4().hex if prefix else None,
+    )
+    # RQ rejects reuse of a live registry name after SIGKILL. Each boot gets a new
+    # name; the private health receipt identifies this process without deleting stale leases.
+    Path("/tmp/zoclip-rq-worker-name").write_text(worker.name)
+    worker.work()
 
 
 if __name__ == "__main__":

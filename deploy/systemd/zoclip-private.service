@@ -1,0 +1,18 @@
+[Unit]
+Description=ZoClip private staging (loopback only)
+Requires=docker.service
+After=docker.service network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/zoclip
+# No secrets in this metadata file or command line.
+ExecStart=/usr/bin/python3 deploy/manage.py resume --env-file /etc/zoclip/staging.env --project zoclip-private --execute-local
+ExecStop=/usr/bin/python3 deploy/manage.py stop --env-file /etc/zoclip/staging.env --project zoclip-private --execute-local
+TimeoutStartSec=600
+TimeoutStopSec=180
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

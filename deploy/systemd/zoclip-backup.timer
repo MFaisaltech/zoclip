@@ -1,0 +1,10 @@
+[Unit]
+Description=ZoClip nightly backup in an approved maintenance window
+
+[Timer]
+OnCalendar=*-*-* 02:00:00 UTC
+Persistent=true
+Unit=zoclip-backup.service
+
+[Install]
+WantedBy=timers.target

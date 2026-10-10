@@ -2,6 +2,7 @@
 
 import logging
 import time
+from pathlib import Path
 
 from redis import Redis
 from sqlalchemy.orm import sessionmaker
@@ -12,6 +13,7 @@ from zoclip.core.db import build_engine
 from zoclip.media.cleanup import cleanup
 from zoclip.media.storage import LocalStorage
 from zoclip.media.worker import dispatch, recover
+from zoclip.ops.privacy import cleanup_auth
 
 
 def main() -> None:
@@ -29,6 +31,10 @@ def main() -> None:
                 cleanup(factory, storage)
                 resume_waiting(factory, settings)
                 dispatch(factory, redis)
+                with factory() as db:
+                    cleanup_auth(db)
+                    db.commit()
+                Path("/tmp/zoclip-maintenance-heartbeat").touch()
             except Exception as exc:
                 logging.error("maintenance_failed class=%s", type(exc).__name__)
             time.sleep(5)

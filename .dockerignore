@@ -4,6 +4,10 @@
 .venv
 .tools
 var
+**/private
+**/*.pem
+**/*.key
+deploy/staging.env
 __pycache__
 .pytest_cache
 .mypy_cache
