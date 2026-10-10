@@ -22,6 +22,8 @@ from zoclip.auth.email import build_email
 from zoclip.auth.google import GoogleOIDC
 from zoclip.auth.google import router as google_router
 from zoclip.auth.routes import router
+from zoclip.billing.providers import build_provider
+from zoclip.billing.routes import router as billing_router
 from zoclip.core.config import Settings
 from zoclip.core.db import build_engine
 from zoclip.core.errors import ApiError, Problem, problem_response
@@ -142,12 +144,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.redis = redis
     app.state.email_sender = build_email(settings)
     app.state.google = GoogleOIDC(settings)
+    app.state.payment_provider = build_provider(settings)
     app.include_router(router)
     app.include_router(google_router)
     app.include_router(credits_router)
     app.include_router(media_router)
     app.include_router(ai_router)
     app.include_router(rendering_router)
+    app.include_router(billing_router)
     app.add_exception_handler(ApiError, problem_response)  # type: ignore[arg-type]
 
     @app.exception_handler(RequestValidationError)

@@ -1,4 +1,4 @@
-# API handoff - Phases 1 through 3
+# API handoff - Phases 1 through 6
 
 The implemented contract is [openapi.json](openapi.json), generated with
 `uv run python scripts/export_openapi.py` from `zoclip.main.create_app` without
@@ -101,9 +101,9 @@ VideoView. Customer DTOs omit private paths, import URLs, worker tokens and payl
 | GET /jobs/{id}/events | Own immutable state events |
 | POST /jobs/{id}/cancel | Idempotent cancellation; live worker acknowledgment before release |
 
-CORS now permits GET/POST/PUT/DELETE and Content-Type, X-CSRF-Token,
-Idempotency-Key and X-Content-SHA256. Every mutation needs Origin/CSRF and an active
-verified session. JSON admissions/completion also require Idempotency-Key.
+CORS permits GET/POST/PUT/PATCH/DELETE and Content-Type, X-CSRF-Token,
+Idempotency-Key, X-Content-SHA256 and If-Match. Every mutation needs Origin/CSRF
+and an active verified session. JSON admissions/completion also require Idempotency-Key.
 Listings accept limit 1-100 and an exclusive owned before UUID.
 Errors include unsupported_source, unsafe_source, integrity_failed, upload_busy,
 incomplete_upload, duration_exceeded, plan_duration_exceeded, insufficient_capacity
@@ -118,9 +118,9 @@ stays WAITING_ENGINE. See [AI_HANDOFF.md](AI_HANDOFF.md) for DTOs, paid-call
 protection, caching, cancellation, privacy, configuration and unrun live Gate 4.
 
 JobView includes updated_at, stage, nullable progress_percent and nullable
-estimated_credits. Only completed ingestion reports 100 percent; other states
-return null. Ingestion has zero credit cost. PROCESS reports its persisted accepted
-reservation amount (null for a legacy checkpoint without that value), independent
+estimated_credits. Completed ingestion and verified rendering report 100 percent;
+other states return null. Ingestion has zero credit cost. PROCESS reports its
+persisted accepted reservation amount (null for a legacy checkpoint without that value), independent
 of later catalog changes. See INGESTION_HANDOFF.md for exact stage semantics.
 GenerateInput accepts quote_id; the path supplies video_id. Both generation routes
 use the same normalized payload/key and cannot create duplicate reservations.
@@ -139,3 +139,35 @@ openapi.json. Rendering jobs expose RENDER_QUEUED/RENDERING and completed 100%;
 other unknown percentages stay null. Suggestions remain candidate DTOs with
 rendered=false; authoritative export status is the clips/renders endpoint.
 Real provider acceptance remains pending; production is not approved.
+
+## Phase 6 prepaid billing
+
+See [PAKISTAN_PAYMENTS.md](PAKISTAN_PAYMENTS.md) for the signed mock protocol,
+merchant documentation boundary, late/reversed states and manual sandbox steps.
+Default is disabled; production rejects mock/live enablement. JazzCash is a named
+disabled adapter, with no real checkout or verified merchant integration.
+
+| Method/path under /api/v1 | Contract |
+|---|---|
+| POST /billing/orders | OrderInput{price_version_id} -> 201 CheckoutView; owner, Origin/CSRF, Idempotency-Key; null checkout_url, explicit sandbox |
+| GET /billing/orders/{order_id} | Owner OrderView, integer PKR paisa/credits, expiry/state; browser query parameters are never authoritative |
+| GET /billing/history | Owner OrderPage{items,next_cursor}; limit 1..100, exclusive owned UUID cursor |
+| POST /billing/webhooks/{provider} | Signed 16 KiB JSON ingress; mock timestamp/signature headers; exact amount/currency/reference; no browser cookie/CSRF dependency |
+| GET /admin/payments | Audited server-RBAC StaffOrderView list, bounded limit/cursor, refund exposure |
+| POST /admin/payments/{order_id}/reconcile | StaffAction{reason,accept_late=false}, Origin/CSRF/key; independent verified query only, no evidence grants zero |
+| POST /admin/payments/{order_id}/refund | RefundInput{reason}, Origin/CSRF/key; durable UNKNOWN/CONFIRMED RefundRequestView; no blind retry |
+
+Purchase terms are pinned to the current audited price version at creation; later
+price changes cannot mutate the order. Paid access is prepaid 30 days; top-ups do
+not override timed access. Free or zero-price/allowance versions cannot be bought.
+No customer-selected amount/currency/credits/provider/return URL is accepted.
+Order keys and provider event IDs reject changed payload reuse. Payment transition,
+entitlement and GRANT are one locked PostgreSQL transaction. Failed/pending events
+cannot undo paid state. A verified pre-expiry payment may arrive late; post-expiry
+payments enter REVIEW unless accepted via reasoned staff query. Full reversal
+revokes entitlement and recovers available credits once; spent/held exposure is
+recorded and access disabled, without negative balances. Partial refunds, recurring
+billing and customer automatic-refund policy are absent. New errors include
+payments_disabled (503), invalid_payment_signature (401), invalid_payment_event
+(422), payment_mismatch, price_stale, price_unavailable, order_not_paid and
+refund_already_requested (409), plus existing idempotency/ownership errors.

@@ -7,6 +7,7 @@ from sqlalchemy import select
 
 from zoclip.auth.dependencies import DB, AdminUser, CsrfSession, CurrentUser
 from zoclip.auth.service import audit
+from zoclip.billing.models import EntitlementRevocation
 from zoclip.core.db import utcnow
 from zoclip.core.rate_limit import rate_limit
 from zoclip.credits import service
@@ -113,7 +114,11 @@ def entitlements(
             price_version_id=r.price_version_id,
             starts_at=r.starts_at,
             ends_at=r.ends_at,
-            active=r.starts_at <= now and (r.ends_at is None or r.ends_at > now),
+            active=r.starts_at <= now
+            and (r.ends_at is None or r.ends_at > now)
+            and not db.scalar(
+                select(EntitlementRevocation.id).where(EntitlementRevocation.entitlement_id == r.id)
+            ),
         )
         for r in db.scalars(query)
     ]

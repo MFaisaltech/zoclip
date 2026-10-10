@@ -1,19 +1,28 @@
 # ZoClip implementation status
 
-Current Phase 4 checkpoint status (2026-10-10):
-- **Phase 4 local mock/fixture gate: PASS.**
+Current Phase 6 implementation status (2026-10-10):
+- **Phase 6 local sandbox gate: PASS.**
+- **Real merchant sandbox/live gate: NOT LIVE.**
 - **Phase 4 real Deepgram/Gemini provider gate: PENDING.**
 - **Production readiness: NOT APPROVED.**
 
-The user explicitly authorized a local Phase 4 checkpoint commit based on the
-passing local gate. This authorization does not waive real-provider verification.
-Final Linux suite: **237 passed, 0 failed, 0 skipped**. Windows: **236 passed,
-0 failed, 1 skipped** (symlink privilege; passes on Linux). Existing Phase 1–3
-functionality remains covered. Runtime PostgreSQL/Redis/Linux RQ/FFmpeg/HTTPS
-simulators, migrations, lint/type and running OpenAPI/source matching pass.
-See [PHASE4_VERIFICATION.md](PHASE4_VERIFICATION.md) and the final Phase 4 section
-for exact evidence. Earlier phase narratives are historical checkpoints.
-No deployment, push, real paid provider call or Phase 5 work is authorized.
+Phase 6 completion review is finished. The user selected "Review and finish the
+current Phase 6 work"; the reviewed implementation and handoff are saved as a
+local checkpoint (see Git history). No Phase 7 work, push or deployment is included.
+
+Phase 6 continues the authorized Phase 5 checkpoint `35032a0`, following Phase 4
+checkpoint `13a886e`. Final Linux suite: **324 passed, 0 failed, 0 errors, 0 skipped**,
+including all 275 Phase 1–5 cases and 49 billing cases. PostgreSQL/Redis/Linux
+RQ/FFmpeg/HTTPS simulator, migration, lint/type and running OpenAPI/source checks
+pass. Full Windows Phase 6 regression was not run. See
+[PHASE6_VERIFICATION.md](PHASE6_VERIFICATION.md) for exact evidence; prior phase
+narratives are historical checkpoints. Real-provider verification is not waived.
+The user explicitly authorized beginning Phase 6 payments. Local signed sandbox
+orders/grants/reversals and audited query/refund workflows are implemented; focused
+billing/config tests pass 59 cases. Running image/API match 62 sources and 55 paths;
+actual sandbox HTTP and prior render/edit simulator smoke pass. Full Linux Phase 1–6
+regression passes. See PHASE6_VERIFICATION.md and PAKISTAN_PAYMENTS.md.
+No deployment, push, real paid provider call or Phase 7 work has been performed.
 
 Phases 1–2 are implemented; local PostgreSQL-backed checks are recorded below.
 Latest infrastructure verification: 2026-10-10; Docker build/Compose startup,
@@ -36,9 +45,9 @@ no live provider requests, benchmarks or deployment have been performed.
 | 1 Foundation/auth | PASS — local development gate verified | Docker build/startup, health, PostgreSQL migrations, Linux Redis/both RQ workers, 49 tests, lint/type/contract checks pass; live Google/email and production remain unverified |
 | 2 Ledger/budgets | PASS — local development gate verified | 115 tests including independent PostgreSQL financial races/duplicates/rollback/isolation, quotes/allowances, all expense budgets; lint/type/contract/migrations and updated Linux container smoke pass |
 | 3 Ingestion/queue | PASS - local development gate verified | 183 Linux tests, real upload/controlled HTTPS import, SSRF/TLS/IDOR, concurrent deletion/credits, crash recovery, Docker/RQ/migrations and exact-source/schema checks; no AI charges |
-| 4 AI suggestions | Local mock/fixture gate PASS; real-provider gate PENDING | User-authorized local checkpoint; 237 Linux tests, actual FFmpeg/RQ/HTTPS simulators and expense/recovery/cancel/API checks; production NOT APPROVED; rendering absent |
-| 5 Render/editor | NOT STARTED | Actual captioned vertical MP4, revision rerender, isolation and exactly-once settlement; representative QA |
-| 6 Payments | NOT STARTED | Verified sandbox credits once; spoof grants zero; merchant live status separately evidenced |
+| 4 AI suggestions | Local mock/fixture gate PASS; real-provider gate PENDING | User-authorized local checkpoint; 237 Linux tests, actual FFmpeg/RQ/HTTPS simulators and expense/recovery/cancel/API checks; production NOT APPROVED |
+| 5 Render/editor | Local mock/fixture gate PASS; representative QA pending | Commit 35032a0; 275 Linux tests, actual captioned MP4/private download/revision rerender, owner isolation and exactly-once settlement; live providers and representative quality/capacity gates remain pending |
+| 6 Payments | Local sandbox gate PASS; merchant gate NOT LIVE | 324 Linux tests, 59 focused native checks, actual signed sandbox HTTP; duplicate grants once, spoof grants zero; real merchant adapter disabled |
 | 7 Operations | NOT STARTED | Compose/runbooks, resource/failure/security drills, encrypted backup restore, monitoring; VPS verification separately recorded |
 | 8 Frontend handoff/audit | NOT STARTED | Actual generated validated OpenAPI, samples/v0 prompt, requirement evidence and release blockers; no frontend build |
 
@@ -928,3 +937,92 @@ Phase 4 real Deepgram/Gemini provider gate remains **PENDING**. Production readi
 remains **NOT APPROVED**. Long representative benchmarks and face/Urdu/subjective
 quality QA remain unrun. No paid call, push, deployment or Phase 6 was performed.
 The user authorized a local Phase 5 commit conditional on this local gate passing.
+
+### Phase 5 handoff reconciliation — 2026-10-10
+
+Checkpoint `35032a0` is present and the working tree was clean at resumption.
+The saved Linux runner/JUnit evidence records 275 passing tests; the runtime
+manifest records 56 matching source files and 48 OpenAPI paths. The top-level
+status, README, decision register introduction and API handoff summary were stale
+and are corrected to describe Phase 5. Historical phase evidence is preserved.
+This follow-up changes documentation only; no new migration or configuration.
+Fresh checks: `.venv/Scripts/python.exe -m pytest tests/test_config.py -q
+--tb=short -p no:cacheprovider` passed 10 tests with the two existing HTTPX
+deprecation warnings; includes OpenAPI validation and snapshot equality. A read-only
+Python check confirmed all 56 current source SHA-256 values equal the saved runtime
+manifest, and the saved JUnit has 275 cases with zero failures/errors/skips.
+`git diff --check` passed. The full Linux suite and provider calls were not rerun
+for this documentation-only change. No additional commit or deployment was made.
+
+## Phase 6 — authorized prepaid sandbox payments
+
+User explicitly chose "Begin Phase 6 payments" after the Phase 5 handoff audit.
+Scope is PROMPT 6 only. Existing Phase 1–5 implementation, migration chain and
+the four documentation corrections were preserved.
+
+| Deliverable | Implementation/evidence |
+|---|---|
+| Prepaid order domain | billing/models.py, schemas.py, service.py; immutable price/amount/credit/validity snapshots and one gateway reference |
+| Verified providers | billing/providers.py; explicit signed MockSandboxProvider, disabled JazzCash adapter, no merchant IO or invented signatures |
+| Financial correctness | Locked event/order/GRANT/entitlement transaction; unique event/key arbitration, exact binding, rollback/redelivery and reversal races |
+| Customer/staff routes | billing/routes.py; owner-scoped orders/history, bounded authenticated webhook, RBAC/reasoned query and durable UNKNOWN refund intent |
+| Revocation/risk | Append-only full reversal and entitlement revocation; available credit recovery, retained spent/held exposure, disabled access on debt |
+| Forward migration | 651ba28dacf9 after a580f314c921; immutable evidence/term guards, populated downgrade refusal, existing financial rows preserved |
+| Configuration | PAYMENT_MOCK_WEBHOOK_SECRET blank/private; explicit non-production mock; named JazzCash choice remains disabled; no live enablement |
+| Handoff/tools | PAKISTAN_PAYMENTS.md, PHASE6_VERIFICATION.md, generated openapi.json, payment_sandbox.py, payment_smoke.py, verify_phase6.py and test-only Compose override |
+
+Focused native command with disposable TEST_DATABASE_URL and TEST_REDIS_URL:
+`.venv/Scripts/python.exe -m pytest tests/test_billing.py tests/test_config.py -q
+--tb=short --basetemp=var/phase6-verification/native-final-tmp -p no:cacheprovider
+--junitxml=var/phase6-verification/native-focused.xml` — **59 passed**, zero failures,
+errors/skips, 39.71s. Normal local permissions were required for pytest temporary
+directories; restricted setup failures are not counted. Final lint/format/type
+and full Linux gate results are recorded in PHASE6_VERIFICATION.md.
+
+Docker build/config/startup, running migration drift, actual Redis/both Linux RQ
+workers and signed HTTP sandbox smoke PASS. Ten concurrent HTTP callbacks grant
+once; fake signature/redirect zero; private history/IDOR and verified refund pass.
+Existing real upload/HTTPS AI simulator/FFmpeg/private download/prepaid edit rerender
+and single-settlement smoke PASS. Running image matches 62 source hashes and live
+55-path OpenAPI. Lock check resolves unchanged 73 packages. No real provider call.
+
+Full Linux suite: **324 passed, 0 failed, 0 errors, 0 skipped**, 418.93s. Final
+schema-only webhook body declaration was followed by 10 passing configuration/
+OpenAPI checks (9.07s), lint/format/type and a cached final-image rebuild. The
+full suite was not repeated for that passive contract declaration; handler and
+financial behavior are unchanged. Merchant sandbox/live remains
+NOT LIVE because current official callback/query/refund contract could not be
+verified; JazzCash stays disabled. Real AI gate, representative economics/quality/
+capacity QA, full Windows regression, deployment/backups/restores and remote CI
+remain unrun. No push, deployment, new commit or Phase 7 implementation is claimed.
+
+### Phase 6 resumption review — 2026-10-10
+
+The resumed working tree matches all 62 application SHA-256 values in the saved
+verified runtime manifest. Saved JUnit reports confirm the recorded 324 Linux,
+59 focused native and 10 final contract passes with zero failures/errors/skips.
+Fresh native configuration/OpenAPI tests pass 10 cases (7.53s, two existing HTTPX
+warnings); lint, formatting (97 files), mypy (62 sources) and `git diff --check`
+pass. No application defect requiring a change was found in this review.
+Only verification/status documentation changed in the follow-up. Integration
+tests, Docker/migrations and real provider gates were not rerun. Existing Phase 6
+changes remain uncommitted; no new migration or configuration was added.
+Phase 7 remains NOT STARTED pending explicit scope selection. Exact commands and
+evidence boundaries are recorded in PHASE6_VERIFICATION.md.
+
+### Phase 6 completion checkpoint — 2026-10-10
+
+The user selected finishing Phase 6. Reviewed payment services/routes/providers,
+database guards, focused financial/security tests, configuration, sandbox tools,
+CI coverage and the API/merchant handoff. No additional application defect or
+required implementation gap was found; no application changes or repeated
+integration tests were needed. The fresh checks and saved evidence above support
+the local sandbox gate only. The prior uncommitted-state notes are historical.
+
+The local checkpoint includes the reviewed Phase 6 sources, tests, forward
+migration 651ba28dacf9, configuration example, generated OpenAPI and documentation.
+Ignored verification artifacts, databases, private CA material, local tooling and
+secrets are excluded. The phase adds PAYMENT_MOCK_WEBHOOK_SECRET; this completion
+review adds no further migration, dependency or environment setting. Merchant
+acceptance, live AI, representative QA/economics/capacity, production operations
+and remote CI remain unverified. Next implementation is Phase 7 only when requested.

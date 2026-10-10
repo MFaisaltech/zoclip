@@ -16,6 +16,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from zoclip.auth.models import AuditLog, User
+from zoclip.billing.models import EntitlementRevocation
 from zoclip.core.db import utcnow
 from zoclip.core.errors import ApiError
 from zoclip.credits.models import (
@@ -200,6 +201,7 @@ def active_price(db: Session, user_id: UUID) -> PlanPrice:
         .where(
             Entitlement.user_id == user_id,
             Entitlement.starts_at <= now,
+            ~Entitlement.id.in_(select(EntitlementRevocation.entitlement_id)),
             Plan.kind == "plan",
             (Entitlement.ends_at.is_(None) | (Entitlement.ends_at > now)),
         )
@@ -298,7 +300,12 @@ def grant_entitlement(
         select(func.max(Entitlement.ends_at))
         .join(PlanPrice)
         .join(Plan)
-        .where(Entitlement.user_id == user_id, Plan.kind == "plan", Entitlement.ends_at > now)
+        .where(
+            Entitlement.user_id == user_id,
+            Plan.kind == "plan",
+            Entitlement.ends_at > now,
+            ~Entitlement.id.in_(select(EntitlementRevocation.entitlement_id)),
+        )
     )
     start = max(now, end) if end and price.valid_days else now
     row = Entitlement(

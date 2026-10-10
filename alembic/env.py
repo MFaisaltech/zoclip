@@ -1,6 +1,7 @@
 from alembic import context
 from zoclip.ai import models as ai_models  # noqa: F401
 from zoclip.auth import models  # noqa: F401
+from zoclip.billing import models as billing_models  # noqa: F401
 from zoclip.core.config import Settings
 from zoclip.core.db import Base, build_engine
 from zoclip.credits import models as credits_models  # noqa: F401

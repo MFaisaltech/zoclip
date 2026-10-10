@@ -1,9 +1,9 @@
 # ZoClip decision register
 
-Phase 0 decisions, with Phase 1 through 4 additions below. Accepted means design default;
+Phase 0 decisions, with Phase 1 through 6 additions below. Accepted means design default;
 implementation evidence lives in IMPLEMENTATION_STATUS.md. AI REST adapters have
 local simulator verification; live account/model acceptance remains unverified.
-No payment integration or current commercial fee claim is made.
+Payment verification is local mock-only; merchant integration and fees remain unverified.
 
 | ID | Decision/default | Rationale / revisit gate |
 |---|---|---|
@@ -219,3 +219,32 @@ and known operational limitations are recorded in IMPLEMENTATION_STATUS.md.
   per-output three bounded local attempts, measured child CPU or conservative lost
   worker ceiling, integer retention units, existing all-scope spend/capacity guards.
   Source revocation/TTL governs revisions and outputs; audit/financial history stays.
+
+## Phase 6 decisions (2026-10-10)
+
+- D50: Reuse audited price versions; snapshot current prepaid PKR amount, credits,
+  validity and fee schedule in immutable order terms. One deterministic sandbox
+  checkout reference. No launch price, auto-renewal, gateway fee or profit inferred.
+- D51: Only adapter-verified exact order/reference/amount/currency evidence grants.
+  User -> wallet -> order locking and unique provider event arbitration serialize
+  payment/entitlement/GRANT atomically, including collisions across owners. Browser
+  returns grant nothing; altered event or order key payload is rejected.
+- D52: Accept late delivery of payment made before expiry. Post-expiry payment or
+  unavailable owner enters REVIEW without credits; only independent provider query
+  plus reasoned staff accept_late may accept a late payment. Reversals are terminal,
+  including when delivered before success. No unauthenticated/manual paid switch.
+- D53: Verified full reversals recover fungible available credits up to the original
+  unrefunded grant, append entitlement revocation, retain spent/held exposure and
+  disable the account when unrecovered credits remain. No negative wallet, seizure
+  of held credits, partial refund, automatic debt clearing or unrestricted unblock.
+- D54: Refund intent commits UNKNOWN before provider IO. Replay never resends an
+  uncertain refund; signed reversal or independent query confirms. Staff query
+  reasons/results and audit events are immutable. No evidence grants zero.
+- D55: MockSandboxProvider is explicit non-production, keyed signed fixture JSON.
+  It performs no merchant IO; query/refund evidence is injected only in tests.
+  The local helper requires opt-in and loopback/isolated host, no proxies/redirects.
+  JazzCash stays disabled because current official callback/query/refund documents
+  could not be verified (rejection/timeouts); no merchant contract is invented.
+- D56: Migration 651ba28dacf9 appends billing tables and database term/evidence
+  guards; populated downgrade refuses erasure. Existing financial rows/migrations
+  remain intact. Revocations are separate from immutable Phase 2 entitlements.

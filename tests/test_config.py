@@ -53,5 +53,12 @@ def test_openapi_is_valid_and_matches_export():
     assert schema == json.loads(Path("docs/openapi.json").read_text())
     assert "/api/v1/me" in schema["paths"]
     assert "/api/v1/me/credits" in schema["paths"]
-    assert "/api/v1/billing/orders" not in schema["paths"]
+    assert "/api/v1/billing/orders" in schema["paths"]
+    assert "/api/v1/billing/webhooks/{provider}" in schema["paths"]
+    event_body = schema["paths"]["/api/v1/billing/webhooks/{provider}"]["post"]["requestBody"]
+    assert event_body["required"] is True
+    event_schema = event_body["content"]["application/json"]["schema"]
+    assert {"event_id", "order_id", "reference", "amount_paisa", "currency"} <= set(
+        event_schema["required"]
+    )
     assert "/api/v1/uploads" in schema["paths"]

@@ -1,13 +1,15 @@
 # ZoClip backend
 
-Phases 1 through 4: authentication, credit accounting, private video ingestion,
-durable jobs, transcript and AI suggestion processing. AI is disabled by default;
-local verification uses mocks and isolated HTTPS simulators. Live Gate 4 remains
-PENDING. Local mock/fixture gate: PASS. Production readiness: NOT APPROVED.
-The user authorized a local checkpoint based on mock/fixture evidence only.
-No payments or clip rendering yet. See
-[IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) and
-[AI_HANDOFF.md](docs/AI_HANDOFF.md) for actual checks and remaining gates.
+Phases 1 through 6: authentication, credit accounting, private video ingestion,
+durable jobs, transcript and AI suggestions, captioned vertical MP4 rendering,
+revisioned editing, private exports and verified development sandbox billing.
+AI/payments are disabled by default; local verification uses mocks and isolated
+HTTPS simulators. Phase 6 local sandbox gate: PASS (324 Linux tests). Real merchant
+payments are NOT LIVE; real Deepgram/Gemini provider gate remains PENDING.
+Production readiness: NOT APPROVED. Prior Phase 5 checkpoint: `35032a0`.
+See [IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) and
+[PHASE6_VERIFICATION.md](docs/PHASE6_VERIFICATION.md) for evidence and remaining
+gates, and [RENDERING_HANDOFF.md](docs/RENDERING_HANDOFF.md) for the editor/export API.
 
 ## Local Docker setup
 
@@ -107,8 +109,9 @@ have no automatic credits. Paid work is disabled until a complete audited policy
 and rates exist. Prices remain unapproved until explicitly reviewed.
 
 Expiry is disabled; unused credits carry over. Access is prepaid 30 days without
-automatic renewal. No customer purchase or payment callback can grant credits in
-this phase. Financial tests use fictional staff grants/rates and no paid APIs.
+automatic renewal. Only a verified, explicitly configured development sandbox
+payment can grant purchase credits. Merchant payments remain disabled. Financial
+tests use fictional grants/rates and no paid APIs.
 Concurrency tests migrate/drop generated schemas within the disposable _test DB;
 the test DB role must be allowed to create schemas. Never grant that privilege to
 the production runtime role just to run tests.
@@ -124,11 +127,15 @@ supported audio/video streams and at most 120 minutes, validated with ffprobe.
 
 POST /api/v1/uploads -> streamed PUT parts -> POST complete -> poll job -> READY.
 POST /api/v1/videos/import-url follows the same durable background validation.
-POST /api/v1/jobs atomically reserves Phase 2 credits and stops at WAITING_ENGINE;
-there is no production mock processing, AI call or settlement. Cancel restores
-the hold, and maintenance cancels these waiting requests after 24h.
+POST /api/v1/jobs (or POST /api/v1/videos/{id}/generate) atomically reserves credits.
+With AI disabled it waits at WAITING_ENGINE; configured AI produces saved
+suggestions. Explicit clip selection queues rendering, and all approved outputs
+must validate before settlement. Cancel releases a held reservation once;
+maintenance cancels waiting requests after 24h. See [AI_HANDOFF.md](docs/AI_HANDOFF.md)
+and [RENDERING_HANDOFF.md](docs/RENDERING_HANDOFF.md) for configuration and flow.
 
-The full suite requires ffprobe on PATH (or FFPROBE_BINARY), PostgreSQL and Redis.
+The full suite requires FFmpeg/ffprobe on PATH (or FFMPEG_BINARY/FFPROBE_BINARY),
+the locked OpenCV dependencies, PostgreSQL and Redis. The Linux image supplies fonts.
 The small synthetic fixture is committed; tests never fetch public user media.
 For an explicitly disposable development Compose project with sufficient disk:
 
@@ -141,8 +148,18 @@ docker compose --project-name zoclip-ingestion-check --env-file .env.example sto
 
 The ingestion smoke configures fictional Free quotas and creates immutable test
 audit/job history in that isolated database; it must never run on customer data.
-No automatic trials, payment success or paid credits are created.
+The ingestion smoke creates no automatic trials or payment success.
 
 For the complete Linux suite and an actual TLS-verified controlled HTTPS import,
 use [PHASE3_VERIFICATION.md](docs/PHASE3_VERIFICATION.md) and the explicitly
 test-only `compose.phase3-test.yaml`. That override must not be used for deployment.
+
+## Development sandbox payments
+
+Read [PAKISTAN_PAYMENTS.md](docs/PAKISTAN_PAYMENTS.md) for prepaid orders, authenticated
+mock events, reversals, account risk holds and the merchant onboarding checklist.
+Explicit non-production mock mode requires PAYMENT_MOCK_WEBHOOK_SECRET configured
+privately. A browser return grants no credits; verified full payment evidence grants
+once. Unknown refund outcomes require reconciliation. Live payments, automatic
+renewals and real gateway refunds are unavailable. No approved retail prices or
+merchant fees are implied by the fictional sandbox values.

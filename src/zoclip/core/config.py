@@ -28,7 +28,8 @@ class Settings(BaseSettings):
     google_redirect_uri: str = ""
     enable_live_payments: bool = False
     enable_trial_credits: bool = False
-    payment_provider: Literal["disabled", "mock"] = "disabled"
+    payment_provider: Literal["disabled", "mock", "jazzcash"] = "disabled"
+    payment_mock_webhook_secret: SecretStr = SecretStr("")
     media_root: str = "var/media"
     media_max_bytes: int = Field(default=4 * 1024**3, ge=1, le=4 * 1024**3)
     media_part_bytes: int = Field(default=8 * 1024**2, ge=65536, le=8 * 1024**2)
@@ -81,6 +82,12 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_deployment(self) -> Self:
+        if self.payment_provider == "mock":
+            sandbox_secret = self.payment_mock_webhook_secret.get_secret_value()
+            if len(sandbox_secret) < 32 or sandbox_secret.lower().startswith(
+                ("change", "placeholder", "set_")
+            ):
+                raise ValueError("Explicit sandbox payments require a private webhook secret")
         if self.deepgram_language not in self.ai_approved_languages:
             raise ValueError("Deepgram language must be explicitly approved")
         if self.ai_min_clip_seconds > self.ai_max_clip_seconds:

@@ -1,0 +1,83 @@
+# Explicit local simulator override. Never use with live credentials or deployment.
+x-simulator-env: &simulator-env
+  AI_ENABLED: "true"
+  DEEPGRAM_API_KEY: synthetic-phase4-not-a-live-key
+  GEMINI_API_KEY: synthetic-phase4-not-a-live-key
+  DEEPGRAM_MODEL: fictional-test
+  DEEPGRAM_VERSION: fixture-v1
+  GEMINI_MODEL: fictional-test
+  AI_MIN_CLIP_SECONDS: "1"
+  AI_MAX_OUTPUT_TOKENS: "128"
+  AI_CALLS_PER_MINUTE: "60"
+  SSL_CERT_FILE: /verify/ca.pem
+  MEDIA_ALLOWED_IMPORT_HOSTS: '["media.phase3.test","wrong.phase3.test"]'
+  AUTH_RATE_LIMIT: "100"
+x-hosts: &hosts
+  - api.deepgram.com:93.184.217.10
+  - generativelanguage.googleapis.com:93.184.217.10
+  - media.phase3.test:93.184.217.10
+  - wrong.phase3.test:93.184.217.10
+services:
+  db:
+    mem_limit: 512m
+    ports: ["127.0.0.1::5432"]
+  redis:
+    mem_limit: 128m
+    ports: ["127.0.0.1::6379"]
+  migrate:
+    image: zoclip-phase6:verify
+    mem_limit: 256m
+  api:
+    image: zoclip-phase6:verify
+    mem_limit: 512m
+    volumes:
+      - ./var/phase6-verification/media:/app/var/media
+      - ./var/phase4-verification/tls/ca.pem:/verify/ca.pem:ro
+      - ./tests/fixtures/source.mp4:/verify/source.mp4:ro
+      - ./scripts/ai_smoke.py:/verify/ai_smoke.py:ro
+      - ./scripts/render_smoke.py:/verify/render_smoke.py:ro
+      - ./scripts/https_fixture.py:/verify/https_fixture.py:ro
+    environment: *simulator-env
+    extra_hosts: *hosts
+    networks: [default, provider-fixture]
+    ports: !override ["127.0.0.1::8000"]
+  worker-ai:
+    image: zoclip-phase6:verify
+    mem_limit: 384m
+    volumes:
+      - ./var/phase6-verification/media:/app/var/media
+      - ./var/phase4-verification/tls/ca.pem:/verify/ca.pem:ro
+    environment: *simulator-env
+    extra_hosts: *hosts
+    networks: [default, provider-fixture]
+  worker-render:
+    image: zoclip-phase6:verify
+    mem_limit: 1536m
+    volumes: ["./var/phase6-verification/media:/app/var/media"]
+  maintenance:
+    image: zoclip-phase6:verify
+    mem_limit: 192m
+    volumes:
+      - ./var/phase6-verification/media:/app/var/media
+    environment:
+      <<: *simulator-env
+      # Maintenance does no HTTP but validates the same configuration.
+      SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
+  provider-fixture:
+    image: zoclip-phase6:verify
+    command: [python, /verify/ai_https_fixture.py, serve, /verify/tls]
+    environment: {ZOCLIP_PROVIDER_SIMULATOR: "1"}
+    volumes:
+      - ./scripts/ai_https_fixture.py:/verify/ai_https_fixture.py:ro
+      - ./var/phase4-verification/tls:/verify/tls:ro
+      - ./tests/fixtures/source.mp4:/verify/source.mp4:ro
+    mem_limit: 64m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    networks:
+      provider-fixture: {ipv4_address: 93.184.217.10}
+networks:
+  provider-fixture:
+    internal: true
+    ipam:
+      config: [{subnet: 93.184.217.0/24}]
