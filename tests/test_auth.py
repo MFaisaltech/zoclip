@@ -301,6 +301,8 @@ def test_rate_limit_and_redis_failure_fail_closed(client, app, monkeypatch):
         json={"email": "unknown@example.com", "password": PASSWORD},
     )
     assert response.status_code == 429 and response.headers["Retry-After"]
+    assert response.headers["access-control-allow-origin"] == ORIGIN
+    assert "retry-after" in response.headers["access-control-expose-headers"].lower()
 
     def unavailable(*args, **kwargs):
         raise RedisConnectionError("sensitive internal address")

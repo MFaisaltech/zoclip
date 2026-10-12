@@ -211,7 +211,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "X-Content-SHA256",
             "If-Match",
         ],
-        expose_headers=["X-Request-ID"],
+        expose_headers=["X-Request-ID", "Retry-After"],
     )
     app.add_middleware(RequestBoundary, production=settings.app_env == "production")
     return app

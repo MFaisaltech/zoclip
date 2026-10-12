@@ -2,7 +2,8 @@
 
 Implemented routes are exported from actual FastAPI models in `openapi.json`.
 All responses containing session/CSRF data use `Cache-Control: no-store`.
-No frontend, wallet, payment, media or AI functionality is included.
+This document describes the backend authentication contract. Current frontend
+integration and local evidence are in [PHASE8_AUTH_MILESTONE.md](PHASE8_AUTH_MILESTONE.md).
 
 ## Session and CSRF protocol
 
@@ -34,6 +35,10 @@ use state/browser binding rather than mutation CSRF header. Proxy forwarding is
 disabled in the supplied Uvicorn command: do not trust arbitrary X-Forwarded-For.
 A later trusted Nginx deployment must explicitly configure proxy IPs; otherwise IP
 throttles see the proxy address and conservatively share its limit.
+
+Responses expose `X-Request-ID` and `Retry-After` to the allowed frontend origin,
+so browser clients can read rate-limit retry hints. Later domain routes also allow
+their documented methods/headers; see API_HANDOFF.md.
 
 ## Endpoints
 

@@ -1,5 +1,14 @@
 # ZoClip implementation status
 
+Phase 8 Milestone 1 (2026-10-13): **local authentication integration PASS**.
+Outage recovery preserved both repositories' uncommitted work. Frontend real auth,
+cookie/CSRF/session handling and protected workspace are verified: 11 client tests,
+5 Chrome tests and 49 focused PostgreSQL/Redis backend tests pass; TypeScript,
+production build, lint/type and contract checks pass. See
+[recovery and evidence](PHASE8_AUTH_MILESTONE.md). Milestones 2–6 are not implemented;
+live email and production configuration remain launch requirements. No deployment,
+VPS change, database reset, commit or push performed.
+
 Private staging proposal (2026-10-12): [reviewable deployment and hardening
 packages](PRIVATE_STAGING_PROPOSAL.md) prepared locally with18443/18444 overrides,
 separate approvals, secret/image/backup/alert inputs and first-release containment.
@@ -86,7 +95,7 @@ no live provider requests, benchmarks or deployment have been performed.
 | 5 Render/editor | Local mock/fixture gate PASS; representative QA pending | Commit 35032a0; 275 Linux tests, actual captioned MP4/private download/revision rerender, owner isolation and exactly-once settlement; live providers and representative quality/capacity gates remain pending |
 | 6 Payments | Local sandbox gate PASS; merchant gate NOT LIVE | 324 Linux tests, 59 focused native checks, actual signed sandbox HTTP; duplicate grants once, spoof grants zero; real merchant adapter disabled |
 | 7 Operations | PASS — local infrastructure gate; VPS unverified | 334 full Linux regression cases plus 10 separate backup security cases; actual private Compose/TLS/RQ/outages/crash recovery/encrypted restore/controller checks; off-server recovery and server gates pending; see PHASE7_VERIFICATION.md |
-| 8 Frontend handoff/audit | NOT STARTED | Actual generated validated OpenAPI, samples/v0 prompt, requirement evidence and release blockers; no frontend build |
+| 8 Frontend handoff/audit | PARTIAL — user-authorized Milestone 1 local gate PASS | Real frontend authentication, 11 client/5 Chrome/49 backend checks; see PHASE8_AUTH_MILESTONE.md. Remaining milestones and full release audit unimplemented |
 
 ## Phase 0 deliverables and verification
 
