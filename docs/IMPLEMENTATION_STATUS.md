@@ -1,5 +1,29 @@
 # ZoClip implementation status
 
+Private staging proposal (2026-10-12): [reviewable deployment and hardening
+packages](PRIVATE_STAGING_PROPOSAL.md) prepared locally with18443/18444 overrides,
+separate approvals, secret/image/backup/alert inputs and first-release containment.
+No new VPS connection, service/configuration change or deployment performed.
+SSH access retirement and full default-deny hardening are deferred until safe
+replacement/rescue access and separate approval; no existing access removed.
+
+VPS read-only inventory (2026-10-12): explicitly authorized root SSH access;
+supplied ED25519 fingerprint matched before authentication. Ubuntu24.04,4CPU,
+7.8GiB RAM,88G available disk; Docker29.9.0/Compose5.6.0, no containers/volumes.
+Caddy occupies8443 and SSLH forwards443 to it; UFW inactive, IPv4/IPv6 INPUT
+ACCEPT, root/password SSH enabled. Proposed staging ports18443/18444 were free
+at observation. See [inventory and remaining inputs](VPS_READONLY_INVENTORY.md).
+No server configuration, deployment, migration, DNS or external account changes;
+runtime/recovery gates remain unverified. Await separate deployment approval.
+
+Private staging preparation (2026-10-12): HEAD `c6814c2` reviewed locally;
+user reports VPS preparation complete at `169.58.17.38`, independently unverified.
+Documentation-only [deployment plan](PRIVATE_STAGING_PLAN.md) lists missing inputs,
+Caddy/SSLH conflict checks, initialization/health/backup/rollback commands and
+approval boundaries. Example Compose config and deployment Python parsing pass
+locally; no VPS, DNS, external services or runtime checks performed. No new
+migration/configuration or Phase 8 work. VPS deployment remains NOT APPROVED.
+
 Current Phase 7 status (2026-10-11): **local infrastructure gate PASS; VPS UNVERIFIED**.
 Private infrastructure, least-privilege roles, TLS proxy, resource/retention
 controls, encrypted backup/recovery tools, operations report, privacy intents

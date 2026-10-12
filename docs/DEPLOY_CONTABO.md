@@ -5,6 +5,10 @@ Phase 7 prepares the existing modular monolith for Contabo Cloud VPS 4, Ubuntu
 launch is authorized.** All commands below are operator instructions for a later,
 explicitly approved session. They have not been executed on Contabo.
 
+The [2026-10-12 private staging preparation](PRIVATE_STAGING_PLAN.md) records the
+supplied VPS address, outstanding inputs, existing Caddy/SSLH conflict checks and
+sequenced operator commands. It does not authorize server access or deployment.
+
 ## Decisions and missing inputs
 
 The supplied authorization overrides the blueprint's eventual public 80/443
