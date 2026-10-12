@@ -1,5 +1,16 @@
 # ZoClip implementation status
 
+Phase 8 Milestone 2 (2026-10-13): **local workspace and credits integration PASS**.
+Real profile, videos/jobs/clips, wallet, ledger, entitlements and plans are connected
+with account isolation, pagination and loading/empty/error/retry/expiry handling.
+Fabricated dashboard data is removed; unsupported later workflows remain disabled
+or labeled. Frontend 21 unit/11 Chrome checks, TypeScript, lint, production build,
+contract drift and 63 focused PostgreSQL/Redis backend checks pass. Backend API
+behavior and schemas are unchanged. See [implementation and evidence](PHASE8_WORKSPACE_MILESTONE.md).
+Implementation made no deployment, VPS change or existing data reset. Subsequent
+Milestone 2 Git commits/pushes are separately user-authorized; see the milestone report.
+Milestones 3–6 remain unimplemented; earlier checkpoints below are historical.
+
 Phase 8 Milestone 1 (2026-10-13): **local authentication integration PASS**.
 Outage recovery preserved both repositories' uncommitted work. Frontend real auth,
 cookie/CSRF/session handling and protected workspace are verified: 11 client tests,
@@ -95,7 +106,7 @@ no live provider requests, benchmarks or deployment have been performed.
 | 5 Render/editor | Local mock/fixture gate PASS; representative QA pending | Commit 35032a0; 275 Linux tests, actual captioned MP4/private download/revision rerender, owner isolation and exactly-once settlement; live providers and representative quality/capacity gates remain pending |
 | 6 Payments | Local sandbox gate PASS; merchant gate NOT LIVE | 324 Linux tests, 59 focused native checks, actual signed sandbox HTTP; duplicate grants once, spoof grants zero; real merchant adapter disabled |
 | 7 Operations | PASS — local infrastructure gate; VPS unverified | 334 full Linux regression cases plus 10 separate backup security cases; actual private Compose/TLS/RQ/outages/crash recovery/encrypted restore/controller checks; off-server recovery and server gates pending; see PHASE7_VERIFICATION.md |
-| 8 Frontend handoff/audit | PARTIAL — user-authorized Milestone 1 local gate PASS | Real frontend authentication, 11 client/5 Chrome/49 backend checks; see PHASE8_AUTH_MILESTONE.md. Remaining milestones and full release audit unimplemented |
+| 8 Frontend handoff/audit | PARTIAL - user-authorized Milestones 1-2 local gates PASS | Real auth/workspace/credits, 21 client/11 Chrome/63 focused backend checks; see PHASE8_WORKSPACE_MILESTONE.md. Milestones 3-6 and full release audit unimplemented |
 
 ## Phase 0 deliverables and verification
 
