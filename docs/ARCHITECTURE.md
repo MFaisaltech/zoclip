@@ -5,7 +5,9 @@ private infrastructure prepared; see
 IMPLEMENTATION_STATUS.md for evidence and remaining gates. The master specification is the product contract. This document
 selects implementation defaults; capacity figures below are planning limits, not
 benchmarks. Phase 8's user-authorized frontend authentication milestone is locally
-verified (see PHASE8_AUTH_MILESTONE.md); remaining frontend milestones, live AI/payment and VPS gates
+verified (see PHASE8_AUTH_MILESTONE.md). Workspace/credits and upload/processing
+integration are now locally verified through M3 (PHASE8_MEDIA_MILESTONE.md);
+remaining frontend milestones, live AI/payment and VPS gates
 remain pending. The Phase 2 transaction
 contracts, limits and implemented scope are detailed in CREDITS_AND_MARGIN.md.
 

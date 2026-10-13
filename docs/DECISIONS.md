@@ -5,6 +5,13 @@ implementation evidence lives in IMPLEMENTATION_STATUS.md. AI REST adapters have
 local simulator verification; live account/model acceptance remains unverified.
 Payment verification is local mock-only; merchant integration and fees remain unverified.
 
+Phase 8 M3 connects the existing upload/import/quote/generation/job contracts;
+see PHASE8_MEDIA_MILESTONE.md. Upload hashing uses incremental 1 MiB reads and
+one server-sized part at a time. Owner-scoped local resume metadata and confirmed
+generation keys survive uncertain acknowledgments. Background identity checks
+preserve mounted transfers while failures still fail closed. No backend schema,
+financial invariant, provider switch, new dependency or deployment decision changed.
+
 | ID | Decision/default | Rationale / revisit gate |
 |---|---|---|
 | D01 | Modular monolith, Python 3.12 and specified FastAPI/PostgreSQL/RQ stack | Fits single CPU VPS; dependency locks in Phase 1 |

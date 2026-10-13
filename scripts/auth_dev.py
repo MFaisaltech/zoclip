@@ -29,6 +29,11 @@ def main() -> None:
     parser.add_argument("--redis-binary", type=Path, required=True)
     parser.add_argument("--api-port", type=int, default=8000)
     parser.add_argument("--auth-rate-limit", type=int, default=10)
+    parser.add_argument(
+        "--media-test-mode",
+        action="store_true",
+        help="Disposable M3 chunk/allowlist fixture configuration; paid AI stays disabled",
+    )
     args = parser.parse_args()
     if not args.allow_disposable_local:
         parser.error("Explicit --allow-disposable-local required")
@@ -147,6 +152,10 @@ def main() -> None:
                 "GEMINI_API_KEY": "",
             }
         )
+        if args.media_test_mode:
+            environment.update(
+                {"MEDIA_PART_BYTES": "65536", "MEDIA_ALLOWED_IMPORT_HOSTS": '["media.example.com"]'}
+            )
         with (work / "migrate.log").open("w") as log:
             run(
                 [sys.executable, "-m", "alembic", "upgrade", "head"],

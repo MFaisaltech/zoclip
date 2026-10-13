@@ -1,5 +1,11 @@
 # API handoff - Phases 1 through 6
 
+Phase 8 frontend Milestones 1–3 now consume the unchanged implemented API.
+Upload/resume/import, quote confirmation, generation and job polling/cancellation
+integration and local mock-only evidence are recorded in
+[PHASE8_MEDIA_MILESTONE.md](PHASE8_MEDIA_MILESTONE.md). No new endpoint or schema
+is introduced; the live 56-path OpenAPI equals `openapi.json`.
+
 The implemented contract is [openapi.json](openapi.json), generated with
 `uv run python scripts/export_openapi.py` from `zoclip.main.create_app` without
 connecting to a provider or database. No future endpoints are included.
