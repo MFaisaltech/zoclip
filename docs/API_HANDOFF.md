@@ -1,5 +1,10 @@
 # API handoff - Phases 1 through 6
 
+Phase 8 M4 now integrates actual transcript/suggestions, clip revisions/caption
+preferences, render selection/re-exports and private MP4 downloads. The existing
+API/snapshot is unchanged. See [M4 frontend evidence](PHASE8_EDITOR_MILESTONE.md)
+and [live provider preparation](PHASE8_LIVE_AI_PLAN.md); no live enablement is implied.
+
 Phase 8 frontend Milestones 1–3 now consume the unchanged implemented API.
 Upload/resume/import, quote confirmation, generation and job polling/cancellation
 integration and local mock-only evidence are recorded in

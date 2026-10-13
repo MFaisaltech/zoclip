@@ -1,5 +1,18 @@
 # ZoClip implementation status
 
+Phase 8 Milestone 4 (2026-10-13): **local mock/fixture editor/export integration
+verified**. Real transcript/highlights, revisioned clip edits/captions, explicit
+render selection, prepaid/quoted re-exports and private MP4 download/preview are
+connected. TypeScript, lint, optimized production build and contract drift pass.
+38 frontend units, 21 Chrome cases across separate fixtures, 105 focused
+backend cases and four fixture-boundary cases pass. Real local disk admission
+correctly blocks this host; functional browser checks use explicit disposable
+synthetic capacity, not a production exception. Live providers remain disabled
+and unverified; safe configuration and approval-gated plan are documented.
+See [M4 evidence and limits](PHASE8_EDITOR_MILESTONE.md) and
+[live-key plan](PHASE8_LIVE_AI_PLAN.md). No commit/push/deployment/VPS change.
+Milestones 5–6 remain outside scope; older checkpoint statements are historical.
+
 Phase 8 Milestone 3 (2026-10-13): **local upload/processing integration PASS**.
 Real resumable uploads, bounded-memory SHA-256, rights-attested direct HTTPS
 imports, quoted/confirmed generation, job polling/events/cancellation and account
@@ -117,7 +130,7 @@ no live provider requests, benchmarks or deployment have been performed.
 | 5 Render/editor | Local mock/fixture gate PASS; representative QA pending | Commit 35032a0; 275 Linux tests, actual captioned MP4/private download/revision rerender, owner isolation and exactly-once settlement; live providers and representative quality/capacity gates remain pending |
 | 6 Payments | Local sandbox gate PASS; merchant gate NOT LIVE | 324 Linux tests, 59 focused native checks, actual signed sandbox HTTP; duplicate grants once, spoof grants zero; real merchant adapter disabled |
 | 7 Operations | PASS — local infrastructure gate; VPS unverified | 334 full Linux regression cases plus 10 separate backup security cases; actual private Compose/TLS/RQ/outages/crash recovery/encrypted restore/controller checks; off-server recovery and server gates pending; see PHASE7_VERIFICATION.md |
-| 8 Frontend handoff/audit | PARTIAL - user-authorized Milestones 1-3 local gates PASS | Real auth/workspace/credits/upload/processing integration; 32 client tests, 18 Chrome cases across separate fixture runs, 146 focused backend passes/one Windows skip; see PHASE8_MEDIA_MILESTONE.md. Milestones 4-6 and full release audit unimplemented |
+| 8 Frontend handoff/audit | PARTIAL - user-authorized Milestones 1-4 mock/local integration verified | Includes transcript/highlights/editor/captions/private exports; 38 client units, 21 Chrome cases, 105 focused backend contracts plus four fixture guards pass; see PHASE8_EDITOR_MILESTONE.md for synthetic-capacity limit and pending live gate. Milestones 5-6/full release audit remain outside scope |
 
 ## Phase 0 deliverables and verification
 

@@ -1,5 +1,12 @@
 # ZoClip decision register
 
+M4 frontend options derive from actual OpenAPI: three caption presets, four framing
+modes, and fixed 9:16 720×1280 MP4 output. Edits use complete Preferences/If-Match;
+confirmed render requests preserve keys, while downloads require completed owned
+jobs and explicit revisions. No financial/provider/API migration was introduced.
+See PHASE8_EDITOR_MILESTONE.md for evidence and synthetic-capacity test limitations,
+and PHASE8_LIVE_AI_PLAN.md for the separately approved live-provider gate.
+
 Phase 0 decisions, with Phase 1 through 6 additions below. Accepted means design default;
 implementation evidence lives in IMPLEMENTATION_STATUS.md. AI REST adapters have
 local simulator verification; live account/model acceptance remains unverified.

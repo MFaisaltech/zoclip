@@ -34,7 +34,10 @@ def main() -> None:
         action="store_true",
         help="Disposable M3 chunk/allowlist fixture configuration; paid AI stays disabled",
     )
+    parser.add_argument("--synthetic-media-capacity", action="store_true")
     args = parser.parse_args()
+    if args.synthetic_media_capacity and not args.media_test_mode:
+        parser.error("Synthetic capacity requires explicit disposable media-test-mode")
     if not args.allow_disposable_local:
         parser.error("Explicit --allow-disposable-local required")
     if not 1024 <= args.api_port <= 65535:
@@ -185,7 +188,9 @@ def main() -> None:
                 sys.executable,
                 "-m",
                 "uvicorn",
-                "zoclip.main:create_app",
+                "scripts.editor_browser_api:create_test_app"
+                if args.synthetic_media_capacity
+                else "zoclip.main:create_app",
                 "--factory",
                 "--host",
                 "127.0.0.1",

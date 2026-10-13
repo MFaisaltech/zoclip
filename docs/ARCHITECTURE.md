@@ -1,5 +1,9 @@
 # ZoClip architecture blueprint
 
+Frontend M4 now consumes the existing transcript/suggestion/revision/render/export
+boundaries. See PHASE8_EDITOR_MILESTONE.md for mock validation and the explicit
+test-only capacity fixture; production media admission and providers are unchanged.
+
 Status: Phase 0 design with Phases 1 through 6 locally verified and Phase 7
 private infrastructure prepared; see
 IMPLEMENTATION_STATUS.md for evidence and remaining gates. The master specification is the product contract. This document

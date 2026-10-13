@@ -28,6 +28,10 @@ def main() -> None:
     parser.add_argument("--state", type=Path, required=True)
     parser.add_argument("--ffmpeg-bin", type=Path, required=True)
     parser.add_argument("--seed", action="store_true")
+    parser.add_argument("--synthetic-media-capacity", action="store_true")
+    parser.add_argument(
+        "--render-test-mode", action="store_true", help="M4 bounded local render fixtures"
+    )
     args = parser.parse_args()
     state_path = args.state.resolve()
     if (
@@ -73,9 +77,28 @@ def main() -> None:
         if args.seed:
             if manifest.exists():
                 parser.error("Fixtures already exist; preserving existing data")
-            users = seed(factory)
+            initial_balance = 20 if args.render_test_mode else 5
+            users = seed(factory, balance=initial_balance)
             settings = configure(factory, users, settings)
             settings.ffmpeg_binary = str(args.ffmpeg_bin / "ffmpeg.exe")
+            if args.render_test_mode:
+                from zoclip.credits.schemas import PolicyInput
+
+                settings.render_max_bytes = 16 * 1024**2
+                with factory() as db:
+                    limits = users["ai_limits"].model_copy(
+                        update={
+                            "render_cpu_seconds_per_output": 520,
+                            "storage_gb_days_per_output": 2,
+                        }
+                    )
+                    credits.configure_policy(
+                        db,
+                        PolicyInput(limits=limits, reason="Bounded M4 mock render verification"),
+                        "m4-render-policy",
+                        users["admin"],
+                    )
+                    db.commit()
             password = "Disposable media fixture password 83!"
             result = {"password": password, "users": {}}
             with factory() as db:
@@ -86,7 +109,7 @@ def main() -> None:
                 credits.adjust(
                     db,
                     users["bob"],
-                    -5,
+                    -initial_balance,
                     "m3-empty-wallet",
                     users["admin"],
                     "Explicit empty wallet fixture",
@@ -113,6 +136,15 @@ def main() -> None:
         )
         ai.HTTPProviders = lambda settings: Simulator()  # Existing test-only adapter, no vendor IO.
         storage = LocalStorage(settings.media_root)
+        if args.synthetic_media_capacity:
+            actual = LocalStorage.free_bytes
+
+            def synthetic(self):
+                if actual(self) < 1024**3:
+                    raise RuntimeError("At least 1 GiB actual fixture disk required")
+                return 1024**4
+
+            LocalStorage.free_bytes = synthetic
 
         def download(url, hosts, output, max_bytes, **kwargs):
             # API initiation still runs the unchanged HTTPS/allowlist policy. This fixture
@@ -143,9 +175,10 @@ def main() -> None:
             while True:
                 cleanup(factory, storage)
                 worker.dispatch(factory, redis)
-                SimpleWorker([Queue("ai", connection=redis)], connection=redis).work(
-                    burst=True, logging_level="ERROR"
-                )
+                SimpleWorker(
+                    [Queue("ai", connection=redis), Queue("render", connection=redis)],
+                    connection=redis,
+                ).work(burst=True, logging_level="ERROR")
                 time.sleep(0.5)
         except KeyboardInterrupt:
             pass
