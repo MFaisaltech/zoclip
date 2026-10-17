@@ -4,7 +4,7 @@ from typing import Literal, Self
 from urllib.parse import urlsplit
 from uuid import UUID
 
-from pydantic import Field, SecretStr, model_validator
+from pydantic import EmailStr, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import make_url
 
@@ -35,8 +35,15 @@ class Settings(BaseSettings):
     anonymous_ttl_seconds: int = Field(default=1800, ge=60, le=3600)
     auth_rate_limit: int = Field(default=10, ge=1, le=100)
     auth_rate_window_seconds: int = Field(default=900, ge=1, le=3600)
-    email_mode: Literal["disabled", "development"] = "disabled"
+    email_mode: Literal["disabled", "development", "smtp"] = "disabled"
     dev_mailbox_dir: str = "var/mailbox"
+    smtp_host: str = ""
+    smtp_port: Literal[465, 587] = 465
+    smtp_tls: Literal["implicit", "starttls"] = "implicit"
+    smtp_username: str = ""
+    smtp_password: SecretStr = SecretStr("")
+    smtp_from: EmailStr | None = None
+    smtp_timeout_seconds: int = Field(default=15, ge=1, le=30)
     google_client_id: str = ""
     google_client_secret: SecretStr = SecretStr("")
     google_redirect_uri: str = ""
@@ -80,6 +87,11 @@ class Settings(BaseSettings):
     ai_min_clip_seconds: int = Field(default=15, ge=1, le=60)
     ai_max_clip_seconds: int = Field(default=90, ge=1, le=180)
 
+    @field_validator("smtp_from", mode="before")
+    @classmethod
+    def blank_smtp_from(cls, value: str | None) -> str | None:
+        return value or None
+
     @property
     def ai_configured(self) -> bool:
         return self.ai_enabled and bool(
@@ -96,6 +108,25 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_deployment(self) -> Self:
+        if self.email_mode == "smtp":
+            if (
+                not self.smtp_host
+                or len(self.smtp_host) > 253
+                or any(
+                    not re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?", part)
+                    for part in self.smtp_host.split(".")
+                )
+                or not self.smtp_username
+                or "\r" in self.smtp_username
+                or "\n" in self.smtp_username
+                or not self.smtp_password.get_secret_value()
+                or self.smtp_from is None
+                or (self.smtp_tls, self.smtp_port) not in {("implicit", 465), ("starttls", 587)}
+                or not self.public_app_url.startswith("https://")
+            ):
+                raise ValueError("SMTP requires complete credentials, verified TLS and HTTPS links")
+        if self.app_env == "production" and self.registration_enabled and self.email_mode != "smtp":
+            raise ValueError("Production signup requires configured transactional email delivery")
         if self.payment_provider == "mock":
             sandbox_secret = self.payment_mock_webhook_secret.get_secret_value()
             if len(sandbox_secret) < 32 or sandbox_secret.lower().startswith(

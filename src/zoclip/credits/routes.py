@@ -24,6 +24,7 @@ from zoclip.credits.models import (
 from zoclip.credits.schemas import (
     AdjustmentInput,
     BudgetLimits,
+    ConsumptionRules,
     EntitlementInput,
     EntitlementView,
     Key,
@@ -57,6 +58,12 @@ def plans(db: DB) -> list[PlanView]:
             .order_by(PlanPrice.created_at.desc(), PlanPrice.id.desc())
             .limit(1)
         )
+        if (
+            price
+            and plan.slug != "free"
+            and not ConsumptionRules.model_validate(price.rules).purchasable
+        ):
+            continue
         result.append(
             PlanView(
                 id=plan.id,

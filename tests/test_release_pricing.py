@@ -13,9 +13,15 @@ from zoclip.credits.service import calculate
 def test_minimum_price_applies_to_short_sources_but_preserves_plan_limits():
     terms = json.loads(Path("deploy/staging-catalog.json").read_text())["plans"]["free"]
     rules = ConsumptionRules.model_validate(terms["rules"])
-    assert terms["included_credits"] == 0
+    assert terms["included_credits"] == 60  # Dormant, once-only trial; not an automatic grant.
     assert calculate(QuoteInput(source_seconds=26, output_count=1), rules) == 60
-    assert calculate(QuoteInput(source_seconds=7200, output_count=3), rules) == 606
+    assert calculate(QuoteInput(source_seconds=300, output_count=1), rules) == 60
+    for request in [
+        QuoteInput(source_seconds=301, output_count=1),
+        QuoteInput(source_seconds=26, output_count=2),
+    ]:
+        with pytest.raises(ApiError, match="plan_limit"):
+            calculate(request, rules)
     with pytest.raises(ApiError, match="plan_limit"):
         calculate(QuoteInput(source_seconds=26, output_count=4), rules)
     assert (

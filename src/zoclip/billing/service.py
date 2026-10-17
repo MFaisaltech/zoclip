@@ -26,6 +26,7 @@ from zoclip.billing.schemas import OrderInput, OrderView
 from zoclip.core.db import utcnow
 from zoclip.credits import service as credits
 from zoclip.credits.models import CreditTransaction, Entitlement, Plan, PlanPrice, Wallet
+from zoclip.credits.schemas import ConsumptionRules
 
 
 def view(order: BillingOrder) -> OrderView:
@@ -85,6 +86,8 @@ def create_order(
     )
     if latest != price.id:
         credits.fail("price_stale", "Select the current plan price version.")
+    if not ConsumptionRules.model_validate(price.rules).purchasable:
+        credits.fail("price_unavailable", "This package is no longer available for purchase.")
     if plan.slug == "free" or price.price_paisa <= 0 or price.included_credits <= 0:
         credits.fail("price_unavailable", "A positive prepaid price and allowance are required.")
     order = BillingOrder(

@@ -1,5 +1,44 @@
 # ZoClip implementation status
 
+## 2026-10-18 pricing release closeout
+
+Active deployment/source hashes, four live catalog packages, unchanged customer financial records and disabled public AI/payments verified read-only. VPN-only API and Vercel all-deployment protection remain intact. No new migration, deployment, paid provider call or rerun of the 190-test suite. Repository synchronization completes the interrupted release. Full commercial SaaS still requires provider-account evidence and bounded live-test approval, verified SMTP delivery, merchant onboarding/integration acceptance and separate launch authorization. See [release closeout evidence](PRICING_2026-10-17.md#release-closeout---2026-10-18).
+
+
+## 2026-10-17 pricing update
+
+Requested Free/Starter/Creator/Pro terms deployed to protected staging: PKR 0/299/699/1299; paid totals 500/1300/2400 credits including bonuses; conditional targets 7/20/38. Free source cap 300 seconds and PostgreSQL lifetime output limit 1. Duration quotes, budgets and payment verification preserved. No credits, paid calls or trial/AI/payment activation. Existing records preserved; append-only catalog retirement keeps legacy order/access snapshots. 190 backend, 36 frontend and 2 pricing browser tests passed. See [pricing evidence](PRICING_2026-10-17.md).
+
+
+## 2026-10-17 commercial execution update
+
+Protected staging release staging-20261017-commercial1 deployed the TLS-only transactional SMTP implementation and schema-aware image after a freshly encrypted, off-server authenticated backup. No new migration ran; all table row hashes matched. Seven services are healthy; VPN/Vercel protections and disabled public AI/payments/signup/email remain verified. The unchanged isolated entitlement survived worker replacement: exact video 9cced2b6-cf08-410c-b653-318eef1dc5fe and job 6271dd2d-5d8e-4549-bc24-87c60cc68703, USD 0.10, one Deepgram POST/one Gemini POST/one clip/zero paid retries, PREPARED/unapproved, zero calls/spend. Owner source consent confirmed; both provider metadata GETs accepted credentials. Applicable account rates, full model permissions and isolated credential binding remain unverified. No paid approval is requested yet.
+
+76 relevant PostgreSQL/mocked-SMTP/provider regressions passed; Ruff/mypy passed. Real email delivery is unverified without SMTP credentials. Owner confirms no JazzCash merchant account: real checkout/adapter and merchant sandbox acceptance remain incomplete; fictional mock tests are not JazzCash sandbox. Customer pay -> real AI -> download delivery is BLOCKED. See [commercial execution evidence](COMMERCIAL_DELIVERY_2026-10-17.md) for exact evidence and dependencies.
+
+
+2026-10-17 owner-authorized isolated operator installation completed:
+[backup, migration, staging verification and remaining blockers](ISOLATED_LIVE_TEST_INSTALL_2026-10-17.md).
+Fresh encrypted DB/media backup copied off-server and authenticated through EOF
+before additive migration c910a2e31f40. Every preexisting table's data preserved;
+one unapproved source-bound USD 0.10 entitlement and one audit appended.
+Staging guards, runtime-role denial, concurrent refusals and post-worker-restart
+cold inspection pass. All seven existing containers healthy and unchanged;
+VPN-only API and signed-out Vercel protection pass. Zero provider calls, spend,
+credits or public AI/payment enablement. READY FOR LIVE-TEST APPROVAL remains NO:
+isolated credentials and applicable account-rate evidence are unverified.
+
+2026-10-17 isolated live-test cap implemented and offline verified:
+[exact source, safeguards, evidence and installation blocker](ISOLATED_LIVE_TEST_CAP_2026-10-17.md).
+PostgreSQL singleton sponsorship, immutable USD 0.10 aggregate cap, permanent
+single-use Deepgram/Gemini/render slots, zero paid retries and runtime-role denial
+are implemented. 157 final PostgreSQL/mocked-provider/FFmpeg/config/staging/credit
+cases pass; Ruff and mypy (80 files) pass. Automatic approval review rejected
+remote code upload/database installation; staging is unchanged. Four-file local
+operator package prepared. No paid calls, credits, AI/payment enablement or
+historical acceptance changes. Live-test approval readiness remains NO pending
+explicit installation approval and verified credential/account-rate evidence.
+
 2026-10-15 private staging upload bug fixed and deployed:
 [root cause, live evidence and verification](PRIVATE_STAGING_UPLOAD_FIX_2026-10-15.md).
 Original upload never left local hashing: staging admission503 plan_unconfigured,

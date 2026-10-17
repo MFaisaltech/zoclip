@@ -240,9 +240,11 @@ def active_price(db: Session, user_id: UUID) -> PlanPrice:
         .order_by((Plan.slug != "free").desc(), Entitlement.starts_at.desc(), Entitlement.id.desc())
         .limit(1)
     )
-    if entitlement:
-        price = db.get(PlanPrice, entitlement.price_version_id)
-    else:
+    price = db.get(PlanPrice, entitlement.price_version_id) if entitlement else None
+    # A free award is once-only; it must not grandfather obsolete trial limits.
+    if price and db.scalar(select(Plan.slug).where(Plan.id == price.plan_id)) == "free":
+        price = None
+    if price is None:
         price = db.scalar(
             select(PlanPrice)
             .join(Plan)
@@ -385,6 +387,30 @@ def calculate(data: QuoteInput, rules: ConsumptionRules) -> int:
     return max(rules.minimum_job_credits, calculated)
 
 
+def check_lifetime_outputs(
+    db: Session, user_id: UUID, price: PlanPrice, requested: int, rules: ConsumptionRules
+) -> None:
+    """Caller holds the wallet lock. Held and settled slots survive version changes/restarts."""
+    if rules.lifetime_output_limit is None:
+        return
+    requests: list[dict] = list(
+        db.scalars(
+            select(Quote.request)
+            .join(CreditReservation, CreditReservation.quote_id == Quote.id)
+            .join(PlanPrice, PlanPrice.id == Quote.price_version_id)
+            .where(
+                CreditReservation.user_id == user_id,
+                CreditReservation.state.in_(["HELD", "SETTLED"]),
+                PlanPrice.plan_id == price.plan_id,
+            )
+        )
+    )
+    if sum(QuoteInput.model_validate(value).output_count for value in requests) + requested > (
+        rules.lifetime_output_limit
+    ):
+        fail("lifetime_output_limit", "Your lifetime trial clip has already been used or reserved.")
+
+
 def make_quote(
     db: Session, user_id: UUID, data: QuoteInput, key: str, *, production: bool = False
 ) -> Quote:
@@ -397,13 +423,16 @@ def make_quote(
     price = active_price(db, user_id)
     if production and not price.approved:
         fail("price_unapproved", "Commercial pricing is not approved.", 503)
+    rules = ConsumptionRules.model_validate(price.rules)
+    credits = calculate(data, rules)
+    check_lifetime_outputs(db, user_id, price, data.output_count, rules)
     row = Quote(
         user_id=user_id,
         price_version_id=price.id,
         operation_key=key,
         payload_hash=payload,
         request=data.model_dump(mode="json"),
-        credits=calculate(data, ConsumptionRules.model_validate(price.rules)),
+        credits=credits,
         expires_at=utcnow() + timedelta(minutes=15),
     )
     db.add(row)
@@ -544,6 +573,10 @@ def reserve(
     ):
         fail("reservation_exists", "Job or quote already has a reservation.")
     rules = ConsumptionRules.model_validate(price.rules)
+    request = QuoteInput.model_validate(quote.request)
+    if calculate(request, rules) != quote.credits:
+        fail("quote_mismatch", "The quote does not match its versioned consumption rules.")
+    check_lifetime_outputs(db, user_id, price, request.output_count, rules)
     if wallet.available < quote.credits:
         fail("insufficient_credits", "Insufficient spendable credits.")
     now = utcnow()

@@ -16280,6 +16280,24 @@
       },
       "ConsumptionRules": {
         "properties": {
+          "purchasable": {
+            "type": "boolean",
+            "title": "Purchasable",
+            "default": true
+          },
+          "lifetime_output_limit": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000000000000.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lifetime Output Limit"
+          },
           "minimum_job_credits": {
             "type": "integer",
             "maximum": 1000000000000.0,

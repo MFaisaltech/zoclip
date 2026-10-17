@@ -110,7 +110,13 @@ def register(data: Credentials, request: Request, db: DB, csrf: CsrfSession) -> 
     raw = issue_email_token(db, user, EmailVerificationToken)
     audit(db, request, "auth.verification_requested", target=user.id)
     db.commit()
-    email_sender.send(user.email, "verify-email", raw)
+    try:
+        email_sender.send(user.email, "verify-email", raw)
+    except ApiError as exc:
+        if exc.code != "email_delivery_failed":
+            raise
+        audit(db, request, "auth.email_delivery_failed", target=user.id)
+        db.commit()
     return GENERIC_MESSAGE
 
 
@@ -200,7 +206,14 @@ def forgot(data: EmailInput, request: Request, db: DB, csrf: CsrfSession) -> Mes
         audit(db, request, "auth.reset_requested", target=user.id)
     db.commit()
     if raw and user:
-        request.app.state.email_sender.send(user.email, "password-reset", raw)
+        try:
+            request.app.state.email_sender.send(user.email, "password-reset", raw)
+        except ApiError as exc:
+            if exc.code != "email_delivery_failed":
+                raise
+            # Same HTTP response for eligible and unknown addresses, even on SMTP failure.
+            audit(db, request, "auth.email_delivery_failed", target=user.id)
+            db.commit()
     return GENERIC_MESSAGE
 
 
