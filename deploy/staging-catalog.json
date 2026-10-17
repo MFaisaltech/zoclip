@@ -1,0 +1,86 @@
+{
+  "version": "release-20261015-v1",
+  "reason": "Owner final release request: bounded quote terms including minimum job cost for conservative 60 percent contribution target. No grants or activation. Retail packages remain draft until measured costs.",
+  "plans": {
+    "free": {
+      "price_paisa": 0,
+      "included_credits": 0,
+      "valid_days": 0,
+      "approved": true,
+      "rules": {
+        "credits_per_minute": 5,
+        "credits_per_output": 2,
+        "credits_per_edit": 2,
+        "captions_credits": 0,
+        "reframe_credits": 0,
+        "max_source_seconds": 7200,
+        "max_outputs": 3,
+        "max_edits": 1,
+        "max_concurrent_jobs": 1,
+        "daily_credits": 650,
+        "monthly_credits": 2500,
+        "minimum_job_credits": 60
+      }
+    },
+    "creator": {
+      "price_paisa": 200000,
+      "included_credits": 100,
+      "valid_days": 30,
+      "approved": false,
+      "rules": {
+        "credits_per_minute": 5,
+        "credits_per_output": 2,
+        "credits_per_edit": 2,
+        "captions_credits": 0,
+        "reframe_credits": 0,
+        "max_source_seconds": 7200,
+        "max_outputs": 3,
+        "max_edits": 1,
+        "max_concurrent_jobs": 1,
+        "daily_credits": 650,
+        "monthly_credits": 2500,
+        "minimum_job_credits": 60
+      }
+    },
+    "pro": {
+      "price_paisa": 600000,
+      "included_credits": 300,
+      "valid_days": 30,
+      "approved": false,
+      "rules": {
+        "credits_per_minute": 5,
+        "credits_per_output": 2,
+        "credits_per_edit": 2,
+        "captions_credits": 0,
+        "reframe_credits": 0,
+        "max_source_seconds": 7200,
+        "max_outputs": 3,
+        "max_edits": 1,
+        "max_concurrent_jobs": 1,
+        "daily_credits": 650,
+        "monthly_credits": 2500,
+        "minimum_job_credits": 60
+      }
+    },
+    "business": {
+      "price_paisa": 2000000,
+      "included_credits": 1000,
+      "valid_days": 30,
+      "approved": false,
+      "rules": {
+        "credits_per_minute": 5,
+        "credits_per_output": 2,
+        "credits_per_edit": 2,
+        "captions_credits": 0,
+        "reframe_credits": 0,
+        "max_source_seconds": 7200,
+        "max_outputs": 3,
+        "max_edits": 1,
+        "max_concurrent_jobs": 1,
+        "daily_credits": 650,
+        "monthly_credits": 2500,
+        "minimum_job_credits": 60
+      }
+    }
+  }
+}

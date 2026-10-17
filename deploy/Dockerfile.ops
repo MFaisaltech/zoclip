@@ -1,6 +1,6 @@
-FROM postgres:17-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826
-RUN apt-get update && apt-get install -y --no-install-recommends age=1.1.1-1+b3 python3=3.11.2-1+b1 openssh-client=1:9.2p1-2+deb12u10 \
-    && rm -rf /var/lib/apt/lists/*
+FROM postgres:17-trixie@sha256:2d2b8998d31037bf721cfdf764d76ba74171b4fab3431b7f72c27c56ddbdf9e3
+RUN apt-get update && apt-get install -y --no-install-recommends age=1.2.1-1+b5 python3=3.13.5-1 openssh-client=1:10.0p1-7+deb13u4 \
+    && rm -rf /var/lib/apt/lists/* /usr/local/bin/gosu
 COPY deploy/backup.py /opt/zoclip/backup.py
 USER 10001:10001
 ENTRYPOINT ["python3", "/opt/zoclip/backup.py"]

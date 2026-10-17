@@ -14,11 +14,13 @@ from zoclip.media.cleanup import cleanup
 from zoclip.media.storage import LocalStorage
 from zoclip.media.worker import dispatch, recover
 from zoclip.ops.privacy import cleanup_auth
+from zoclip.ops.staging import verify_closed_runtime
 
 
 def main() -> None:
     settings = Settings()  # type: ignore[call-arg]
     engine = build_engine(settings.database_url.get_secret_value())
+    verify_closed_runtime(settings, engine)
     factory = sessionmaker(engine, expire_on_commit=False)
     redis = Redis.from_url(
         settings.redis_url.get_secret_value(), socket_timeout=5, socket_connect_timeout=5

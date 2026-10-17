@@ -1,5 +1,11 @@
 # Safe live Gemini/Deepgram preparation — not executed
 
+Subsequent offline preparation and actual remaining gates are recorded in
+[PHASE8_LIVE_AI_READINESS.md](PHASE8_LIVE_AI_READINESS.md). AI remains disabled;
+private keys are now present, approved F: media and isolated local PostgreSQL/Redis
+are prepared. Models/versions/rates and live approval remain pending. No paid test
+was run. Earlier empty-key/service notes in the report are historical snapshots.
+
 Milestone 4 keeps live AI disabled. This plan does not authorize paid calls,
 deployment, VPS changes or access to existing user data. Mock validation must pass
 first, followed by explicit user approval for a concrete source, model/version,

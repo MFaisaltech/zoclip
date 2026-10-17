@@ -12,6 +12,7 @@ settings = Settings()
 engine = build_engine(settings.database_url.get_secret_value())
 with engine.begin() as db:
     db.execute(text("REVOKE INSERT, UPDATE, DELETE ON alembic_version FROM zoclip_runtime"))
+    db.execute(text("REVOKE DELETE, TRUNCATE ON staging_account_invites FROM zoclip_runtime"))
     # Default privileges survive future migrations; all append-only triggers stay active.
     for table in (
         "wallet_transactions",

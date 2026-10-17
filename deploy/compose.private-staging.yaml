@@ -1,0 +1,37 @@
+# Optional M6 profile: loopback transport, one browser API origin, all integrations closed.
+# Use AFTER deploy/compose.yaml; never publish this listener on 0.0.0.0.
+x-private: &private
+  PRIVATE_STAGING: "true"
+  STAGING_SITE_DOMAIN: ${STAGING_SITE_DOMAIN:?Set owned same-site domain}
+  STAGING_INVITE_EPOCH: ${STAGING_INVITE_EPOCH:?Set fresh deployment UUID and rotate after restores}
+  REGISTRATION_ENABLED: "false"
+  AI_ENABLED: "false"
+  DEEPGRAM_API_KEY: ""
+  GEMINI_API_KEY: ""
+  GOOGLE_CLIENT_ID: ""
+  GOOGLE_CLIENT_SECRET: ""
+  GOOGLE_REDIRECT_URI: ""
+  PAYMENT_PROVIDER: disabled
+  ENABLE_LIVE_PAYMENTS: "false"
+  ENABLE_TRIAL_CREDITS: "false"
+  EMAIL_MODE: disabled
+  MEDIA_ALLOWED_IMPORT_HOSTS: "[]"
+  MEDIA_UPLOAD_TTL_SECONDS: "86400"
+  MEDIA_RETENTION_SECONDS: "604800"
+services:
+  api:
+    environment: *private
+  worker-ai:
+    environment: *private
+    networks: !override [data, queue]
+  worker-render:
+    environment: *private
+  maintenance:
+    environment: *private
+  migrate:
+    environment: *private
+  redis:
+    command: [redis-server, --appendonly, "yes", --appendfsync, everysec, --maxmemory, 192mb, --maxmemory-policy, noeviction]
+  proxy:
+    volumes:
+      - ./nginx.private-staging.conf:/etc/nginx/nginx.conf:ro

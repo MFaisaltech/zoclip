@@ -10,7 +10,8 @@ from zoclip.core.config import Settings
 from zoclip.core.db import Base, utcnow
 from zoclip.core.errors import ApiError
 from zoclip.credits import service as money
-from zoclip.credits.models import Quote
+from zoclip.credits.models import Quote, SystemLimits
+from zoclip.credits.schemas import ConsumptionRules
 from zoclip.media.importer import validate_url
 from zoclip.media.models import (
     Job,
@@ -116,9 +117,32 @@ def pending_gate(db: Session, settings: Settings) -> None:
         raise ApiError(429, "queue_full", "The processing queue is full.")
 
 
+def source_duration_limit(db: Session, owner: UUID, settings: Settings) -> int:
+    """Closed private uploads need no commercial catalog or credit allowance."""
+    try:
+        price = money.active_price(db, owner)
+    except ApiError as exc:
+        if exc.code != "plan_unconfigured" or not settings.private_staging:
+            raise
+        limits = db.get(SystemLimits, 1)
+        if (
+            settings.ai_enabled
+            or settings.payment_provider != "disabled"
+            or settings.enable_live_payments
+            or limits is None
+            or limits.breaker is not True
+        ):
+            raise ApiError(
+                503, "spending_disabled", "Private upload controls must stay closed."
+            ) from exc
+        # Same 120-minute hard ceiling enforced independently by the media probe.
+        # This grants no plan, entitlement, balance, quote or processing permission.
+        return 7200
+    return ConsumptionRules.model_validate(price.rules).max_source_seconds
+
+
 def ingestion_gate(db: Session, owner: UUID, settings: Settings) -> None:
-    # Free catalog must also have an explicit configured quota; no automatic allowance.
-    money.active_price(db, owner)
+    source_duration_limit(db, owner, settings)
     query = (
         select(func.count())
         .select_from(SourceVideo)
@@ -302,7 +326,8 @@ def process(
 ) -> Job:
     # Financial locks precede media locks everywhere. User lock serializes all mutations.
     money.lock_wallet(db, owner)
-    hashed = money.fingerprint(data.model_dump())
+    # Preserve fingerprints for previously accepted manual-selection requests.
+    hashed = money.fingerprint(data.model_dump(exclude_defaults=True))
     old = db.scalar(select(Job).where(Job.user_id == owner, Job.operation_key == key))
     if old:
         money.same(old.request_hash, hashed)
@@ -353,7 +378,7 @@ def process(
         operation_key=key,
         request_hash=hashed,
         reservation_id=reservation.id,
-        checkpoint={"estimated_credits": reservation.credits},
+        checkpoint={"estimated_credits": reservation.credits, "auto_render": data.auto_render},
     )
     db.add(job)
     db.flush()

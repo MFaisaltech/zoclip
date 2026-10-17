@@ -42,11 +42,13 @@ class ProcessInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     video_id: UUID
     quote_id: UUID
+    auto_render: bool = False
 
 
 class GenerateInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     quote_id: UUID
+    auto_render: bool = False
 
 
 class JobView(BaseModel):

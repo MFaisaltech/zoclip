@@ -1,5 +1,205 @@
 # ZoClip implementation status
 
+2026-10-15 private staging upload bug fixed and deployed:
+[root cause, live evidence and verification](PRIVATE_STAGING_UPLOAD_FIX_2026-10-15.md).
+Original upload never left local hashing: staging admission503 plan_unconfigured,
+zero sessions/parts/videos/files. Closed private upload validation now works without
+a commercial catalog while preserving configured quotas and all financial fences.
+UI separates hashing/admission/transfer/finalization and clears failed progress.
+62 real-PostgreSQL backend and13 frontend cases pass; lint/types/build pass. Protected
+frontend and immutable backend uploadfix1 deployed after verified off-server backup.
+Exact-size admission passes in rollback-only staging verification; no data deletion,
+migration, credits, payments, AI calls, acceptance changes, commit or push.
+
+2026-10-15 owner-authorized private staging execution:
+[live deployment evidence and remaining checks](PRIVATE_STAGING_DEPLOYMENT_2026-10-15.md).
+Authoritative DNS verified; real DNS-01 API certificate issued; protected Vercel
+frontend built/aliased; isolated DB migrated to8c42ab719e30. Guarded services and
+WireGuard-only18443 socket passed real Windows VPN HTTPS200/200/admin401 checks.
+AI=false, breaker=true, payments/signup/external integrations disabled. Audited
+owner first-admin invitation delivered locally without printing secrets. Recovery
+identity generated/stays on PC; encrypted baseline copied and restored locally.
+Security-refreshed pinned images reduce findings; residual vendor advisories,
+manual renewal/backup scheduling and browser/reboot/IPv6 limitations are recorded.
+52 backend and24 frontend focused checks pass; no paid-provider/financial grant,
+acceptance continuation, public API exposure, portfolio/email change, commit or push.
+
+2026-10-15 owner-confirmed offline-only reviewer verification:
+[evidence and limits](WIREGUARD_OFFLINE_VERIFICATION_2026-10-15.md).
+27 focused backend and36 frontend cases pass. Strengthened authenticated-session
+CSRF assertions reject missing/stale token and untrusted Origin, accept valid
+rotation; real mock-PostgreSQL login/cookie/admin checks pass. No staging exists,
+so WireGuard handshake/isolation, real certificate and browser connectivity remain
+unverified. No deployment/infrastructure/provider/acceptance changes performed.
+
+2026-10-15 reviewer access selection: **WireGuard**, superseding managed reviewer
+SSH tunnels; SSH retained for operators. [Exact preparation](WIREGUARD_REVIEWER_ACCESS.md).
+Nonsecret-only renderer validates RFC1918 subnet/peers/ports/route exclusions and
+prepares per-device key placeholders, dedicated nftables policy and systemd VPN
+socket/loopback TLS forwarder. Docker publication guards, application auth/finance,
+invite epoch and acceptance evidence remain unchanged. 25 VPN/template cases plus
+25 existing deployment-fence cases and6 frontend private-access cases pass;
+focused Ruff/Oxlint pass. CLI placeholder-bundle hashes and overwrite refusal
+pass. Linux unit/nft syntax, reboot/isolation and browser/VPN tests remain
+target checks. No keys, accounts, services, firewall/DNS changes or deployment.
+
+Private staging blocker follow-up (2026-10-14):
+[implementation and exact owner procedures](STAGING_BLOCKERS_RESOLVED.md).
+Audited operator-only first-admin/reviewer invites, private0600 single-use token
+delivery, atomic CSRF/rate-limited redemption, permanently closed bootstrap after
+activation, reviewer revocation/session invalidation and external restore epoch.
+New forward migration8c42ab719e30 only adds protected invite history; existing
+authentication and financial/acceptance guards are retained. Canonical configurable
+same-site subdomains, explicit browser private-access probe, restricted reviewer
+SSH template, Vercel protection body/access checklist and owner-selectable backup
+policy/destination/restore procedure prepared. 81 focused backend cases pass
+(including fresh mock PostgreSQL concurrency/crash/role/migration/immutability),
+36 frontend cases pass; Ruff/mypy/Oxlint/TypeScript and generated contracts pass.
+Merged closed Compose plan passes without containers. No new production build,
+browser automation, production accounts, live DB migration, DNS, provider calls,
+deployment, commit or push. Owner inputs/explicit deployment approval and actual
+target verification remain; managed reviewer SSH is the prepared topology, not
+Vercel server-to-private-network access. Acceptance remains paused and untouched.
+
+Phase8, Milestone6 private staging preparation (2026-10-14):
+[exact deployment and recovery runbook](PHASE8_PRIVATE_STAGING_RUNBOOK.md).
+Same-site Vercel frontend / SSH-only Contabo API profile, closed runtime settings,
+read-only breaker startup fence, signup/spending-open denial, internal application
+networks, Redis AOF persistence and systemd profile drop-ins prepared. Guarded
+production build PASS (minimum1475MiB sampled RAM);56 focused backend tests and13
+frontend staging tests pass, lint/types pass and merged Compose plan validates.
+No migration or deployment executed. Owner domains/credentials/images/protection,
+audited production invite/admin provisioning and actual target/backup verification
+remain blockers. AI acceptance stays paused; original guards/evidence untouched.
+
+
+Phase 8, Milestone 5 billing/admin implementation (2026-10-14):
+[feature and focused verification record](PHASE8_BILLING_ADMIN_MILESTONE.md).
+Real wallet/ledger, applied plan/prepaid access, usage and reservation visibility;
+safe pricing review; protected admin customers/plans/jobs/costs/payments/audits and
+existing audited staff actions. Six PostgreSQL feature cases, ten config/OpenAPI
+checks and 32 frontend cases pass; focused lint/types/contract checks pass.
+No migration or live financial write. Merchant checkout remains inactive.
+Live AI acceptance is paused until private staging; its evidence, guards and
+approvals are untouched. Build/browser QA and private staging verification remain.
+
+Safe pre-dispatch continuation implemented/offline-verified (2026-10-14):
+[continuation contract and evidence](ACCEPTANCE_CONTINUATION.md). Fixed original
+operation and hashed immutable history; fresh scoped approval, atomic single-use
+audit/fence and nonrecoverable in-memory start permit; separate continuation
+receipts/attestation, unchanged native provider/financial/resource guards.
+126 focused offline checks pass, including 56 continuation cases; Ruff passes,
+mypy passes for 77 files. No live authorization was created/consumed; original
+receipts remain unchanged, AI disabled and spending blocked. Explicit execution
+approval is still required. This supersedes the earlier live-readiness wording
+below without replacing the historical preparation/attempt records.
+
+One-shot preparation ready for explicit live authorization (2026-10-14):
+[actual completion record](ACCEPTANCE_READY_2026-10-14.md). Gemini 3.1 minimal
+thinking/default temperature/structured-output amendment and model guards applied.
+One authorized unauthenticated metadata GET, HTTP 200; actual Nova-3 general
+monolingual English batch version 2025-07-31.0 verified and pinned. Five approved
+amended rates plus all five USD 0.05 budgets installed with breaker=true through
+admin routes; six financial audits. Existing customer/one-credit ledger unchanged.
+70 offline checks, Ruff and mypy (76 files) pass. Original approval/bootstrap
+history preserved; new private amendment/metadata/financial receipts recorded.
+AI_ENABLED=false, live attestation=false; no inference/authenticated provider
+requests, breaker opening, deployment, commit or push. Only live-run authorization
+and its immediate preflight remain; prior missing-version/rate notes are historical.
+
+Approved isolated provisioning (2026-10-13): [actual results](LOCAL_ACCEPTANCE_PROVISIONING.md).
+Local-only audited first-admin command implemented/tested/executed; separate admin
+registered/verified through existing workflows, customer unchanged, sessions
+revoked/fresh login verified. Exact reviewed free-plan terms and one ADMIN_ADJUST
+test credit installed through admin RBAC/CSRF/idempotency routes. 53 offline tests,
+Ruff and mypy (74 files) pass. No production data/payment settings touched.
+No provider requests, AI enablement, breaker opening, deploy, commit or push.
+Five rates and USD 0.05 policy remain blocked by verified Deepgram batch-version
+and account-rate evidence; installation command implemented/tested but not run.
+AI_ENABLED=false; breaker=true; no cost policy or provider/job history.
+
+One-shot approval proposal (2026-10-13): documentation only; no code/config/data
+changes. [Approval sheet](ONE_SHOT_APPROVAL_SHEET.md) proposes a separately audited
+local admin bootstrap, one-credit isolated free-plan terms, five reviewed rate
+shapes (local CPU/storage explicitly assumed), USD 0.0149192 accounting envelope
+and five USD 0.05 budget dimensions. Pure in-memory Pydantic/Decimal checks pass;
+no database/provider connection used. Executor re-reviewed; prior 42 offline
+checks retained, not rerun. First-admin utility remains unimplemented, Gemini
+account access and a verified Nova-3/en batch version unresolved. No admin,
+credit adjustment, financial policy, AI enablement or breaker opening authorized
+or executed. Live test remains blocked pending explicit approval and evidence.
+
+Acceptance account/model preparation (2026-10-13): **English/audio/account PASS;
+live run remains BLOCKED**. Configured Gemini 2.5 Flash-Lite and Deepgram Nova-3/en
+only; keys and all other dotenv values unchanged, AI_ENABLED=false, version unset.
+Sample AAC-LC/mono/44.1 kHz and hash pass. Exactly one verified local customer was
+created through existing auth/development-mailbox workflows; credentials are
+ignored/user-SYSTEM private, sessions logged out, zero credits granted. Persisted
+email mode remains disabled. Services healthy; zero financial rows/jobs/requests,
+no admin/policy, breaker open. No financial setting or application-code change,
+provider request, deployment, commit or push. Version cannot remain empty for
+execution under current contracts. Exact manual provider/version/admin/financial/
+breaker/approval actions: [latest acceptance handoff](ONE_SHOT_ACCEPTANCE.md).
+
+One-shot acceptance preparation (2026-10-13): **local services and offline guard
+PASS; live run BLOCKED**. Restarted the existing isolated readiness PostgreSQL/
+Redis without reset/deletion; head 7b37ea061d28 and read-only drift check pass.
+Readiness DB remains empty, no rates/policy/credits, breaker open; Redis DB 0 empty.
+Added native single-job driver and PostgreSQL commit-before-dispatch slots for
+opt-in acceptance jobs, including stop-on-429 and restart/crash protection.
+38 full offline cases plus four approval-gate cases pass; lint/format/type pass.
+Sample probe/hash pass. AI_ENABLED stays false; provider model/version fields
+remain unset, keys private. No provider requests, API/RQ/scheduler start, production
+billing change, reset, deployment, commit or push. New mock schemas/evidence were
+preserved. Exact commands, stop conditions and remaining account/rate/approval
+gates: [one-shot acceptance handoff](ONE_SHOT_ACCEPTANCE.md).
+
+Scoped M2 resumption review (2026-10-13): **COMPLETE; no M2 code gap found**.
+Existing M2 completion commits and subsequent M3/M4 commits were already present
+and preserved, along with all five pre-existing uncommitted live-readiness files.
+Fresh checks: 21 auth/workspace frontend units, TypeScript, lint, auth/workspace
+contract drift, 10 backend configuration/OpenAPI tests, Ruff/format and mypy PASS.
+Build/Chrome were not relaunched with only 0.51 GiB available physical memory;
+the earlier M2 successful build and 11 Chrome cases remain historical evidence.
+The 63 PostgreSQL/Redis checks were not repeated because their fixture resets the
+disposable database and this request forbids resets. No database/service changes,
+live calls, later milestone implementation, deployment, commit or push occurred.
+See [scoped audit and evidence boundaries](PHASE8_WORKSPACE_MILESTONE.md).
+
+Latest live-readiness preparation (2026-10-13): **keys/storage/local services PASS;
+live execution still BLOCKED**. Both private keys are present and AI_ENABLED=false.
+User-confirmed source rights; a separate 26.74s/2.70 MiB local input copy is prepared.
+User selected private F: media (~85.43 GiB free); real capacity now passes without
+an override. New isolated loopback PostgreSQL/Redis and forward migrations
+7b37ea061d28 pass; existing PostgreSQL service/data untouched. Live DB empty and
+breaker open. A separate disposable DB/Redis DB 15 regression run passes **130
+tests**, zero failures/skips. Model access/exact version, actual rates/local
+allocations, policy/test account and paid approval remain pending. No provider
+request, API/processing-worker start, deployment, VPS operation, commit or push.
+See PHASE8_LIVE_AI_READINESS.md for current evidence and manual model guidance;
+the earlier rechecks below are historical.
+
+Controlled live-validation recheck (2026-10-13): **NOT READY / no live execution**.
+Actual private key/model fields remain empty; configured isolated PostgreSQL/Redis
+are unreachable, real disk is about 439 MiB below admission needs, and licensed
+source confirmation is missing. Available RAM is now 1.46 GiB. Fresh offline/mock
+subset: 20 passed, 44 deselected. Conditional provider admission estimates and the
+existing helper command template are documented in PHASE8_LIVE_AI_READINESS.md;
+USD 0.05 policy/rates remain unapplied. No configuration/secret overwrite, database
+mutation, provider request, worker start, deployment, VPS change, commit or push.
+
+Phase 8 live AI readiness (2026-10-13): **offline disabled preparation PASS;
+live test BLOCKED**. Created ignored, user/SYSTEM-only local `.env` with empty
+provider-key/model slots and AI_ENABLED=false; no existing configuration replaced.
+Added a read-only offline checker and a proposed USD 0.05 one-source test plan.
+20 selected configuration/mock-adapter tests pass, plus checker redaction/refusal
+checks. Real disk is below normal admission requirements, available RAM is low,
+and provider access/version/rates, isolated services and source consent/hash remain
+manual gates. No live call, worker startup, database mutation, deployment, VPS
+operation, commit or push. See [readiness evidence and exact actions](PHASE8_LIVE_AI_READINESS.md).
+M1â€“4 publication was separately authorized and completed before this preparation;
+earlier no-commit/push statements describe their original verification handoffs.
+
 Phase 8 Milestone 4 (2026-10-13): **local mock/fixture editor/export integration
 verified**. Real transcript/highlights, revisioned clip edits/captions, explicit
 render selection, prepaid/quoted re-exports and private MP4 download/preview are
@@ -1107,3 +1307,63 @@ secrets are excluded. The phase adds PAYMENT_MOCK_WEBHOOK_SECRET; this completio
 review adds no further migration, dependency or environment setting. Merchant
 acceptance, live AI, representative QA/economics/capacity, production operations
 and remote CI remain unverified. Next implementation is Phase 7 only when requested.
+
+### Private staging quote preview — 2026-10-15
+
+The READY source reached the normal `/jobs/quote` path. Live inspection found five
+seeded enabled plan names but zero `plan_price_versions`, so `active_price` raised
+`plan_unconfigured`. This was missing versioned pricing/consumption rules, not a
+video readiness or browser refresh failure. Local acceptance-only terms explicitly
+exclude commercial pricing approval and were not copied to staging.
+
+Added authenticated, CSRF-protected, rate-limited `POST /jobs/quote-preview` for
+private staging only. It requires AI disabled, payment provider disabled, live
+payments disabled and a closed database spending breaker. It returns the requested
+settings and null credit estimate when pricing is missing/unapproved; only existing
+approved terms produce a numeric estimate. Existing configured plan limits still
+apply. No quote ID, durable quote, wallet, ledger, reservation, provider call, job or
+outbox is created. Production quote/reserve logic is unchanged. The private frontend
+uses this preview route and offers no confirmation/reservation action; saved normal
+quotes cannot restore a confirmation action in private mode. No migration, catalog
+write, entitlement, credit grant, or payment activation is needed.
+
+Validation: 138 tests passed using a fresh disposable PostgreSQL 17 database (quote,
+credit invariants, private upload and deployment fences); 14 frontend media API tests
+passed. Ruff, mypy, frontend TypeScript and targeted frontend lint passed. Tests cover
+missing/approved/unapproved pricing, configured plan limits, disabled plans, preview
+fences, auth/CSRF, unchanged financial/job rows, no redeemable quote ID, and unchanged
+commercial missing-price rejection. No paid provider was called. Live deployment
+results are recorded separately after verification.
+
+Deployment verified: backend release `staging-20261015-quotefix1`, image
+`sha256:d71a81c4e945b012a8ef1457d3720fa043885427220bc3fb0ffe261f55446ede`;
+protected Vercel deployment `dpl_vCUcWT7j1kFFukzs3axrg4ztjbtz` now serves
+`zoclip.technabeel.com`. All service health checks passed; deployment checks report
+zero alerts. Live read-only preview returned 26 source seconds, null credits and
+`unconfigured`, with financial/job/provider row counts unchanged. The normal quote
+service still reproduced `plan_unconfigured` in a rolled-back transaction. The
+114,549,007-byte READY source passed its stored SHA-256 check. Wallet available and
+reserved remain zero; ledger/reservations/spend attempts/provider usage/orders remain
+zero. HTTPS readiness from the Windows reviewer VPN returned 200; unauthenticated
+preview returned 401; public server port 18443 remained inaccessible. WireGuard,
+VPN firewall and private socket units remain active; listeners bind only VPN/loopback.
+Vercel project protection remains `all`. No schema migration or integration activation.
+Encrypted backup `20261015T122415-239dc3b5.json` and both ciphertexts were copied to the
+protected local backup directory and SHA-256 verified before rollout. Recovery key
+remained on this PC. Scanner results match the preceding image (existing unresolved
+1 critical/212 high baseline); this code-only fix does not claim production readiness.
+Signed-in browser automation was unavailable; authenticated HTTP behavior was tested
+against disposable PostgreSQL, and live service behavior verified read-only. Owner
+should refresh the protected browser and retry Get processing quote; expected private
+preview explicitly shows missing approved pricing and offers no processing action.
+
+### Protected release completed - 2026-10-17
+
+Backend `staging-20261017-final1` and protected Vercel deployment
+`dpl_GKrPNBvtPSBEhbbtg5THJ5graf1J` are deployed and healthy.
+The existing source receives a configured 60-credit preview with AI/payment
+controls closed and balances unchanged. Completed encrypted backup was reused,
+copied off-server, hash-verified and locally authenticated through age EOF.
+Exact versions, verification boundaries, preserved data and recovery notes:
+[private release result](PRIVATE_RELEASE_RESULT_2026-10-17.md).
+Signed-in staging browser acceptance and live AI remain unverified.

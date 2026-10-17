@@ -1,0 +1,22 @@
+{
+  "status": "owner_decision_required_not_activated",
+  "local_ciphertext_directory": "SET_PRIVATE_BACKUP_SCRATCH_PATH",
+  "off_server": {
+    "method": "ssh_scp",
+    "host": "SET_BACKUP_HOST",
+    "port": 22,
+    "user": "SET_RESTRICTED_BACKUP_USER",
+    "directory": "SET_PRIVATE_REMOTE_DIRECTORY",
+    "known_hosts_file": "SET_VERIFIED_KNOWN_HOSTS_PATH",
+    "key_file": "SET_RESTRICTED_KEY_PATH"
+  },
+  "age_recipient_file": "SET_PUBLIC_RECIPIENT_FILE",
+  "offline_identity_custodian": "SET_CUSTODIAN",
+  "backup_window_utc": null,
+  "retention": {"daily_points": null, "weekly_points": null, "monthly_points": null},
+  "rpo_hours": null,
+  "rto_hours": null,
+  "restore_drill_days": null,
+  "alert_owner": "SET_ALERT_OWNER",
+  "automatic_deletion_enabled": false
+}

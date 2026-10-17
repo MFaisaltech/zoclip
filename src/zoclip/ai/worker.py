@@ -322,7 +322,23 @@ def paid_request(
         # Recheck cancellation immediately before dispatch; if revoked, no request is sent.
         try:
             with factory() as db:
-                checked(db, owner, job_id, token)
+                job = checked(db, owner, job_id, token)
+                from zoclip.ai.acceptance import MARKER, consume
+
+                if MARKER in job.checkpoint:
+                    video = service.owned(db, SourceVideo, owner, job.video_id)
+                    # Reject any previous attempt even if a damaged checkpoint lost a slot.
+                    count = db.scalar(
+                        select(func.count())
+                        .select_from(AIRequest)
+                        .where(AIRequest.job_id == job_id, AIRequest.provider == provider)
+                    )
+                    if count != 1:
+                        raise ApiError(
+                            503, "acceptance_request_consumed", "Acceptance request history exists."
+                        )
+                    consume(job, settings, provider, request_id, video.metadata_json["sha256"])
+                    db.commit()  # Durable before dispatch, including crash/429/timeout boundaries.
         except ApiError:
             with factory() as db:
                 money.lock_wallet(db, owner, active_required=False)
@@ -353,6 +369,14 @@ def paid_request(
             checkpoint_response(factory, owner, request_id, receipt)
     result = reconcile_response(factory, owner, request_id)
     if result["status"] == 429:
+        with factory() as db:
+            job = checked(db, owner, job_id, token)
+            from zoclip.ai.acceptance import MARKER
+
+            if MARKER in job.checkpoint:
+                raise ApiError(
+                    503, "acceptance_provider_rejected", "One-shot provider rejected; stop."
+                )
         from zoclip.media.worker import retry_delay
 
         with factory() as db:
@@ -381,6 +405,19 @@ def run(
             db.commit()
             return
         pinned = job.checkpoint.get("ai_config") or {k: getattr(settings, k) for k in CONFIG_KEYS}
+        if job.checkpoint.get("auto_render") and not job.checkpoint.get("ai_config"):
+            source = service.owned(db, SourceVideo, owner, job.video_id)
+            source_seconds = (
+                source.metadata_json.get(
+                    "duration_ms", source.metadata_json["duration_seconds"] * 1000
+                )
+                / 1000
+            )
+            pinned = {
+                **pinned,
+                "ai_min_clip_seconds": min(settings.ai_min_clip_seconds, source_seconds),
+                "ai_max_clip_seconds": min(30, settings.ai_max_clip_seconds, source_seconds),
+            }
         job.checkpoint = {**job.checkpoint, "ai_config": pinned}
         settings = settings.model_copy(update=pinned)
         if settings.deepgram_language not in settings.ai_approved_languages:
@@ -552,6 +589,31 @@ def run(
                 service.event(db, job, "SUGGESTIONS_READY")
                 job.checkpoint = {k: v for k, v in job.checkpoint.items() if k != "candidates"}
                 job.lease_token, job.lease_until = None, None
+                if job.checkpoint.get("auto_render"):
+                    from zoclip.rendering import service as rendering
+
+                    # The user authorized rendering with the original quote. Reuse
+                    # selection admission, quotas, disk guards and durable outbox.
+                    db.flush()
+                    suggestions = list(
+                        db.scalars(
+                            select(ClipSuggestion)
+                            .where(ClipSuggestion.job_id == job.id)
+                            .order_by(ClipSuggestion.rank)
+                        )
+                    )
+                    clips = [
+                        rendering.create(db, owner, suggestion.id) for suggestion in suggestions
+                    ]
+                    rendering.select_clips(
+                        db,
+                        owner,
+                        job.id,
+                        [clip.id for clip in clips],
+                        "auto-render:" + str(job.id),
+                        settings,
+                        storage,
+                    )
         db.commit()
 
 

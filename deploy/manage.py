@@ -3,11 +3,58 @@
 import argparse
 import json
 import os
+import re
 import subprocess
 import time
 from pathlib import Path
+from uuid import UUID
 
 WORKLOAD = ["proxy", "api", "worker-ai", "worker-render", "maintenance"]
+
+
+def validate_private_config(config):
+    for name in ["api", "proxy", "backup"]:
+        if not re.fullmatch(r".+@sha256:[a-f0-9]{64}", config["services"][name]["image"]):
+            raise RuntimeError("Private staging requires reviewed app, proxy and tools digests")
+    for name in ["api", "worker-ai", "worker-render", "maintenance", "migrate"]:
+        env = config["services"][name]["environment"]
+        try:
+            UUID(str(env.get("STAGING_INVITE_EPOCH", "")))
+        except ValueError as exc:
+            raise RuntimeError(
+                "Private staging requires an owner-selected invite epoch UUID"
+            ) from exc
+        if any(
+            env.get(key) != value
+            for key, value in {
+                "PRIVATE_STAGING": "true",
+                "AI_ENABLED": "false",
+                "REGISTRATION_ENABLED": "false",
+                "PAYMENT_PROVIDER": "disabled",
+                "ENABLE_LIVE_PAYMENTS": "false",
+                "ENABLE_TRIAL_CREDITS": "false",
+                "DEEPGRAM_API_KEY": "",
+                "GEMINI_API_KEY": "",
+                "GOOGLE_CLIENT_ID": "",
+                "GOOGLE_CLIENT_SECRET": "",
+                "GOOGLE_REDIRECT_URI": "",
+                "EMAIL_MODE": "disabled",
+                "MEDIA_ALLOWED_IMPORT_HOSTS": "[]",
+            }.items()
+        ):
+            raise RuntimeError("Private staging integrations must remain closed")
+    for name in ["api", "worker-ai", "worker-render", "maintenance", "migrate"]:
+        networks = config["services"][name]["networks"]
+        if any(not config["networks"][network].get("internal") for network in networks):
+            raise RuntimeError("Private staging application networks must be internal")
+    mounts = config["services"]["proxy"]["volumes"]
+    if not any(
+        mount["target"] == "/etc/nginx/nginx.conf"
+        and Path(mount["source"]).name == "nginx.private-staging.conf"
+        and mount.get("read_only")
+        for mount in mounts
+    ):
+        raise RuntimeError("Private staging requires the reviewed single-origin proxy profile")
 
 
 def main():
@@ -16,6 +63,7 @@ def main():
     parser.add_argument("--env-file", type=Path, required=True)
     parser.add_argument("--project", default="zoclip-private")
     parser.add_argument("--execute-local", action="store_true")
+    parser.add_argument("--private-staging", action="store_true")
     parser.add_argument("--previous-image")
     args = parser.parse_args()
     if not args.project.startswith("zoclip-"):
@@ -39,14 +87,20 @@ def main():
         "-f",
         str(Path(__file__).parent / "compose.yaml"),
     ]
+    if args.private_staging:
+        compose += ["-f", str(Path(__file__).parent / "compose.private-staging.yaml")]
     # Capture configuration privately; do not print environment or resolved secrets paths.
     config = json.loads(
-        subprocess.check_output(compose + ["config", "--format", "json"], env=environment)
+        subprocess.check_output(
+            compose + ["--profile", "tools", "config", "--format", "json"], env=environment
+        )
     )
     for name, service in config["services"].items():
         for port in service.get("ports", []):
             if name != "proxy" or port.get("host_ip") != "127.0.0.1":
                 raise RuntimeError("Only loopback proxy publication is authorized")
+    if args.private_staging:
+        validate_private_config(config)
     print(
         json.dumps(
             {
@@ -54,6 +108,7 @@ def main():
                 "services": list(config["services"]),
                 "publication": "loopback HTTPS/admin only",
                 "action": args.action,
+                "private_staging": args.private_staging,
             }
         ),
         flush=True,

@@ -17,7 +17,6 @@ from zoclip.core.config import Settings
 from zoclip.core.db import build_engine, utcnow
 from zoclip.core.errors import ApiError
 from zoclip.credits import service as financial
-from zoclip.credits.schemas import ConsumptionRules
 from zoclip.media import service
 from zoclip.media.importer import download
 from zoclip.media.models import Job, Outbox, SourceVideo, StorageObject, UploadPart, UploadSession
@@ -197,9 +196,9 @@ def run_job(
                 service.terminate(db, job, "CANCELED")
             else:
                 service.capacity(db, settings, storage)
-                price = financial.active_price(db, owner)
-                rules = ConsumptionRules.model_validate(price.rules)
-                if metadata["duration_seconds"] > rules.max_source_seconds:
+                if metadata["duration_seconds"] > service.source_duration_limit(
+                    db, owner, settings
+                ):
                     raise ApiError(
                         422, "plan_duration_exceeded", "Source exceeds active plan duration."
                     )

@@ -1,0 +1,16 @@
+# FUTURE OWNER-APPROVED INSTALL ONLY. Review alongside existing sshd includes/AllowUsers.
+# One OS account/key per reviewer; no sudo, Docker group, shell or agent access.
+Match Group zoclip-reviewers
+    AuthenticationMethods publickey
+    PasswordAuthentication no
+    KbdInteractiveAuthentication no
+    AllowTcpForwarding local
+    PermitOpen 127.0.0.1:8443
+    PermitListen none
+    AllowStreamLocalForwarding no
+    AllowAgentForwarding no
+    X11Forwarding no
+    PermitTTY no
+    GatewayPorts no
+    ForceCommand /usr/sbin/nologin
+Match all

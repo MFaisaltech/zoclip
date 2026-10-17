@@ -22,6 +22,7 @@ from zoclip.auth.email import build_email
 from zoclip.auth.google import GoogleOIDC
 from zoclip.auth.google import router as google_router
 from zoclip.auth.routes import router
+from zoclip.billing.dashboard import router as billing_dashboard_router
 from zoclip.billing.providers import build_provider
 from zoclip.billing.routes import router as billing_router
 from zoclip.core.config import Settings
@@ -30,6 +31,7 @@ from zoclip.core.errors import ApiError, Problem, problem_response
 from zoclip.credits.routes import router as credits_router
 from zoclip.media.routes import router as media_router
 from zoclip.ops.routes import router as ops_router
+from zoclip.ops.staging import verify_closed_runtime
 from zoclip.rendering.routes import router as rendering_router
 
 logger = logging.getLogger("zoclip.requests")
@@ -116,6 +118,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
         logging.basicConfig(level=logging.INFO, format="%(message)s")
+        verify_closed_runtime(settings, engine)
         yield
         redis.close()
         engine.dispose()
@@ -153,6 +156,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(ai_router)
     app.include_router(rendering_router)
     app.include_router(billing_router)
+    app.include_router(billing_dashboard_router)
     app.include_router(ops_router)
     app.add_exception_handler(ApiError, problem_response)  # type: ignore[arg-type]
 

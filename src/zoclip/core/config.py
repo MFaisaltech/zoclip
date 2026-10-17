@@ -1,6 +1,8 @@
+import re
 from pathlib import Path
 from typing import Literal, Self
 from urllib.parse import urlsplit
+from uuid import UUID
 
 from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -16,6 +18,12 @@ class Settings(BaseSettings):
     )
 
     app_env: Literal["development", "test", "production"] = "development"
+    private_staging: bool = False
+    staging_site_domain: str = ""
+    staging_invite_epoch: UUID | None = (
+        None  # Rotate outside DB after any restore; old tokens fail.
+    )
+    registration_enabled: bool = False  # Production registration is explicit opt-in.
     database_url: SecretStr
     postgres_password: SecretStr = SecretStr("")  # Compose bootstrap; never exposed.
     redis_url: SecretStr = SecretStr("redis://localhost:6379/0")
@@ -161,4 +169,45 @@ class Settings(BaseSettings):
                 raise ValueError("Production requires real allowed hosts")
             if not db.password or db.password.lower() in {"change_me", "password", "zoclip"}:
                 raise ValueError("Production database credentials must be configured")
+        if self.private_staging:
+            domain = self.staging_site_domain
+            if (
+                self.app_env != "production"
+                or self.ai_enabled
+                or self.registration_enabled
+                or self.email_mode != "disabled"
+                or self.payment_provider != "disabled"
+                or self.google_enabled
+                or self.media_allowed_import_hosts
+                or self.deepgram_api_key.get_secret_value()
+                or self.gemini_api_key.get_secret_value()
+            ):
+                raise ValueError(
+                    "Private staging forbids public signup, AI, payments and integrations"
+                )
+            label = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
+            if (
+                len(domain) > 253
+                or not re.fullmatch(rf"{label}(?:\.{label})+", domain)
+                or domain
+                in {
+                    "vercel.app",
+                    "localhost",
+                }
+            ):
+                raise ValueError("Private staging requires an explicitly owned same-site domain")
+            for origin in (self.public_app_url, self.api_public_url):
+                parsed = urlsplit(origin)
+                host = parsed.hostname or ""
+                port = f":{parsed.port}" if parsed.port not in {None, 443} else ""
+                if origin != f"https://{host}{port}":
+                    raise ValueError("Private staging requires canonical exact HTTPS origins")
+                if host != domain and not host.endswith("." + domain):
+                    raise ValueError("Frontend and API must use the owned staging site domain")
+                if len(host) > 253 or not re.fullmatch(rf"{label}(?:\.{label})+", host):
+                    raise ValueError("Staging origins require exact valid DNS hostnames")
+            if urlsplit(self.public_app_url).hostname == urlsplit(self.api_public_url).hostname:
+                raise ValueError("Separate frontend/API subdomains required for host-only cookies")
+            if self.allowed_hosts != [urlsplit(self.api_public_url).hostname]:
+                raise ValueError("Private staging ALLOWED_HOSTS must contain only the API hostname")
         return self

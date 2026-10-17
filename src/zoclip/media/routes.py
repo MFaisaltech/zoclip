@@ -224,7 +224,12 @@ def generate(
 ) -> JobView:
     """Canonical source-bound entrypoint; /jobs remains a compatible alias."""
     return process(
-        ProcessInput(video_id=video_id, quote_id=data.quote_id), key, request, db, user, csrf
+        ProcessInput(video_id=video_id, quote_id=data.quote_id, auto_render=data.auto_render),
+        key,
+        request,
+        db,
+        user,
+        csrf,
     )
 
 

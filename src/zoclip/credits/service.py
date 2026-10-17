@@ -39,10 +39,42 @@ from zoclip.credits.schemas import (
     PlanVersionInput,
     PolicyInput,
     QuoteInput,
+    QuotePreviewView,
     RateInput,
 )
 
 ZERO = Decimal("0")
+
+
+def preview_quote(db: Session, user_id: UUID, data: QuoteInput, settings: Any) -> QuotePreviewView:
+    """Read-only private preview. Never creates a spendable quote or financial rows."""
+    if not settings.private_staging:
+        raise ApiError(404, "not_found", "Preview is unavailable.")
+    system = db.get(SystemLimits, 1)
+    if (
+        settings.ai_enabled
+        or settings.payment_provider != "disabled"
+        or settings.enable_live_payments
+        or system is None
+        or not system.breaker
+    ):
+        raise ApiError(503, "spending_disabled", "Private preview controls must stay closed.")
+    try:
+        price = active_price(db, user_id)
+    except ApiError as exc:
+        if exc.code != "plan_unconfigured":
+            raise
+        return QuotePreviewView(
+            pricing_status="unconfigured", price_version_id=None, credits=None, request=data
+        )
+    # Validate configured plan limits even when its monetary terms are unapproved.
+    credits = calculate(data, ConsumptionRules.model_validate(price.rules))
+    return QuotePreviewView(
+        pricing_status="configured" if price.approved else "unapproved",
+        price_version_id=price.id,
+        credits=credits if price.approved else None,
+        request=data,
+    )
 
 
 def fail(code: str, detail: str, status: int = 409) -> NoReturn:
@@ -343,13 +375,14 @@ def calculate(data: QuoteInput, rules: ConsumptionRules) -> int:
         or data.edit_count > rules.max_edits
     ):
         fail("plan_limit", "Requested duration, output or edit count exceeds plan limits.")
-    return (
+    calculated = (
         ((data.source_seconds + 59) // 60) * rules.credits_per_minute
         + data.output_count * rules.credits_per_output
         + data.edit_count * rules.credits_per_edit
         + (rules.captions_credits if data.captions else 0)
         + (rules.reframe_credits if data.reframe else 0)
     )
+    return max(rules.minimum_job_credits, calculated)
 
 
 def make_quote(

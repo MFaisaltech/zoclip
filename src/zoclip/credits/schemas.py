@@ -29,6 +29,7 @@ class StrictModel(BaseModel):
 
 
 class ConsumptionRules(StrictModel):
+    minimum_job_credits: Credit = 0
     credits_per_minute: PositiveCredit
     credits_per_output: Credit
     credits_per_edit: Credit
@@ -115,6 +116,17 @@ class QuoteView(StrictModel):
     credits: int
     request: QuoteInput
     expires_at: datetime
+
+
+class QuotePreviewView(StrictModel):
+    """Non-redeemable preview: no quote ID, allowance, or reservation."""
+
+    preview_only: Literal[True] = True
+    processing_enabled: Literal[False] = False
+    pricing_status: Literal["unconfigured", "unapproved", "configured"]
+    price_version_id: UUID | None
+    credits: int | None
+    request: QuoteInput
 
 
 class AdjustmentInput(StrictModel):

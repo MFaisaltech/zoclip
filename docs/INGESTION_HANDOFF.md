@@ -1,5 +1,11 @@
 # Phase 3 ingestion and queue contract
 
+2026-10-15 private staging upload fix: non-billable upload/validation no longer
+requires a commercial price catalog in the fully closed private profile. Existing
+configured plan limits, ownership, storage/queue limits and all finance fences
+remain. [Root cause, deployment and verification](PRIVATE_STAGING_UPLOAD_FIX_2026-10-15.md).
+The remaining text records the earlier phase contract.
+
 This phase implements private source ingestion, not AI suggestions or clips.
 `COMPLETED` on a VALIDATE/IMPORT job means source validation completed. PROCESS
 jobs reserve credits and stop at `WAITING_ENGINE` / `processing_unavailable`.

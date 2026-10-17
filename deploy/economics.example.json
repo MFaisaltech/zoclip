@@ -1,0 +1,33 @@
+{
+  "credits_per_minute": 5,
+  "credits_per_output": 2,
+  "pkr_per_credit": "20",
+  "assumed_pkr_per_usd": "300",
+  "deepgram_minute_usd": "0.0077",
+  "gemini_input_token_usd": "0.00000025",
+  "gemini_output_token_usd": "0.0000015",
+  "max_chunks": 32,
+  "chunk_bytes": 16000,
+  "protocol_bytes": 2048,
+  "max_output_tokens": 2048,
+  "render_cpu_seconds_per_output": 520,
+  "cpu_second_usd": "0.00002",
+  "storage_gb_days_per_output": 2,
+  "storage_gb_day_usd": "0.01",
+  "output_gb": "0.25",
+  "downloads_per_clip": 3,
+  "bandwidth_gb_usd": "0.02",
+  "retry_multiplier": "3",
+  "monthly_vps_usd": "13.20",
+  "assumed_monthly_completed_jobs": 100,
+  "assumed_payment_fee_fraction": "0.05",
+  "assumed_fixed_fee_usd": "0.05",
+  "target_contribution_fraction": "0.60",
+  "sources": {
+    "deepgram": "https://deepgram.com/pricing",
+    "gemini": "https://ai.google.dev/gemini-api/docs/pricing",
+    "provider_rates_reviewed": "2026-10-15",
+    "notes": "Nova-3 prerecorded base is 0.0043/min; 0.0077 is a conservative scenario allowance, not a verified MIP opt-out quote. Gemini 3.1 Flash-Lite standard paid text rates. Model availability/account rates remain unverified. FX, compute, storage, bandwidth, retries, monthly jobs and gateway fees are estimates. No free-tier savings assumed. Actual staging cost policy remains absent and spending closed."
+  },
+  "minimum_job_credits": 60
+}

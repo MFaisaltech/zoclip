@@ -45,6 +45,25 @@ class PasswordResetToken(TokenMixin, Base):
     __tablename__ = "password_reset_tokens"
 
 
+class StagingInvite(IdentityMixin, Base):
+    """Approval/token identity is immutable; only one terminal transition is permitted."""
+
+    __tablename__ = "staging_account_invites"
+    __table_args__ = (
+        CheckConstraint("purpose IN ('first_admin', 'reviewer')", name="purpose"),
+        CheckConstraint("consumed_at IS NULL OR revoked_at IS NULL", name="one_terminal_state"),
+    )
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    actor_id: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), index=True)
+    purpose: Mapped[str] = mapped_column(String(20))
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    approval_hash: Mapped[str] = mapped_column(String(64))
+    target_hash: Mapped[str] = mapped_column(String(64))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class OAuthIdentity(IdentityMixin, Base):
     __tablename__ = "oauth_identities"
     __table_args__ = (

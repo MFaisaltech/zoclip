@@ -1,5 +1,62 @@
 # ZoClip decision register
 
+2026-10-15: owner selected reviewer WireGuard VPN with SSH retained for operations.
+Keep Docker loopback-only and use a separate systemd socket bound to wg-zoclip
+plus its exact private IP, forwarding encrypted TCP to existing loopback HTTPS.
+Dedicated pre-Docker nft filtering allows only named peer IPs to API TCP and
+rejects other VPN input/forwarding. No Vercel private connector, default client
+route, NAT, provider egress or public API is introduced. See WIREGUARD_REVIEWER_ACCESS.md.
+
+2026-10-14 staging blocker follow-up: implement first-admin and customer reviewer
+invites in a separate operator-only production/private-staging CLI, never relax
+the local acceptance bootstrap. Hash retained fresh target-bound approval manifests
+and identity evidence; store random token hashes, expire within one hour, globally
+serialize issuance/redemption under the existing read-only financial fence and
+write activation/revocation with immutable audits in the same DB transaction.
+First-admin activation permanently closes bootstrap; no credits or auto-login.
+An external invite-epoch UUID invalidates old delivery tokens after restores.
+Retain earlier managed reviewer SSH topology unless owner selects another network;
+document browser/hosts/TLS/permission gates explicitly and add a manual browser
+readiness probe. Vercel hosts UI only, with All Deployments protection configured
+externally. No infrastructure/provider/acceptance execution authorized or performed.
+
+2026-10-14, Phase8 M6: owner chose same-site frontend/API subdomains and SSH
+tunnel access initially. Prepare a separate private Compose override and proxy
+profile that allows RBAC-protected admin routes at the same browser API origin.
+Keep base deployment intact, app networks internal, all integrations disabled and
+spending blocked. Production public signup defaults off; private staging startup
+requires existing breaker=true and refuses admin attempts to open it. Vercel must
+protect all deployments externally. No secret, account, credit, policy or paused
+acceptance evidence is changed. The production invite/first-admin path needs a
+separate audited implementation after owner identity/delivery policy selection;
+the local acceptance bootstrap must never be generalized to staging. See the
+[M6 runbook](PHASE8_PRIVATE_STAGING_RUNBOOK.md) for approval boundaries and blockers.
+
+2026-10-14: Recover only the proven pre-dispatch resource-gate failure through
+the [scoped continuation](ACCEPTANCE_CONTINUATION.md). Preserve the historical
+workflow guard and all provider slots. Reuse the immutable PostgreSQL audit table
+with a serialized consumption event and full receipt SHA-256 event, plus an
+exclusive local fence and an in-memory start permit. Ambiguous commits/crashes
+remain consumed. No schema migration, HTTP recovery route, automatic approval,
+provider retry or guard reset. Implementation approval does not authorize live
+execution; fresh explicit approval is required before any consumption.
+
+User-selected live-test media now uses new private F:\ZoClip-LiveAI storage,
+keeping the project and new isolated service data on D:. This resolves real disk
+admission without deleting prior data or changing capacity safeguards. A separate
+26.74-second bounded local input copy preserves the original video. New loopback
+PostgreSQL/Redis are independent of existing Windows services. Keys remain private,
+AI disabled and the budget breaker open; no provider model/version or real rate
+is fabricated to complete readiness. Current evidence: PHASE8_LIVE_AI_READINESS.md.
+
+Live AI preparation stays disabled and separate from mock acceptance. Keys belong
+only in ignored backend configuration with restricted local permissions. Model
+selection remains unset until account access and the existing request body are
+reviewed; newer Gemini IDs are not assumed compatible. A proposed USD 0.05 isolated
+test ceiling requires actual versioned rates, all PostgreSQL budget dimensions,
+real disk/RAM capacity and explicit approval. No rates or budgets were applied.
+See [offline readiness and manual gates](PHASE8_LIVE_AI_READINESS.md).
+
 M4 frontend options derive from actual OpenAPI: three caption presets, four framing
 modes, and fixed 9:16 720×1280 MP4 output. Edits use complete Preferences/If-Match;
 confirmed render requests preserve keys, while downloads require completed owned

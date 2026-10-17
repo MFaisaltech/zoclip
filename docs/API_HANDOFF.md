@@ -1,5 +1,36 @@
 # API handoff - Phases 1 through 6
 
+2026-10-15 private upload admission fix adds no routes or schema changes.
+Closed private staging can admit upload/validation without a commercial catalog,
+using the existing120-minute cap only while AI/payments are disabled and breaker
+is true. Configured plan limits still apply; public missing-plan rejection and all
+financial/processing gates remain unchanged. [Evidence and retry procedure](PRIVATE_STAGING_UPLOAD_FIX_2026-10-15.md).
+
+Staging blocker follow-up adds `POST /api/v1/auth/invite/accept` (`InviteInput`,
+`Message` response), private staging only, with existing anonymous CSRF and rate
+limits. Recipient supplies token/password only; no roles/credits and no automatic
+login. Operator issuance/revocation has no HTTP endpoint. New migration8c42ab719e30
+preserves immutable invite identity/history, and STAGING_INVITE_EPOCH UUID scopes
+tokens outside the DB across restores. Generated OpenAPI/client contracts updated.
+See [exact staging procedures](STAGING_BLOCKERS_RESOLVED.md).
+
+Phase8 M6 adds no backend paths or migration. Production registration now requires
+explicit opt-in (private staging forbids it). Private staging rejects attempts to
+write breaker=false with403 `staging_spending_disabled`, in addition to existing
+admin RBAC/CSRF. Its API/workers read-check breaker=true at startup and refuse
+unsafe configuration. Exact same-site origins and host-only secure cookies remain.
+See [private staging runbook and account provisioning blocker](PHASE8_PRIVATE_STAGING_RUNBOOK.md).
+
+Phase 8 M5 adds billing visibility and protected admin dashboard reads. See
+[billing/admin contract and verification](PHASE8_BILLING_ADMIN_MILESTONE.md) and
+the regenerated `openapi.json`. New GET paths: `/api/v1/me/billing`,
+`/api/v1/me/credit-reservations`, `/api/v1/admin/dashboard`,
+`/api/v1/admin/customers`, `/api/v1/admin/customers/{user_id}/billing`, and
+`/api/v1/admin/jobs`. Existing wallet, ledger, entitlements, plan catalog,
+billing history, usage/cost/limits, payment/audit reads and audited staff action
+contracts are reused. Checkout remains explicitly unavailable. No ledger,
+financial-policy, provider or one-shot acceptance contract was changed.
+
 Phase 8 M4 now integrates actual transcript/suggestions, clip revisions/caption
 preferences, render selection/re-exports and private MP4 downloads. The existing
 API/snapshot is unchanged. See [M4 frontend evidence](PHASE8_EDITOR_MILESTONE.md)
@@ -196,3 +227,12 @@ operations estimate, not an invoice or verified profit. Invalid period/policy422
 Phase 7 customer proxy blocks all /admin paths; private listener still enforces
 the same cookie/RBAC/CSRF contracts. No privacy-erasure public route exists.
 Deploy profile disables AI/payments/email/Google/trial grants and all webhooks.
+
+`POST /api/v1/jobs/quote-preview` is a private-staging-only, authenticated/CSRF
+read-only preview. Response: `preview_only=true`, `processing_enabled=false`,
+`pricing_status=unconfigured|unapproved|configured`, nullable `price_version_id`
+and `credits`, and echoed validated `request`. No quote ID is issued; this response
+cannot reserve credits or dispatch work. Missing/unapproved pricing is represented
+by null credits, never invented pricing. Public production returns 404. Private
+preview requires all AI/payment switches off and the spending breaker closed.
+`POST /jobs/quote` and all commercial admission checks retain their existing contract.

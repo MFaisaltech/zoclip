@@ -1,5 +1,57 @@
 # Phase 8, Milestone 2 — real workspace and credits
 
+## Scoped resumption review — 2026-10-13
+
+The requested interrupted state had already been completed in backend commit
+`6c48779` and frontend commit `4086ea8`. Both histories also already contain M3/M4
+completion commits. This review preserved them and performed no later milestone
+implementation. The starting frontend tree was clean; the pre-existing content
+of all five backend live-readiness changes was preserved. No M2 code
+defect or missing connection was found after reviewing workspace UI, request
+validation, pagination, account disposal/session invalidation, owner-scoped API
+reads, credit display and the existing tests. No application code changed.
+
+Fresh checks, run sequentially with a 256 MiB Node heap where applicable:
+
+| Check | Current result |
+|---|---|
+| `node tests/auth-api.test.mjs` | 11 passed |
+| `node tests/workspace-api.test.mjs` | 10 passed |
+| Auth/workspace generators with `--check` | Both match backend OpenAPI |
+| `node node_modules/typescript/bin/tsc --noEmit --incremental false` | PASS |
+| Existing Oxlint command via `node node_modules/oxlint/bin/oxlint` | 35 files; zero warnings/errors |
+| `.venv/Scripts/python.exe -m pytest tests/test_config.py -q --tb=short -p no:cacheprovider` | 10 passed; two existing dependency deprecation warnings |
+| Ruff check and format check on `src` plus M2 fixture/helper and auth/Google/config tests | PASS; 76 files formatted |
+| `.venv/Scripts/python.exe -m mypy src` | PASS; 70 source files |
+
+The standard Node test runner initially could not spawn child processes (`EPERM`)
+under workspace restrictions. Running the same two test files directly produced
+their full passing TAP results without child-process isolation. This was a
+permission failure, not a memory failure or test assertion failure.
+
+Read-only resource inspection found C: 5.91 GiB free, D: 21.28 GiB free, only
+0.51 GiB physical RAM available and 1.95 GiB available pagefile commitment. Build,
+Chrome and temporary API/service startups were therefore not attempted. Earlier
+successful M2 production build and 11 Chrome tests below are retained historical
+evidence, not fresh executions. Raw private harness artifacts were inaccessible
+under current permissions; this review relies on the tracked milestone report
+for those prior results. No retry or permission change was made to access them.
+
+The earlier 63 real PostgreSQL/Redis passes remain historical evidence. Their
+pytest fixtures perform upgrade/downgrade and Redis flush operations, so they
+were deliberately not run under this request's no-database-reset restriction.
+The 10 fresh backend checks above do not use those database fixtures.
+
+M2 is complete and has no known implementation blocker for proceeding to M3.
+The existing later commits do not authorize any further work in this turn.
+Remaining limits are fresh build/browser resource headroom, database regression
+reruns under suitable authorization, and the separately documented live-provider,
+merchant and production launch gates. Only handoff/status documentation changed;
+no data deletion, database reset, configuration change, deployment, commit or push.
+Stop here pending the user's next approval.
+
+## Original completion evidence
+
 Date: 2026-10-13 (Asia/Karachi). The user authorized only workspace and credit
 read integration. Milestone 1 is preserved. Uploads, processing, editing, payments,
 admin integration and subsequent milestones remain outside this implementation.

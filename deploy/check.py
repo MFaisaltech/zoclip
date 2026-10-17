@@ -14,6 +14,7 @@ def main():
     parser.add_argument("--project", default="zoclip-private")
     parser.add_argument("--backup-dir", type=Path, required=True)
     parser.add_argument("--certificate", type=Path, required=True)
+    parser.add_argument("--private-staging", action="store_true")
     args = parser.parse_args()
     compose = [
         "docker",
@@ -25,6 +26,8 @@ def main():
         "-f",
         str(Path(__file__).parent / "compose.yaml"),
     ]
+    if args.private_staging:
+        compose += ["-f", str(Path(__file__).parent / "compose.private-staging.yaml")]
 
     def output(tail):
         return subprocess.check_output(compose + tail, stderr=subprocess.DEVNULL, timeout=60)

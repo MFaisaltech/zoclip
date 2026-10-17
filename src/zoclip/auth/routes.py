@@ -25,6 +25,7 @@ from zoclip.auth.schemas import (
     Credentials,
     CsrfResponse,
     EmailInput,
+    InviteInput,
     LoginResponse,
     Me,
     Message,
@@ -50,9 +51,24 @@ from zoclip.core.security import (
     token,
     verify_password,
 )
+from zoclip.ops.staging_accounts import redeem
 
 router = APIRouter(prefix="/api/v1", tags=["authentication"])
 GENERIC_MESSAGE = Message(message="If eligible, check your email for the next step.")
+
+
+@router.post("/auth/invite/accept", response_model=Message)
+def accept_invite(data: InviteInput, request: Request, db: DB, csrf: CsrfSession) -> Message:
+    if not request.app.state.settings.private_staging:
+        raise ApiError(404, "not_found", "Invite redemption is unavailable.")
+    rate_limit(request, "staging-invite")
+    hashed = hash_password(data.password)
+    try:
+        redeem(db, request.app.state.settings, data.token, hashed)
+    except ValueError as exc:
+        raise ApiError(400, "invalid_token", "Invite unavailable.") from exc
+    db.commit()
+    return Message(message="Invite accepted. Sign in with your new password.")
 
 
 @router.get("/auth/csrf", response_model=CsrfResponse)
@@ -73,6 +89,9 @@ def csrf(request: Request, response: Response, db: DB, session: CurrentSession) 
 
 @router.post("/auth/register", response_model=Message, status_code=202)
 def register(data: Credentials, request: Request, db: DB, csrf: CsrfSession) -> Message:
+    settings = request.app.state.settings
+    if settings.app_env == "production" and not settings.registration_enabled:
+        raise ApiError(503, "registration_disabled", "Public registration is disabled.")
     rate_limit(request, "register", str(data.email))
     email_sender = request.app.state.email_sender
     email_sender.ensure_available()

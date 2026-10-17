@@ -1,5 +1,9 @@
 # Private staging deployment and rollback
 
+For Phase8 Milestone6 use the [coordinated Vercel/SSH deployment runbook](PHASE8_PRIVATE_STAGING_RUNBOOK.md)
+and its two-file private profile. It supersedes this base profile's split-origin
+admin routing for the private browser dashboard only; all RBAC/CSRF remains.
+
 Phase 7 prepares the existing modular monolith for Contabo Cloud VPS 4, Ubuntu
 24.04, 4 vCPU, 8 GB RAM, 100 GB SSD, Germany. **No VPS deployment or production
 launch is authorized.** All commands below are operator instructions for a later,

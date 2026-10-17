@@ -30,6 +30,10 @@ class ResetInput(TokenInput):
     password: str = Field(min_length=12, max_length=128)
 
 
+class InviteInput(ResetInput):
+    token: str = Field(min_length=43, max_length=43, pattern=r"^[A-Za-z0-9_-]{43}$")
+
+
 class Message(BaseModel):
     message: str
 

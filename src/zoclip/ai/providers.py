@@ -24,16 +24,21 @@ class Providers(Protocol):
 
 
 def gemini_body(prompt: str, settings: Settings) -> dict:
+    generation = {
+        "candidateCount": 1,
+        "maxOutputTokens": settings.ai_max_output_tokens,
+        "responseMimeType": "application/json",
+        "responseJsonSchema": Moments.model_json_schema(),
+    }
+    if settings.gemini_model == "gemini-3.1-flash-lite":
+        generation["thinkingConfig"] = {"thinkingLevel": "minimal"}
+        # Gemini 3 recommends its default temperature (1.0). Minimal is NOT
+        # thinking-off: usage accounting still includes all residual tokens.
+    else:
+        generation.update(temperature=0.2, thinkingConfig={"thinkingBudget": 0})
     return {
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-        "generationConfig": {
-            "temperature": 0.2,
-            "candidateCount": 1,
-            "maxOutputTokens": settings.ai_max_output_tokens,
-            "thinkingConfig": {"thinkingBudget": 0},
-            "responseMimeType": "application/json",
-            "responseJsonSchema": Moments.model_json_schema(),
-        },
+        "generationConfig": generation,
     }
 
 

@@ -33,6 +33,7 @@ from zoclip.credits.schemas import (
     PolicyView,
     PriceView,
     QuoteInput,
+    QuotePreviewView,
     QuoteView,
     RateInput,
     RateView,
@@ -124,6 +125,14 @@ def entitlements(
     ]
 
 
+@router.post("/jobs/quote-preview", response_model=QuotePreviewView)
+def quote_preview(
+    data: QuoteInput, request: Request, db: DB, user: CurrentUser, csrf: CsrfSession
+) -> QuotePreviewView:
+    rate_limit(request, "credit-quote", str(user.id))
+    return service.preview_quote(db, user.id, data, request.app.state.settings)
+
+
 @router.post("/jobs/quote", response_model=QuoteView)
 def quote(
     data: QuoteInput,
@@ -208,8 +217,17 @@ def rate(
 
 @router.post("/admin/limits/versions", response_model=PolicyView, tags=["admin"])
 def policy(
-    data: PolicyInput, key: OperationKey, db: DB, user: AdminUser, csrf: CsrfSession
+    data: PolicyInput,
+    key: OperationKey,
+    request: Request,
+    db: DB,
+    user: AdminUser,
+    csrf: CsrfSession,
 ) -> PolicyView:
+    if request.app.state.settings.private_staging and not data.breaker:
+        from zoclip.core.errors import ApiError
+
+        raise ApiError(403, "staging_spending_disabled", "Private staging keeps spending blocked.")
     row = service.configure_policy(db, data, key, user.id)
     system = db.get(SystemLimits, 1)
     assert system is not None

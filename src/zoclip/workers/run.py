@@ -7,10 +7,18 @@ from redis import Redis
 from rq import Queue, Worker
 
 from zoclip.core.config import Settings
+from zoclip.core.db import build_engine
+from zoclip.ops.staging import verify_closed_runtime
 
 
 def main() -> None:
     settings = Settings()  # type: ignore[call-arg]
+    if settings.private_staging:
+        engine = build_engine(settings.database_url.get_secret_value())
+        try:
+            verify_closed_runtime(settings, engine)
+        finally:
+            engine.dispose()
     logging.basicConfig(level=logging.INFO)
     queue = os.environ.get("WORKER_QUEUE", "ai")
     if queue not in {"ai", "render"}:
