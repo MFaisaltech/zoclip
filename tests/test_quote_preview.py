@@ -196,4 +196,3 @@ def test_private_http_preview_without_catalog_never_dispatches_or_mutates(app):
             ).status_code
             == 404
         )
-
