@@ -67,19 +67,32 @@ def approval(config, *, actor=None, purpose="first_admin", email=None):
 
 
 @pytest.mark.parametrize(
-    "change",
+    "case",
     [
-        {"approved_at": utcnow() - timedelta(minutes=16)},
-        {"approved_at": utcnow() + timedelta(minutes=1)},
-        {"approved_at": utcnow().replace(tzinfo=None)},
-        {"expires_at": utcnow() - timedelta(seconds=1)},
-        {"expires_at": utcnow() + timedelta(hours=2)},
-        {"target_sha256": "f" * 64},
-        {"actor_id": uuid4()},
-        {"purpose": "reviewer"},
+        "stale",
+        "future",
+        "naive",
+        "expired",
+        "too_long",
+        "target",
+        "actor",
+        "purpose",
     ],
 )
-def test_reject_stale_unscoped_or_wrong_authority(change):
+def test_reject_stale_unscoped_or_wrong_authority(case):
+    # Resolve relative times at execution: a slow suite must not turn a future
+    # approval collected minutes earlier into an actually valid past approval.
+    now = utcnow()
+    change = {
+        "stale": {"approved_at": now - timedelta(minutes=16)},
+        "future": {"approved_at": now + timedelta(minutes=1)},
+        "naive": {"approved_at": now.replace(tzinfo=None)},
+        "expired": {"expires_at": now - timedelta(seconds=1)},
+        "too_long": {"expires_at": now + timedelta(hours=2)},
+        "target": {"target_sha256": "f" * 64},
+        "actor": {"actor_id": uuid4()},
+        "purpose": {"purpose": "reviewer"},
+    }[case]
     config = settings()
     with pytest.raises(ValueError):
         check_approval(config, approval(config).model_copy(update=change))
