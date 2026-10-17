@@ -19,6 +19,7 @@ def config(**kwargs):
         smtp_username="transactional-user",
         smtp_password="offline-only-password",
         smtp_from="accounts@example.com",
+        email_queue_key="eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHg=",
     )
     return Settings(**(values | kwargs))
 
@@ -112,6 +113,8 @@ def test_starttls_refusal_never_authenticates_or_sends(monkeypatch):
         {"smtp_tls": "starttls", "smtp_port": 465},
         {"smtp_host": "x\r\nmalicious"},
         {"public_app_url": "http://app.example.com"},
+        {"email_queue_key": ""},
+        {"email_queue_key": "invalid"},
     ],
 )
 def test_smtp_config_fails_closed(override):
@@ -144,13 +147,26 @@ def test_smtp_signup_verify_reset_and_repeat_login(client, app, monkeypatch):
 
     monkeypatch.setattr(smtplib, "SMTP_SSL", MailServer)
     app.state.email_sender = build_email(config())
+    app.state.settings = config().model_copy(
+        update={
+            "database_url": app.state.settings.database_url,
+            "public_app_url": app.state.settings.public_app_url,
+            "app_env": "test",
+            "cookie_secure": False,
+            "auth_rate_limit": 100,
+        }
+    )
     headers = csrf(client)
     result = client.post(
         "/api/v1/auth/register",
         headers=headers,
         json={"email": "new@example.com", "password": PASSWORD},
     )
-    assert result.status_code == 202 and len(messages) == 1
+    assert result.status_code == 202 and len(messages) == 0
+    from zoclip.auth.mail_queue import deliver_one
+
+    assert deliver_one(app.state.session_factory, app.state.settings)
+    assert len(messages) == 1
     raw = re.search(r"#token=([A-Za-z0-9_-]+)", messages[-1].get_content()).group(1)
     assert (
         client.post("/api/v1/auth/verify-email", headers=headers, json={"token": raw}).status_code
@@ -166,6 +182,7 @@ def test_smtp_signup_verify_reset_and_repeat_login(client, app, monkeypatch):
         ).status_code
         == 202
     )
+    assert deliver_one(app.state.session_factory, app.state.settings)
     raw = re.search(r"#token=([A-Za-z0-9_-]+)", messages[-1].get_content()).group(1)
     replacement = "another sufficiently long password"
     assert (

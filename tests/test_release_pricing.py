@@ -33,13 +33,29 @@ def test_minimum_price_applies_to_short_sources_but_preserves_plan_limits():
     )
 
 
-@pytest.mark.parametrize("minutes,outputs", [(1, 1), (1, 3), (2, 2), (30, 3), (120, 3)])
-def test_draft_catalog_covers_conservative_scenarios_at_assumed_rates(minutes, outputs):
+@pytest.mark.parametrize("minutes,outputs", [(1, 1), (5, 3), (30, 3), (120, 3)])
+@pytest.mark.parametrize("plan", ["starter", "creator", "pro"])
+def test_estimates_use_actual_package_revenue_and_disclose_margin_shortfall(minutes, outputs, plan):
     from scripts.release_economics import calculate as economics
 
     config = json.loads(Path("deploy/economics.example.json").read_text())
-    result = economics(config, minutes, outputs)
-    assert result["target_met"]
+    from decimal import Decimal
+
+    result = economics(config, minutes, outputs, plan)
+    terms = json.loads(Path("deploy/staging-catalog.json").read_text())["plans"][plan]
+    expected = Decimal(terms["price_paisa"]) / 100 / terms["included_credits"]
+    assert Decimal(result["package_unit_pkr_per_credit"]) == expected
+    assert Decimal(result["payment_fee_usd_estimate"]) == (
+        Decimal(result["retail_revenue_usd_estimate"])
+        * Decimal(config["assumed_payment_fee_fraction"])
+        + Decimal(config["assumed_fixed_fee_usd"]) * result["credits"] / terms["included_credits"]
+    )
+    assert not result["target_met"]  # Actual retail prices cannot substantiate the former claim.
+    assert result["credits"] == max(60, minutes * 5 + outputs * 2)
+    assert result["covered_by_one_package"] == (result["credits"] <= terms["included_credits"])
+    assert Decimal(result["maximum_analysis_usd_before_retry_multiplier"]) >= Decimal(
+        result["analysis_usd_estimate"]
+    )
     assert result["activation"].startswith("BLOCKED")
     # Retail terms never become approved just because an estimate passed.
     plans = json.loads(Path("deploy/staging-catalog.json").read_text())["plans"]

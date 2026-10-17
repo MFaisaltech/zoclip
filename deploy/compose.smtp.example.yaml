@@ -1,0 +1,31 @@
+# Future owner-approved production email overlay; NOT used by private staging.
+# PRIVATE_STAGING=true continues to reject SMTP. This does not enable registration,
+# AI, trials or payments. No inbound mail port is published.
+x-mail: &mail
+  EMAIL_MODE: smtp
+  SMTP_HOST: ${SMTP_HOST:?Set the authorized SMTP hostname}
+  SMTP_PORT: ${SMTP_PORT:-465}
+  SMTP_TLS: ${SMTP_TLS:-implicit}
+  SMTP_USERNAME: ${SMTP_USERNAME:?Set the SMTP account username}
+  SMTP_FROM: ${SMTP_FROM:?Set the verified sender address}
+  SMTP_TIMEOUT_SECONDS: "10"
+services:
+  api:
+    environment: *mail
+    secrets:
+      - smtp_password
+      - email_queue_key
+  maintenance:
+    environment: *mail
+    secrets:
+      - smtp_password
+      - email_queue_key
+    networks: [data, queue, mail_egress]
+secrets:
+  smtp_password:
+    file: ${SMTP_PASSWORD_FILE:?Set private SMTP password file}
+  email_queue_key:
+    file: ${EMAIL_QUEUE_KEY_FILE:?Set private base64 32-byte encryption key file}
+networks:
+  mail_egress:
+    internal: false

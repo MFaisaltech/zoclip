@@ -76,6 +76,27 @@ class SMTPEmail:
             f"This single-use link expires in {expiry}. Opening it does not change your account "
             "until you confirm on the page. If you did not request this, ignore this email.\n"
         )
+        self._deliver(message, recipient)
+
+    def send_receipt(self, recipient: str, order_id: str, amount_paisa: int, credits: int) -> None:
+        self.ensure_available()
+        if amount_paisa <= 0 or credits <= 0:
+            raise ValueError("Invalid receipt")
+        message = EmailMessage()
+        message["From"], message["To"] = str(self.settings.smtp_from), recipient
+        message["Subject"] = "Your ZoClip purchase receipt"
+        message["Date"] = formatdate(localtime=False)
+        message["Message-ID"] = make_msgid(domain=str(self.settings.smtp_from).split("@", 1)[1])
+        message.set_content(
+            f"Thank you for your ZoClip purchase.\n\n"
+            f"Paid: PKR {amount_paisa // 100:,}.{amount_paisa % 100:02d}\n"
+            f"Credits added: {credits:,}\nReceipt reference: {order_id}\n\n"
+            f"View your balance and history: {self.settings.public_app_url}/dashboard\n"
+        )
+        self._deliver(message, recipient)
+
+    def _deliver(self, message: EmailMessage, recipient: str) -> None:
+        s = self.settings
         context = ssl.create_default_context()
         try:
             if s.smtp_tls == "implicit":

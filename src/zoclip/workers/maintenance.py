@@ -8,6 +8,7 @@ from redis import Redis
 from sqlalchemy.orm import sessionmaker
 
 from zoclip.ai.worker import resume_waiting
+from zoclip.auth.mail_queue import cleanup_mail, deliver_one, enqueue_recent_receipts
 from zoclip.core.config import Settings
 from zoclip.core.db import build_engine
 from zoclip.media.cleanup import cleanup
@@ -33,8 +34,11 @@ def main() -> None:
                 cleanup(factory, storage)
                 resume_waiting(factory, settings)
                 dispatch(factory, redis)
+                deliver_one(factory, settings)
                 with factory() as db:
                     cleanup_auth(db)
+                    cleanup_mail(db)
+                    enqueue_recent_receipts(db, settings)
                     db.commit()
                 Path("/tmp/zoclip-maintenance-heartbeat").touch()
             except Exception as exc:

@@ -340,10 +340,7 @@ def test_unicode_chunking_bounded_and_absolute_timestamps():
     groups = list(selection.chunks(words, settings))
     assert len(groups) > 1
     assert groups[0][0].start == 0 and groups[-1][-1].end == 99.5
-    assert all(
-        len(json.dumps([w.model_dump() for w in g], ensure_ascii=False).encode()) <= 1000
-        for g in groups
-    )
+    assert all(len(selection.analysis_data(g).encode()) <= 1000 for g in groups)
     with pytest.raises(ApiError, match="capacity"):
         list(selection.chunks(words, settings.model_copy(update={"ai_max_chunks": 1})))
 
@@ -769,8 +766,7 @@ def test_gemini_chunk_pipeline_reuses_each_exact_result(processing, monkeypatch)
     settings = settings.model_copy(update={"ai_chunk_bytes": 1000})
     payload = dg_payload()
     payload["results"]["channels"][0]["alternatives"][0]["words"] = [
-        {"word": "idea" * 40, "start": i / 2, "end": (i + 1) / 2, "confidence": 0.9}
-        for i in range(5)
+        {"word": "é" * 160, "start": i / 2, "end": (i + 1) / 2, "confidence": 0.9} for i in range(5)
     ]
     simulator = Simulator(dg=payload)
     configured = factory, users, settings, storage

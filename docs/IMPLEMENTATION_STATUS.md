@@ -1406,3 +1406,7 @@ copied off-server, hash-verified and locally authenticated through age EOF.
 Exact versions, verification boundaries, preserved data and recovery notes:
 [private release result](PRIVATE_RELEASE_RESULT_2026-10-17.md).
 Signed-in staging browser acceptance and live AI remain unverified.
+
+### Protected engineering delivery — 2026-10-18
+
+Encrypted durable mail, bounded transcript analysis, honest cost scenarios and dashboard fixes are implemented. Pricing is unchanged. See [delivery evidence and external acceptance](DELIVERY_2026-10-18.md). Public signup/AI/payments remain disabled; no paid test is approved.

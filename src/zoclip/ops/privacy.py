@@ -6,6 +6,7 @@ from uuid import UUID
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
+from zoclip.auth.mail_models import MailDelivery
 from zoclip.auth.models import (
     AuthSession,
     EmailVerificationToken,
@@ -54,6 +55,16 @@ def request_erasure(db: Session, actor: UUID, owner: UUID, reason: str) -> None:
         None,
     )
     db.execute(update(AuthSession).where(AuthSession.user_id == owner).values(revoked_at=utcnow()))
+    db.execute(
+        update(MailDelivery)
+        .where(MailDelivery.user_id == owner)
+        .values(
+            state="EXPIRED",
+            ciphertext=None,
+            lease_until=None,
+            lease_token=None,
+        )
+    )
     for model in (EmailVerificationToken, PasswordResetToken, OAuthFlow, OAuthIdentity):
         db.execute(delete(model).where(model.user_id == owner))
     db.add(PrivacyRequest(user_id=owner, actor_id=actor, reason=reason, payload_hash=payload))

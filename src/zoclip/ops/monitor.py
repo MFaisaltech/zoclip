@@ -11,6 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from zoclip.ai.models import AIRequest
+from zoclip.auth.mail_models import MailDelivery
 from zoclip.billing.models import BillingRefund
 from zoclip.core.config import Settings
 from zoclip.core.db import build_engine, utcnow
@@ -24,6 +25,28 @@ def snapshot(db: Session, settings: Settings) -> dict:
     start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     result = report(db, start, now, settings.media_root)
     alerts = []
+    result["email_delivery_counts"] = dict(
+        db.execute(select(MailDelivery.state, func.count()).group_by(MailDelivery.state)).all()
+    )
+    if settings.email_mode == "smtp":
+        if db.scalar(
+            select(MailDelivery.id)
+            .where(
+                MailDelivery.state == "FAILED",
+                MailDelivery.updated_at >= now - timedelta(hours=1),
+            )
+            .limit(1)
+        ):
+            alerts.append("email_delivery_failed")
+        if db.scalar(
+            select(MailDelivery.id)
+            .where(
+                MailDelivery.state.in_(["QUEUED", "SENDING"]),
+                MailDelivery.due_at < now - timedelta(minutes=10),
+            )
+            .limit(1)
+        ):
+            alerts.append("email_queue_stalled")
     if result["disk_free_bytes"] < settings.media_headroom_bytes + 2 * 1024**3:
         alerts.append("disk_headroom_low")
     if Decimal(result["held_or_unknown_usd_all_periods"]) > 0:

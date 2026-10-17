@@ -29,8 +29,10 @@ financial_database = test_ai.financial_database
 media = test_media.media
 
 
-@pytest.mark.parametrize("seconds", [24, 120])
-def test_upload_generate_render_mp4_without_manual_selection(media, monkeypatch, tmp_path, seconds):
+@pytest.mark.parametrize("seconds,outputs", [(24, 1), (120, 1), (60, 3)])
+def test_upload_generate_render_mp4_without_manual_selection(
+    media, monkeypatch, tmp_path, seconds, outputs
+):
     factory, users, settings, storage = media
     source = tmp_path / "customer-source.mp4"
     subprocess.run(
@@ -79,7 +81,10 @@ def test_upload_generate_render_mp4_without_manual_selection(media, monkeypatch,
             users["admin"],
         )
         quote = money.make_quote(
-            db, users["alice"], QuoteInput(source_seconds=seconds, output_count=1), "release-quote"
+            db,
+            users["alice"],
+            QuoteInput(source_seconds=seconds, output_count=outputs),
+            "release-quote",
         )
         request = ProcessInput(video_id=video, quote_id=quote.id, auto_render=True)
         job = service.process(db, users["alice"], request, "release-process", settings, storage)
@@ -107,11 +112,22 @@ def test_upload_generate_render_mp4_without_manual_selection(media, monkeypatch,
         "results": {"channels": [{"alternatives": [{"confidence": 0.95, "words": words}]}]},
     }
     simulator = test_ai.Simulator(
-        dg=dg, gemini=test_ai.gemini_payload([test_ai.moment(start_sec=1, end_sec=21)])
+        dg=dg,
+        gemini=test_ai.gemini_payload(
+            [test_ai.moment(start_sec=i * 20, end_sec=i * 20 + 20) for i in range(outputs)]
+        ),
     )
     configured = factory, users, settings, storage
     assert test_ai.drive((configured, video, job_id), monkeypatch, simulator) == ("COMPLETED", None)
     with factory() as db:
+        assert (
+            db.scalar(
+                select(func.count())
+                .select_from(RenderOutput)
+                .where(RenderOutput.job_id == job_id, RenderOutput.state == "COMPLETE")
+            )
+            == outputs
+        )
         output = db.scalar(select(RenderOutput).where(RenderOutput.job_id == job_id))
         assert output.state == "COMPLETE"
         assert 15000 <= output.metadata_json["duration_ms"] <= 30000

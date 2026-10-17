@@ -12,6 +12,7 @@ from zoclip.auth.dependencies import (
     CurrentUser,
     owned_resource,
 )
+from zoclip.auth.mail_queue import enqueue
 from zoclip.auth.models import (
     AuditLog,
     AuthSession,
@@ -109,7 +110,11 @@ def register(data: Credentials, request: Request, db: DB, csrf: CsrfSession) -> 
         return GENERIC_MESSAGE
     raw = issue_email_token(db, user, EmailVerificationToken)
     audit(db, request, "auth.verification_requested", target=user.id)
+    if settings.email_mode == "smtp":
+        enqueue(db, settings, user, "verify-email", raw)
     db.commit()
+    if settings.email_mode == "smtp":
+        return GENERIC_MESSAGE
     try:
         email_sender.send(user.email, "verify-email", raw)
     except ApiError as exc:
@@ -204,7 +209,11 @@ def forgot(data: EmailInput, request: Request, db: DB, csrf: CsrfSession) -> Mes
     if user and user.status == "active" and user.verified and user.password_hash:
         raw = issue_email_token(db, user, PasswordResetToken)
         audit(db, request, "auth.reset_requested", target=user.id)
+        if request.app.state.settings.email_mode == "smtp":
+            enqueue(db, request.app.state.settings, user, "password-reset", raw)
     db.commit()
+    if request.app.state.settings.email_mode == "smtp":
+        return GENERIC_MESSAGE
     if raw and user:
         try:
             request.app.state.email_sender.send(user.email, "password-reset", raw)

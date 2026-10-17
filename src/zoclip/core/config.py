@@ -1,3 +1,4 @@
+import base64
 import re
 from pathlib import Path
 from typing import Literal, Self
@@ -44,6 +45,7 @@ class Settings(BaseSettings):
     smtp_password: SecretStr = SecretStr("")
     smtp_from: EmailStr | None = None
     smtp_timeout_seconds: int = Field(default=15, ge=1, le=30)
+    email_queue_key: SecretStr = SecretStr("")
     google_client_id: str = ""
     google_client_secret: SecretStr = SecretStr("")
     google_redirect_uri: str = ""
@@ -108,6 +110,17 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_deployment(self) -> Self:
+        if self.email_mode == "smtp":
+            try:
+                queue_key = base64.b64decode(
+                    self.email_queue_key.get_secret_value(), altchars=b"-_", validate=True
+                )
+                if len(queue_key) != 32:
+                    raise ValueError
+            except ValueError:
+                raise ValueError(
+                    "SMTP delivery requires a private 32-byte base64 EMAIL_QUEUE_KEY"
+                ) from None
         if self.email_mode == "smtp":
             if (
                 not self.smtp_host
