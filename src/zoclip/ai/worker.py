@@ -17,7 +17,13 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from zoclip.ai import audio, selection
 from zoclip.ai.models import AIRequest, ClipSuggestion, Transcript
-from zoclip.ai.providers import MAX_RESPONSE, HTTPProviders, Providers, gemini_body
+from zoclip.ai.providers import (
+    MAX_RESPONSE,
+    HTTPProviders,
+    LocalWhisperProviders,
+    Providers,
+    gemini_body,
+)
 from zoclip.ai.schemas import Moment, Moments, TranscriptData
 from zoclip.auth.models import User
 from zoclip.core.config import Settings
@@ -30,6 +36,10 @@ from zoclip.media.models import Job, Outbox, SourceVideo
 from zoclip.media.storage import LocalStorage
 
 CONFIG_KEYS = (
+    "transcription_provider",
+    "whisper_model",
+    "whisper_device",
+    "whisper_compute_type",
     "deepgram_model",
     "deepgram_version",
     "deepgram_language",
@@ -52,6 +62,27 @@ def dg_options(settings: Settings) -> dict:
 
 def deepgram_rate_label(settings: Settings) -> str:
     return "deepgram:" + money.fingerprint(dg_options(settings))
+
+
+def transcription_options(settings: Settings) -> dict:
+    if settings.transcription_provider == "deepgram":
+        return dg_options(settings)  # Preserve original Deepgram cache identity.
+    return {
+        "provider": "whisper",
+        "model": settings.whisper_model,
+        "device": settings.whisper_device,
+        "compute_type": settings.whisper_compute_type,
+        "language": settings.deepgram_language,
+        "adapter": "local-whisper-v1",
+    }
+
+
+def default_providers(settings: Settings) -> Providers:
+    if settings.transcription_provider == "whisper":
+        return LocalWhisperProviders(settings)
+    if settings.transcription_provider == "deepgram":
+        return HTTPProviders(settings)
+    raise ApiError(503, "transcription_unconfigured", "Unknown transcription provider.")
 
 
 def checked(db: Session, owner: UUID, job_id: UUID, token: UUID) -> Job:
@@ -145,7 +176,7 @@ def usage(result: dict, provider: str) -> list[int] | None:
             return [0] if provider == "deepgram" else [0, 0]
         if result["status"] != 200:
             return None
-        if provider == "deepgram":
+        if provider in {"deepgram", "whisper"}:
             duration = body["metadata"]["duration"]
             if (
                 isinstance(duration, bool)
@@ -154,7 +185,7 @@ def usage(result: dict, provider: str) -> list[int] | None:
                 or not 0 < duration <= 7201
             ):
                 return None
-            return [math.ceil(duration / 60)]
+            return [] if provider == "whisper" else [math.ceil(duration / 60)]
         meta = body["usageMetadata"]
         values = [
             meta["promptTokenCount"],
@@ -387,6 +418,72 @@ def paid_request(
     return {**result, "local_request_id": str(request_id)}
 
 
+def local_request(
+    factory: sessionmaker,
+    settings: Settings,
+    storage: LocalStorage,
+    providers: Providers,
+    owner: UUID,
+    job_id: UUID,
+    token: UUID,
+    cache_key: str,
+    path: UUID,
+) -> dict:
+    """Durable local receipt, no paid admission and no fabricated provider expense.
+
+    Quote/reservation policy remains conservative and unchanged. This does not
+    install or approve a new CostRate. Gemini still uses paid_request unchanged.
+    """
+    with factory() as db:
+        job = checked(db, owner, job_id, token)
+        from zoclip.ai.acceptance import MARKER
+
+        if MARKER in job.checkpoint:
+            raise ApiError(
+                503, "acceptance_provider_mismatch", "Paid acceptance needs explicit Deepgram."
+            )
+        _, _, limits = money.locked_limits(db)
+        money.configured_rates(db, limits)
+        money.check_budgets(db, limits, owner, job.reservation_id, money.ZERO)
+        row = db.scalar(
+            select(AIRequest).where(AIRequest.user_id == owner, AIRequest.cache_key == cache_key)
+        )
+        fresh = row is None
+        if row is None:
+            row = AIRequest(
+                id=uuid4(),
+                user_id=owner,
+                video_id=job.video_id,
+                job_id=job_id,
+                provider="whisper",
+                model="faster-whisper:" + settings.whisper_model,
+                cache_key=cache_key,
+                number=1,
+                attempt_ids=[],
+            )
+            db.add(row)
+        request_id = row.id
+        if row.state == "RECORDED":
+            assert row.response is not None
+            return {**row.response, "local_request_id": str(request_id)}
+        db.commit()
+    if fresh:
+        with factory() as db:
+            job = checked(db, owner, job_id, token)
+            _, _, limits = money.locked_limits(db)
+            money.configured_rates(db, limits)
+            money.check_budgets(db, limits, owner, job.reservation_id, money.ZERO)
+        result = providers.transcribe(storage.path(path))
+        journal(storage, request_id, result)
+        checkpoint_response(factory, owner, request_id, result)
+    else:
+        receipt = read_receipt(storage, request_id)
+        if receipt:
+            checkpoint_response(factory, owner, request_id, receipt)
+    result = reconcile_response(factory, owner, request_id)
+    return {**result, "local_request_id": str(request_id)}
+
+
 def run(
     job_id: UUID,
     owner: UUID,
@@ -405,6 +502,8 @@ def run(
             db.commit()
             return
         pinned = job.checkpoint.get("ai_config") or {k: getattr(settings, k) for k in CONFIG_KEYS}
+        if job.checkpoint.get("ai_config") and "transcription_provider" not in pinned:
+            pinned = {**pinned, "transcription_provider": "deepgram"}
         if job.checkpoint.get("auto_render") and not job.checkpoint.get("ai_config"):
             source = service.owned(db, SourceVideo, owner, job.video_id)
             source_seconds = (
@@ -419,7 +518,7 @@ def run(
                 "ai_max_clip_seconds": min(30, settings.ai_max_clip_seconds, source_seconds),
             }
         job.checkpoint = {**job.checkpoint, "ai_config": pinned}
-        settings = settings.model_copy(update=pinned)
+        settings = Settings(_env_file=None, **(settings.model_dump() | pinned))  # type: ignore[call-arg]
         if settings.deepgram_language not in settings.ai_approved_languages:
             raise ApiError(503, "language_unapproved", "Job language is no longer approved.")
         video = service.owned(db, SourceVideo, owner, job.video_id)
@@ -431,7 +530,7 @@ def run(
         quote = service.required(db, Quote, reservation.quote_id)
         count = min(settings.ai_max_candidates, quote.request["output_count"])
         transcript_key = money.fingerprint(
-            [owner, video.id, source_digest, dg_options(settings), "pcm16k-v1"]
+            [owner, video.id, source_digest, transcription_options(settings), "pcm16k-v1"]
         )
         cached = db.scalar(
             select(Transcript).where(
@@ -441,7 +540,7 @@ def run(
         cached_id = cached.id if cached else None
         stage(db, job, "ANALYZING" if cached else "EXTRACTING_AUDIO")
         db.commit()
-    providers = providers or HTTPProviders(settings)
+    providers = providers or default_providers(settings)
     if not cached_id:
         audio_id = uuid4()
         last_heartbeat = 0.0
@@ -467,18 +566,32 @@ def run(
                 job = checked(db, owner, job_id, token)
                 stage(db, job, "TRANSCRIBING")
                 db.commit()
-            response = paid_request(
-                factory,
-                settings,
-                storage,
-                providers,
-                owner,
-                job_id,
-                token,
-                "deepgram",
-                transcript_key,
-                path=audio_id,
-                duration=duration,
+            response = (
+                local_request(
+                    factory,
+                    settings,
+                    storage,
+                    providers,
+                    owner,
+                    job_id,
+                    token,
+                    transcript_key,
+                    audio_id,
+                )
+                if settings.transcription_provider == "whisper"
+                else paid_request(
+                    factory,
+                    settings,
+                    storage,
+                    providers,
+                    owner,
+                    job_id,
+                    token,
+                    "deepgram",
+                    transcript_key,
+                    path=audio_id,
+                    duration=duration,
+                )
             )
             if response is None:
                 return
@@ -491,7 +604,9 @@ def run(
                     job_id=job.id,
                     request_id=UUID(response["local_request_id"]),
                     cache_key=transcript_key,
-                    model=settings.deepgram_model + "@" + settings.deepgram_version,
+                    model=("faster-whisper:" + settings.whisper_model)
+                    if settings.transcription_provider == "whisper"
+                    else settings.deepgram_model + "@" + settings.deepgram_version,
                     language=settings.deepgram_language,
                     audio_sha256=audio_digest,
                     data=data.model_dump(mode="json"),

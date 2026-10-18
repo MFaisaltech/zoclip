@@ -7,6 +7,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg fonts-de
 COPY --from=ghcr.io/astral-sh/uv:0.12.24@sha256:3af4716e991d6956a41e573eab705d0ee08500cd829ed30293eb8472f372c65a /uv /usr/local/bin/uv
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
+COPY scripts/download_whisper_model.py ./scripts/download_whisper_model.py
+RUN /opt/venv/bin/python scripts/download_whisper_model.py
+ENV HF_HUB_OFFLINE=1 HF_HUB_DISABLE_TELEMETRY=1 DO_NOT_TRACK=1
 COPY src ./src
 COPY alembic ./alembic
 COPY alembic.ini ./

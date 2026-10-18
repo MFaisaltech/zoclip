@@ -1,5 +1,18 @@
 # ZoClip implementation status
 
+## 2026-10-19 local faster-whisper default
+
+Protected staging now defaults to faster-whisper 1.2.1 small/cpu/int8, with PyAV
+17.1.0, image-local assets, serialized inference and explicit Deepgram fallback.
+Gemini, selection/schema shapes, credits/prices and closed public AI/payments stay
+unchanged. Final-image local benchmark: 25.14725s PCM in 20.70033s, 661.30 MiB peak
+RSS, valid TranscriptData, zero paid calls. 31 final focused tests pass; full local
+checkpoint 633 passed/84 skipped, with full Linux CI repeated for the pushed commit.
+Encrypted off-server backup, additive CHECK migration, unchanged customer rows/media,
+seven services, VPN and Vercel protections verified. CostRates are proposal only;
+long-source capacity remains bounded/unmeasured. See [evidence and exact files](WHISPER_RELEASE_2026-10-19.md).
+
+
 ## 2026-10-18 pricing release closeout
 
 Active deployment/source hashes, four live catalog packages, unchanged customer financial records and disabled public AI/payments verified read-only. VPN-only API and Vercel all-deployment protection remain intact. No new migration, deployment, paid provider call or rerun of the 190-test suite. Repository synchronization completes the interrupted release. Full commercial SaaS still requires provider-account evidence and bounded live-test approval, verified SMTP delivery, merchant onboarding/integration acceptance and separate launch authorization. See [release closeout evidence](PRICING_2026-10-17.md#release-closeout---2026-10-18).

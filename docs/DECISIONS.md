@@ -1,5 +1,12 @@
 # ZoClip decision register
 
+2026-10-19: default transcription is local faster-whisper small/cpu/int8, with
+explicit Deepgram rollback only. Gemini/selection/API shapes and all customer
+financial rules stay unchanged. Offline image assets, one shared-volume inference
+lock and local durable receipts avoid silent paid fallback or invented API spend.
+See [operating constraints and privacy](LOCAL_WHISPER.md). CostRates remain pending
+separate owner approval; no financial configuration is installed by this change.
+
 2026-10-15: owner selected reviewer WireGuard VPN with SSH retained for operations.
 Keep Docker loopback-only and use a separate systemd socket bound to wg-zoclip
 plus its exact private IP, forwarding encrypted TCP to existing loopback HTTPS.

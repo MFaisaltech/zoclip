@@ -1,5 +1,10 @@
 # Phase 4 AI transcript and suggestions
 
+2026-10-19: [local faster-whisper](LOCAL_WHISPER.md) is now the default adapter;
+Deepgram is an explicit inactive fallback. Gemini still receives transcript data.
+Historical Deepgram-specific sections below describe that fallback. API and
+TranscriptData shapes and paid authorization requirements remain unchanged.
+
 Phase 4 produces private transcripts and suggestions, not rendered clips. Live
 provider acceptance remains unverified. AI is disabled by default. Existing
 authentication, CSRF, credits, ingestion and durable outbox contracts still apply.

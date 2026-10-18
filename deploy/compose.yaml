@@ -13,6 +13,11 @@ x-env: &environment
   ENABLE_LIVE_PAYMENTS: "false"
   ENABLE_TRIAL_CREDITS: "false"
   AI_ENABLED: "false"
+  TRANSCRIPTION_PROVIDER: ${TRANSCRIPTION_PROVIDER:-whisper}
+  WHISPER_MODEL: small
+  WHISPER_COMPUTE_TYPE: int8
+  WHISPER_DEVICE: cpu
+  WHISPER_MODEL_PATH: /opt/models/faster-whisper-small
   REDIS_URL: redis://redis:6379/0
   MEDIA_ROOT: /app/var/media
   MEDIA_ALLOWED_IMPORT_HOSTS: "[]"
@@ -124,8 +129,9 @@ services:
     <<: *app
     command: [python, -m, zoclip.workers.run]
     environment: {<<: *environment, WORKER_QUEUE: ai, WORKER_NAME: zoclip-ai}
-    mem_limit: 1024m
-    cpus: 0.75
+    # One RQ worker/work horse; shared-volume adapter lock also excludes replicas.
+    mem_limit: 2560m
+    cpus: 2.0
     networks: [data, queue, egress]
     healthcheck:
       test: [CMD, python, -m, zoclip.ops.health, worker]

@@ -11,7 +11,7 @@ class AIRequest(IdentityMixin, Base):
     __table_args__ = (
         UniqueConstraint("user_id", "cache_key", "number"),
         CheckConstraint("number BETWEEN 1 AND 3", name="number"),
-        CheckConstraint("provider IN ('deepgram','gemini')", name="provider"),
+        CheckConstraint("provider IN ('deepgram','gemini','whisper')", name="provider"),
         CheckConstraint(
             "state IN ('ADMITTED','RESPONDED','RECORDED','REJECTED','UNKNOWN')", name="state"
         ),

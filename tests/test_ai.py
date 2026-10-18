@@ -134,6 +134,7 @@ class Simulator:
 def configure(factory, users, settings):
     settings = settings.model_copy(
         update={
+            "transcription_provider": "deepgram",  # This simulator tests paid Deepgram accounting.
             "ai_enabled": True,
             "deepgram_api_key": "unused",
             "gemini_api_key": "unused",

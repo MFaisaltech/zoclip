@@ -70,6 +70,12 @@ class Settings(BaseSettings):
     render_deadline_seconds: int = Field(default=240, ge=10, le=300)
     render_max_bytes: int = Field(default=256 * 1024**2, ge=1024**2, le=512 * 1024**2)
     ai_enabled: bool = False
+    transcription_provider: Literal["whisper", "deepgram"] = "whisper"
+    # Only the reviewed CPU configuration has an image-pinned model in this phase.
+    whisper_model: Literal["small"] = "small"
+    whisper_compute_type: Literal["int8"] = "int8"
+    whisper_device: Literal["cpu"] = "cpu"
+    whisper_model_path: str = "/opt/models/faster-whisper-small"
     deepgram_api_key: SecretStr = SecretStr("")
     deepgram_model: str = Field(default="", pattern=r"^[a-zA-Z0-9._-]{0,60}$")
     deepgram_version: str = Field(default="", pattern=r"^[a-zA-Z0-9._-]{0,60}$")
@@ -97,11 +103,16 @@ class Settings(BaseSettings):
     @property
     def ai_configured(self) -> bool:
         return self.ai_enabled and bool(
-            self.deepgram_api_key.get_secret_value()
-            and self.deepgram_model
-            and self.deepgram_version
-            and self.gemini_api_key.get_secret_value()
+            self.gemini_api_key.get_secret_value()
             and self.gemini_model
+            and (
+                self.transcription_provider == "whisper"
+                or (
+                    self.deepgram_api_key.get_secret_value()
+                    and self.deepgram_model
+                    and self.deepgram_version
+                )
+            )
         )
 
     @property
@@ -151,7 +162,9 @@ class Settings(BaseSettings):
         if self.ai_min_clip_seconds > self.ai_max_clip_seconds:
             raise ValueError("AI clip duration bounds are invalid")
         if self.ai_enabled and not self.ai_configured:
-            raise ValueError("AI enablement requires both provider keys and pinned models/version")
+            raise ValueError(
+                "AI enablement requires the selected provider and pinned Gemini configuration"
+            )
         db = make_url(self.database_url.get_secret_value())
         if db.drivername != "postgresql+psycopg":
             raise ValueError("DATABASE_URL must use postgresql+psycopg")

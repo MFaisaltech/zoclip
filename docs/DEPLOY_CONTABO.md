@@ -1,5 +1,9 @@
 # Private staging deployment and rollback
 
+2026-10-19: [local Whisper operations](LOCAL_WHISPER.md) documents the authorized
+protected staging update, CPU/memory limits, offline model and explicit rollback.
+This supersedes the historical Deepgram default without authorizing public AI.
+
 For Phase8 Milestone6 use the [coordinated Vercel/SSH deployment runbook](PHASE8_PRIVATE_STAGING_RUNBOOK.md)
 and its two-file private profile. It supersedes this base profile's split-origin
 admin routing for the private browser dashboard only; all RBAC/CSRF remains.

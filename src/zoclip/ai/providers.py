@@ -1,8 +1,13 @@
 """Official HTTPS REST adapters, no implicit retries or configurable destinations."""
 
 import json
+import math
+import os
 import ssl
+import sys
+import threading
 import time
+import wave
 from pathlib import Path
 from typing import Protocol
 
@@ -102,3 +107,186 @@ class HTTPProviders:
             limit=256 * 1024,
             json=body,
         )
+
+
+_whisper_lock = threading.Lock()
+_whisper_models: dict[tuple, object] = {}
+WHISPER_FILES = ("config.json", "model.bin", "tokenizer.json", "vocabulary.txt")
+
+
+def check_whisper_files(settings: Settings) -> Path:
+    """Local paths only. Missing assets never authorize a runtime download."""
+    path = Path(settings.whisper_model_path)
+    if not path.is_absolute() or not path.is_dir():
+        raise ProviderFailure("whisper_model_unavailable")
+    if any(not (path / name).is_file() for name in WHISPER_FILES):
+        raise ProviderFailure("whisper_model_unavailable")
+    return path
+
+
+def _load_whisper(settings: Settings) -> object:
+    import onnxruntime
+    from faster_whisper import WhisperModel
+
+    onnxruntime.disable_telemetry_events()
+    return WhisperModel(
+        str(check_whisper_files(settings)),
+        device=settings.whisper_device,
+        compute_type=settings.whisper_compute_type,
+        cpu_threads=2,
+        num_workers=1,
+        local_files_only=True,
+    )
+
+
+class LocalWhisperProviders(HTTPProviders):
+    """Local audio, shared unchanged Gemini adapter; never automatic paid fallback.
+
+    Lazy process-local reuse is safe for RQ's forked work horses. The shared media
+    lock also serializes separate processes/containers, released by the OS on crash.
+    Speaker 0 is a placeholder, not diarization.
+    """
+
+    def transcribe(self, path: Path) -> dict:
+        try:
+            # The existing extractor supplies bounded mono 16kHz PCM WAV. Validate
+            # actual samples rather than VAD's shorter duration_after_vad value.
+            with wave.open(str(path), "rb") as source:
+                duration = source.getnframes() / source.getframerate()
+                if (
+                    source.getnchannels() != 1
+                    or source.getframerate() != 16000
+                    or source.getsampwidth() != 2
+                    or not 0 < duration <= 7200
+                    or path.stat().st_size > 240 * 1024**2
+                ):
+                    raise ValueError
+                # Reject truncated payloads without loading the full audio into RAM.
+                frames = 0
+                while data := source.readframes(32768):
+                    frames += len(data) // 2
+                if frames != source.getnframes():
+                    raise ValueError
+        except Exception:
+            raise ProviderFailure("whisper_invalid_audio") from None
+
+        try:
+            with _whisper_lock:
+                # One host-wide transcription on the existing shared private volume.
+                # Nonblocking acquisition fails closed rather than holding job leases.
+                lock_path = Path(self.settings.media_root) / ".whisper-transcription.lock"
+                with lock_path.open("a+b") as lock:
+                    if sys.platform != "win32":
+                        import fcntl
+
+                        fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    else:
+                        import msvcrt
+
+                        lock.seek(0)
+                        if not lock.read(1):
+                            lock.write(b"0")
+                            lock.flush()
+                        lock.seek(0)
+                        msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
+                    key = (
+                        os.getpid(),
+                        self.settings.whisper_model_path,
+                        self.settings.whisper_model,
+                        self.settings.whisper_device,
+                        self.settings.whisper_compute_type,
+                    )
+                    if key not in _whisper_models:
+                        _whisper_models[key] = _load_whisper(self.settings)
+                    model = _whisper_models[key]
+                    segments, _info = model.transcribe(  # type: ignore[attr-defined]
+                        str(path),
+                        language=self.settings.deepgram_language,
+                        vad_filter=True,
+                        word_timestamps=True,
+                    )
+                    words: list[dict] = []
+                    pending: list = []
+                    deadline = time.monotonic() + 300
+                    # Iteration performs inference; exceptions must not yield success.
+                    for segment in segments:
+                        if time.monotonic() > deadline:
+                            raise ValueError
+                        if segment.words is None:
+                            raise ValueError
+                        for w in segment.words:
+                            text = w.word.strip()
+                            if (
+                                not text
+                                or len(text) > 200
+                                or len(words) >= 40000
+                                or any(
+                                    isinstance(v, bool)
+                                    or not isinstance(v, (int, float))
+                                    or not math.isfinite(v)
+                                    for v in (w.start, w.end, w.probability)
+                                )
+                                or not 0 <= w.start <= w.end <= duration
+                                or not 0 <= w.probability <= 1
+                                or (words and w.start < words[-1]["end"] - 0.05)
+                            ):
+                                raise ValueError
+                            if w.start == w.end:
+                                # Native alignment can emit a real zero-length token.
+                                # Preserve its text at an already-timed boundary; never
+                                # invent a positive duration or silently drop the token.
+                                if (
+                                    not words
+                                    or not words[-1]["start"] <= w.start <= words[-1]["end"]
+                                ):
+                                    if len(pending) >= 20:
+                                        raise ValueError
+                                    pending.append(w)
+                                    continue
+                                previous = words[-1]
+                                separator = " " if w.word[:1].isspace() else ""
+                                combined = previous["punctuated_word"] + separator + text
+                                if len(combined) > 200:
+                                    raise ValueError
+                                previous.update(
+                                    word=combined,
+                                    punctuated_word=combined,
+                                    confidence=min(previous["confidence"], w.probability),
+                                )
+                                continue
+                            confidence = w.probability
+                            if pending:
+                                if any(not w.start <= token.start <= w.end for token in pending):
+                                    raise ValueError
+                                text = ("".join(token.word for token in pending) + w.word).strip()
+                                confidence = min(
+                                    confidence, *(token.probability for token in pending)
+                                )
+                                pending.clear()
+                                if len(text) > 200:
+                                    raise ValueError
+                            words.append(
+                                {
+                                    "word": text,
+                                    "punctuated_word": text,
+                                    "start": w.start,
+                                    "end": w.end,
+                                    "confidence": confidence,
+                                    "speaker": 0,
+                                }
+                            )
+                    if pending:
+                        raise ValueError
+                    return {
+                        "status": 200,
+                        "body": {
+                            "metadata": {"duration": duration},
+                            "results": {
+                                "channels": [{"alternatives": [{"words": words}]}],
+                                "utterances": [],
+                            },
+                        },
+                    }
+        except Exception:
+            # No decoder/native-model error or chained sensitive path reaches logs.
+            raise ProviderFailure("whisper_transcription_failed") from None

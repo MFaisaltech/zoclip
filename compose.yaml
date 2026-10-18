@@ -39,6 +39,11 @@ x-app: &app
     RENDER_DEADLINE_SECONDS: ${RENDER_DEADLINE_SECONDS:-240}
     RENDER_MAX_BYTES: ${RENDER_MAX_BYTES:-268435456}
     AI_ENABLED: ${AI_ENABLED:-false}
+    TRANSCRIPTION_PROVIDER: ${TRANSCRIPTION_PROVIDER:-whisper}
+    WHISPER_MODEL: small
+    WHISPER_COMPUTE_TYPE: int8
+    WHISPER_DEVICE: cpu
+    WHISPER_MODEL_PATH: /opt/models/faster-whisper-small
     DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY:-}
     DEEPGRAM_MODEL: ${DEEPGRAM_MODEL:-}
     DEEPGRAM_VERSION: ${DEEPGRAM_VERSION:-}
@@ -118,8 +123,8 @@ services:
       <<: *environment
       WORKER_QUEUE: ai
     command: [python, -m, zoclip.workers.run]
-    mem_limit: 1024m
-    cpus: 1.0
+    mem_limit: 2560m
+    cpus: 2.0
     restart: unless-stopped
     depends_on:
       migrate: {condition: service_completed_successfully}
