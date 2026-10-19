@@ -1,5 +1,22 @@
 # ZoClip implementation status
 
+
+## 2026-10-20 deep economics audit (no activation)
+
+Completed read-only pipeline/cost/credit audit and three financial scenarios.
+New staging snapshot: seven healthy services, zero AI/provider/render usage,
+Whisper default, public AI/payments off, breaker on and no rates/policy. Owner
+confirmed actual invoice/traffic/overage/shared workloads unknown. Prior USD0.3545
+is a reproducible allocated stress scenario, not measured cash cost. Conditional
+planning ceiling 293/742 credits; supplemental-cost risk 81/205; neither certified.
+Review alternatives 280/720 or 75/200 need evidence and owner approval, not activation.
+Nine pure audit tests passed (0 failed/skipped), final run 25.90s; artifact replay,
+ceilings, edits, fee/FX/volume sensitivities, escaped JSON and prohibited side effects.
+Ruff/format pass. No full suite, inference, stress test, migration or deployment.
+Active pricing/CostRates/quote engine/customer records/frontend unchanged.
+See [unit economics audit](ZOCLIP_UNIT_ECONOMICS_AUDIT.md) and
+[pricing simulation and evidence requirements](ZOCLIP_PRICING_SIMULATION.md).
+
 ## 2026-10-20 Whisper closeout and inactive pricing review
 
 Whisper commit 24ce3a6 CI succeeded: 641 passed/81 skipped, Docker and ingestion

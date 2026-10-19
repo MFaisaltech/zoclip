@@ -1,0 +1,66 @@
+{
+  "observed_at_utc": "2026-10-19T20:23:41Z",
+  "observed_at_pkt": "2026-10-20 01:23:41 +05:00",
+  "sample_seconds": 5,
+  "logical_cpus": 4,
+  "host_busy_percent": 8.17,
+  "memory": {
+    "MemTotal": 8326930432,
+    "MemAvailable": 6957535232,
+    "SwapTotal": 0,
+    "SwapFree": 0
+  },
+  "disk": {
+    "total_bytes": 102888095744,
+    "used_bytes": 38054129664,
+    "free_bytes": 64817188864
+  },
+  "services_healthy": 7,
+  "app": {
+    "settings": {
+      "private_staging": true,
+      "ai_enabled": false,
+      "transcription_provider": "whisper",
+      "gemini_model": "",
+      "ai_chunk_bytes": 16000,
+      "ai_max_chunks": 32,
+      "ai_max_output_tokens": 2048,
+      "ai_calls_per_minute": 6,
+      "media_retention_seconds": 604800,
+      "media_max_bytes": 4294967296,
+      "media_retained_bytes": 42949672960,
+      "media_headroom_bytes": 21474836480,
+      "render_deadline_seconds": 240,
+      "render_max_bytes": 268435456,
+      "payment_provider": "disabled",
+      "enable_live_payments": false,
+      "registration_enabled": false,
+      "enable_trial_credits": false
+    },
+    "counts": {
+      "ai_requests": 0,
+      "provider_usage": 0,
+      "jobs": 2,
+      "render_outputs": 0,
+      "transcripts": 0,
+      "cost_rate_versions": 0,
+      "cost_policy_versions": 0,
+      "billing_orders": 0,
+      "wallet_transactions": 0
+    },
+    "jobs": [
+      [
+        "VALIDATE",
+        "COMPLETED",
+        2
+      ]
+    ],
+    "requests": [],
+    "spending_closed": true
+  },
+  "monthly_invoice_verified": false,
+  "monthly_traffic_verified": false,
+  "owner_unknowns_confirmed": "2026-10-20",
+  "production_workload_or_benchmark_triggered": false,
+  "paid_calls_triggered": 0
+}
