@@ -1,5 +1,17 @@
 # ZoClip implementation status
 
+## 2026-10-20 Whisper closeout and inactive pricing review
+
+Whisper commit 24ce3a6 CI succeeded: 641 passed/81 skipped, Docker and ingestion
+smokes green. Read-only staging confirms seven healthy services, local default
+and explicit Deepgram fallback; no expensive benchmark or redeployment repeated.
+Owner's PKR 2000/5000 with 3700/9500 credits fails the existing 60% cost scenario;
+owner selected review of lower allocations before activation. Inactive two-card
+preview, deterministic proposal/economics reports and fail-closed install guard
+are tested. No active catalog, customer balance, CostRate or deployment changed.
+See [pricing review and conditional ceilings](PRICING_REVIEW_2026-10-20.md).
+
+
 ## 2026-10-19 local faster-whisper default
 
 Protected staging now defaults to faster-whisper 1.2.1 small/cpu/int8, with PyAV

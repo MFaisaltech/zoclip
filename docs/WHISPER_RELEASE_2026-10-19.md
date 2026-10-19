@@ -1,5 +1,10 @@
 # Local Whisper staging verification — 2026-10-19
 
+2026-10-20 closeout: [CI 39168348997](https://github.com/MFaisaltech/zoclip/actions/runs/39168348997)
+completed successfully for 24ce3a6: **641 passed, 81 skipped**, plus Docker/container
+health and private ingestion smokes. Read-only staging recheck confirms seven
+healthy services and default Whisper. No benchmark/rebuild/redeployment repeated.
+
 Default: faster-whisper **1.2.1**, small/cpu/int8, VAD/word timestamps enabled.
 PyAV **17.1.0** is pinned: newer PyAV removed an argument used by faster-whisper.
 Deepgram remains an inactive explicit fallback. No paid calls, public activation,

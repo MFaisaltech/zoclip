@@ -16,6 +16,8 @@ from zoclip.credits.schemas import ConsumptionRules, PlanVersionInput, QuoteInpu
 
 
 def install(db: Session, settings: Settings, actor: UUID, catalog: dict) -> list[dict]:
+    if catalog.get("release_status", "ready") != "ready":
+        raise RuntimeError("Pricing proposal has not passed economics and owner review")
     system = db.scalar(select(SystemLimits).where(SystemLimits.id == 1).with_for_update())
     if (
         not settings.private_staging

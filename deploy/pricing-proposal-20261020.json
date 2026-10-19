@@ -1,0 +1,104 @@
+{
+  "version": "pricing-20261020-proposal",
+  "release_status": "proposal",
+  "reason": "Owner two-package proposal; activation blocked by unverified economics",
+  "retired": [
+    "starter",
+    "business",
+    "topup"
+  ],
+  "estimate": {
+    "source_seconds": 300,
+    "outputs_per_job": 1,
+    "edits_per_job": 0
+  },
+  "display": {
+    "free": {
+      "name": "FREE",
+      "target_clips": 1,
+      "bonus_credits": 0
+    },
+    "creator": {
+      "name": "CREATOR",
+      "bonus_credits": 0,
+      "target_clips": 61,
+      "representative_quote_credits": 60
+    },
+    "pro": {
+      "name": "PRO",
+      "bonus_credits": 0,
+      "target_clips": 158,
+      "representative_quote_credits": 60
+    }
+  },
+  "plans": {
+    "free": {
+      "price_paisa": 0,
+      "included_credits": 60,
+      "valid_days": 0,
+      "approved": true,
+      "rules": {
+        "credits_per_minute": 5,
+        "credits_per_output": 2,
+        "credits_per_edit": 2,
+        "captions_credits": 0,
+        "reframe_credits": 0,
+        "max_source_seconds": 300,
+        "max_outputs": 1,
+        "max_edits": 0,
+        "max_concurrent_jobs": 1,
+        "daily_credits": 60,
+        "monthly_credits": 60,
+        "minimum_job_credits": 60,
+        "purchasable": false,
+        "lifetime_output_limit": 1
+      }
+    },
+    "creator": {
+      "price_paisa": 200000,
+      "included_credits": 3700,
+      "valid_days": 30,
+      "approved": false,
+      "rules": {
+        "credits_per_minute": 5,
+        "credits_per_output": 2,
+        "credits_per_edit": 2,
+        "captions_credits": 0,
+        "reframe_credits": 0,
+        "max_source_seconds": 7200,
+        "max_outputs": 3,
+        "max_edits": 1,
+        "max_concurrent_jobs": 1,
+        "daily_credits": 650,
+        "monthly_credits": 3700,
+        "minimum_job_credits": 60,
+        "purchasable": true,
+        "lifetime_output_limit": null
+      },
+      "review_only": true
+    },
+    "pro": {
+      "price_paisa": 500000,
+      "included_credits": 9500,
+      "valid_days": 30,
+      "approved": false,
+      "rules": {
+        "credits_per_minute": 5,
+        "credits_per_output": 2,
+        "credits_per_edit": 2,
+        "captions_credits": 0,
+        "reframe_credits": 0,
+        "max_source_seconds": 7200,
+        "max_outputs": 3,
+        "max_edits": 1,
+        "max_concurrent_jobs": 1,
+        "daily_credits": 650,
+        "monthly_credits": 9500,
+        "minimum_job_credits": 60,
+        "purchasable": true,
+        "lifetime_output_limit": null
+      },
+      "review_only": true
+    }
+  }
+}
