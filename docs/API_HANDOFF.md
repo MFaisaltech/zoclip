@@ -236,3 +236,13 @@ cannot reserve credits or dispatch work. Missing/unapproved pricing is represent
 by null credits, never invented pricing. Public production returns 404. Private
 preview requires all AI/payment switches off and the spending breaker closed.
 `POST /jobs/quote` and all commercial admission checks retain their existing contract.
+
+## 2026-10-20 capacity acceptance handoff
+
+No public API schema change. Existing queue_full429 (Retry-After60),
+processing_limit429 and insufficient_capacity507 retain atomic credit rollback.
+Private local monitor adds processing_capacity queue/running counts and queue/
+heartbeat ages plus hourly terminal/failure counts; not deployed. Active plans
+remain unchanged because representative capacity acceptance fails. The inactive
+two-plan preview uses exact owner3700/9500 targets with conditional job/clip
+examples. [Evidence and release blocker](CAPACITY_ACTIVATION_2026-10-20.md).

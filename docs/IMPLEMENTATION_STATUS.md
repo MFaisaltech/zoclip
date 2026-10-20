@@ -1,5 +1,29 @@
 # ZoClip implementation status
 
+## 2026-10-20 capacity acceptance remains blocked
+
+Owner-selected targets remain Creator PKR2000/3700 and Pro PKR5000/9500.
+An authorized isolated staging diagnostic on actual25.14725s PCM measured
+0.707s extraction,28.159s Whisper,56.536s captioned/tracked render and52.414s
+rerender;659.63MiB process peak,4,659,815-byte outputs. Selection was explicitly
+mocked; no provider calls. No representative5/30/120min source is available.
+Do not activate or deploy pricing: long-source deadlines, real queue throughput,
+simultaneous worker pressure and high-redemption storage remain unverified.
+Seven services healthy before/after,13 table fingerprints and both retained
+media hashes unchanged; VPN/Vercel protection verified, AI/payments/trial grants
+closed. Runtime image/catalog/CostRates/quotes/Whisper and customer data unchanged.
+Local next-release work adds private queue-age/heartbeat/failure telemetry and
+capacity boundary tests; inactive frontend preview reflects the owner targets
+and current conditional projections. No new arbitrary resource threshold or
+credit restriction. See [full acceptance and exact changed files](CAPACITY_ACTIVATION_2026-10-20.md).
+283 backend tests passed/2 skipped; additional real-PG/Redis capacity/monitor/RQ
+checks passed13 cases (clean shutdown rerun recorded in closeout). Frontend55 API
+tests, typecheck/lint/generator checks and backend Ruff/format/mypy passed.
+Production build passed (minimum free RAM1597MiB); browser preview-on3 passed/1
+skipped and preview-off1 passed/1 skipped (opposite flag branches). Temporary
+servers stopped. No deployment. Commit/push hashes are in the final handoff.
+No migration, new environment setting or commercial launch approval.
+
 ## 2026-10-20 final owner-cost pricing recalculation (review only)
 
 Owner updates replace the old USD13.20 hosting and 5% + USD0.05 fee assumptions

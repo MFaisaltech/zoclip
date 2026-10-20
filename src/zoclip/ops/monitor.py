@@ -117,6 +117,29 @@ def snapshot(db: Session, settings: Settings) -> dict:
             alerts.append(f"{period}_spend_at_80_percent")
     result["alerts"] = alerts
     result["spending_disabled"] = not policy or bool(system and system.breaker)
+    # SQL-authoritative backlog includes already-dispatched RQ work, unlike the
+    # outbox-only alert. These are ages, not fabricated processing percentages.
+    oldest_queued = db.scalar(select(func.min(Job.created_at)).where(Job.state == "QUEUED"))
+    oldest_running = db.scalar(
+        select(func.min(Job.heartbeat_at)).where(Job.state.in_(["RUNNING", "CANCEL_REQUESTED"]))
+    )
+    result["processing_capacity"] = {
+        "queued_jobs": result["job_states"].get("QUEUED", 0),
+        "queue_admission_limit": settings.media_pending_limit,
+        "running_jobs": sum(
+            result["job_states"].get(s, 0) for s in ("RUNNING", "CANCEL_REQUESTED")
+        ),
+        "oldest_queued_age_seconds": max(0, int((now - oldest_queued).total_seconds()))
+        if oldest_queued
+        else None,
+        "oldest_running_heartbeat_age_seconds": max(0, int((now - oldest_running).total_seconds()))
+        if oldest_running
+        else None,
+        "failed_jobs_last_hour": failures,
+        "terminal_jobs_last_hour": sum(
+            counts.get(s, 0) for s in ("COMPLETED", "FAILED", "CANCELED")
+        ),
+    }
     return result
 
 

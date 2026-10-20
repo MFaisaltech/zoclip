@@ -1,0 +1,330 @@
+{
+  "date": "2026-10-20",
+  "activation_allowed": false,
+  "blockers": [
+    "No representative 5-,30-,120-minute input exists in available local/staging media",
+    "Real RQ complete Whisper+mock-selection+render throughput and latency not measured",
+    "Simultaneous AI/render peak RAM and pressure behavior unmeasured",
+    "Financial pass depends on storage/traffic assumptions; high-redemption single-host capacity not established",
+    "No new deployment or fresh recoverable backup/rollback rehearsal performed because activation gates fail"
+  ],
+  "benchmark": {
+    "source_duration_seconds": 25.14725,
+    "source_bytes": 114549007,
+    "source_sha256": "4e07da5b61752632ccc5027a9a0156e10b7efe4c6fdb70647796c745995deb80",
+    "phases": [
+      {
+        "phase": "copy_to_disposable_storage_not_http_upload",
+        "wall_seconds": 0.3683256979857106,
+        "cpu_seconds": 0.36824100000000015,
+        "process_peak_rss_kib_cumulative": 64796,
+        "child_peak_rss_kib_cumulative": 75640,
+        "materialized_work_bytes": 114549007
+      },
+      {
+        "phase": "ffmpeg_audio_extraction",
+        "wall_seconds": 0.707235107984161,
+        "cpu_seconds": 0.9283129999999999,
+        "process_peak_rss_kib_cumulative": 64796,
+        "child_peak_rss_kib_cumulative": 76544,
+        "materialized_work_bytes": 115353797
+      },
+      {
+        "phase": "cold_local_whisper",
+        "wall_seconds": 28.158533806010382,
+        "cpu_seconds": 45.42305699999999,
+        "process_peak_rss_kib_cumulative": 675460,
+        "child_peak_rss_kib_cumulative": 76544,
+        "materialized_work_bytes": 115353797
+      },
+      {
+        "phase": "mock_gemini_selection",
+        "wall_seconds": 7.820202154107392e-05,
+        "cpu_seconds": 8.699999999861596e-05,
+        "process_peak_rss_kib_cumulative": 675460,
+        "child_peak_rss_kib_cumulative": 76544,
+        "materialized_work_bytes": 115353797
+      },
+      {
+        "phase": "initial_captioned_tracked_render",
+        "wall_seconds": 56.53574155000388,
+        "cpu_seconds": 89.775565,
+        "process_peak_rss_kib_cumulative": 675460,
+        "child_peak_rss_kib_cumulative": 675460,
+        "materialized_work_bytes": 120013612
+      },
+      {
+        "phase": "initial_captioned_tracked_render_local_download_read_not_http",
+        "wall_seconds": 0.008708758017746732,
+        "cpu_seconds": 0.00869599999999604,
+        "process_peak_rss_kib_cumulative": 675460,
+        "child_peak_rss_kib_cumulative": 675460,
+        "materialized_work_bytes": 120013612
+      },
+      {
+        "phase": "prepaid_edit_rerender",
+        "wall_seconds": 52.4143332800013,
+        "cpu_seconds": 82.38712000000001,
+        "process_peak_rss_kib_cumulative": 675460,
+        "child_peak_rss_kib_cumulative": 675460,
+        "materialized_work_bytes": 124673427
+      },
+      {
+        "phase": "prepaid_edit_rerender_local_download_read_not_http",
+        "wall_seconds": 0.008131413982482627,
+        "cpu_seconds": 0.008117999999984526,
+        "process_peak_rss_kib_cumulative": 675460,
+        "child_peak_rss_kib_cumulative": 675460,
+        "materialized_work_bytes": 124673427
+      }
+    ],
+    "initial_outputs": 1,
+    "requested_outputs": 3,
+    "edited_outputs": 1,
+    "outputs": [
+      {
+        "bytes": 4659815,
+        "sha256": "7df1c8ef4410f1c7ff08f356fe94693039de66b7fd2df63d7fc47047acb8178f"
+      },
+      {
+        "bytes": 4659815,
+        "sha256": "7df1c8ef4410f1c7ff08f356fe94693039de66b7fd2df63d7fc47047acb8178f"
+      }
+    ],
+    "transcript_word_count": 98,
+    "gemini_mode": "deterministic mock selection; no provider invocation",
+    "gemini_requests_if_uncached": 1,
+    "gemini_input_admission_units": 3596,
+    "gemini_output_admission_units": 2048,
+    "actual_tokens_and_remote_latency": null,
+    "queue_wait_seconds": null,
+    "http_upload_download_measured": false,
+    "retry_failure_rates_measured": false,
+    "cancellation_stopped_renderer": true,
+    "paid_calls": 0,
+    "customer_records_modified": false,
+    "image": "sha256:2e421e33f1406e0b68ee7849c01db3054d49e2d2c0d5bcc10119c1b498d0f131",
+    "container_cpu_limit": 2,
+    "container_memory_limit_bytes": 2684354560,
+    "network": "none",
+    "queue_kind": "direct_engine_no_RQ",
+    "captured_utc": "2026-10-20T03:49:02Z"
+  },
+  "staging_preservation": {
+    "image_unchanged": true,
+    "table_fingerprints_unchanged": true,
+    "tables": {
+      "wallets": {
+        "count": 1,
+        "sha256": "b2aa1976d9c370c81072b89d20be78e15c77a9eb6c43d6bf63e5f46a475933b0"
+      },
+      "wallet_transactions": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "credit_reservations": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "billing_orders": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "user_entitlements": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "plan_price_versions": {
+        "count": 10,
+        "sha256": "33ec69072c5c0159e7711cd56a189a1bb8bef54b9eda3aa95ffed7af35dddac7"
+      },
+      "source_videos": {
+        "count": 2,
+        "sha256": "d43951102e309acae975073b303df8f41a6326c2d424969c205b9004a3a7cd26"
+      },
+      "storage_objects": {
+        "count": 2,
+        "sha256": "0cf8d36ed614f9a6071a3468be9afacf0a076c8e2bcee5e286a0628f924040fc"
+      },
+      "jobs": {
+        "count": 2,
+        "sha256": "a0e645f8fff1fd69fc10c39d3f6a010a467a680463072675a379e8c6a8089721"
+      },
+      "ai_requests": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "provider_usage": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "render_outputs": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "transcripts": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "retained_files_verified": 2,
+    "services": [
+      {
+        "name": "zoclip-private-proxy-1",
+        "health": "healthy"
+      },
+      {
+        "name": "zoclip-private-api-1",
+        "health": "healthy"
+      },
+      {
+        "name": "zoclip-private-maintenance-1",
+        "health": "healthy"
+      },
+      {
+        "name": "zoclip-private-worker-render-1",
+        "health": "healthy"
+      },
+      {
+        "name": "zoclip-private-worker-ai-1",
+        "health": "healthy"
+      },
+      {
+        "name": "zoclip-private-db-1",
+        "health": "healthy"
+      },
+      {
+        "name": "zoclip-private-redis-1",
+        "health": "healthy"
+      }
+    ],
+    "settings": {
+      "private_staging": true,
+      "ai_enabled": false,
+      "transcription_provider": "whisper",
+      "gemini_model": "",
+      "payment_provider": "disabled",
+      "enable_live_payments": false,
+      "enable_trial_credits": false,
+      "media_pending_limit": 10,
+      "media_user_processing_limit": 1,
+      "media_headroom_bytes": 21474836480,
+      "media_retained_bytes": 42949672960
+    },
+    "memory_after_bytes": {
+      "MemTotal": 8326930432,
+      "MemAvailable": 6898667520
+    },
+    "disk_free_after_bytes": 64797052928,
+    "captured_utc": "2026-10-20T03:50:39Z"
+  },
+  "access_verification": {
+    "checked_at": "2026-10-20T03:50:39.518326+00:00",
+    "tls_verification": true,
+    "frontend": [
+      {
+        "url": "https://zoclip.technabeel.com",
+        "status": 302,
+        "vercel_auth_redirect": true
+      },
+      {
+        "url": "https://zoclip-l2tbcyu33-faisals-projects-160572e0.vercel.app",
+        "status": 302,
+        "vercel_auth_redirect": true
+      }
+    ],
+    "vpn": {
+      "/health/live": {
+        "status": 200,
+        "cors": "https://zoclip.technabeel.com"
+      },
+      "/health/ready": {
+        "status": 200,
+        "cors": "https://zoclip.technabeel.com"
+      },
+      "/api/v1/me": {
+        "status": 401,
+        "cors": "https://zoclip.technabeel.com"
+      },
+      "/docs": {
+        "status": 404,
+        "cors": null
+      },
+      "/api/v1/videos/9cced2b6-cf08-410c-b653-318eef1dc5fe/content": {
+        "status": 401,
+        "cors": "https://zoclip.technabeel.com"
+      },
+      "/api/v1/clips/00000000-0000-0000-0000-000000000000/download": {
+        "status": 401,
+        "cors": "https://zoclip.technabeel.com"
+      },
+      "/api/v1/admin/metrics": {
+        "status": 404,
+        "cors": "https://zoclip.technabeel.com"
+      }
+    },
+    "public_ports": {
+      "18443": "blocked",
+      "18444": "blocked",
+      "5432": "blocked",
+      "6379": "blocked"
+    }
+  },
+  "benchmarks_not_run_minutes": [
+    5,
+    30,
+    120
+  ],
+  "long_source_projections": {
+    "status": "not measurements; short cold overhead/content/bitrate may not scale",
+    "five_minute_whisper_wall_seconds": "335.9238144052774995277813677",
+    "source_bytes_per_five_minutes_at_sample_bitrate": "1365304016.686531585220500596"
+  },
+  "safe_existing_worker_configuration": {
+    "whisper": 1,
+    "render": 1,
+    "whisper_and_render_simultaneous_peak_verified": false,
+    "queued": 10,
+    "per_account_processing": 1
+  },
+  "financial_basis": "Owner VPS5.30-6, provisional2% fee; final pricing review2cb5a28, no double-counted local CPU invoice",
+  "credits_per_job_changed": false,
+  "cost_rates_changed": false,
+  "paid_provider_end_to_end_verified": false,
+  "verification": {
+    "focused_backend": {
+      "passed": 283,
+      "skipped": 2,
+      "seconds": "248.71"
+    },
+    "additional_real_pg_redis": {
+      "passed": 13,
+      "skipped": 0,
+      "seconds": "10.69",
+      "clean_service_shutdown": true
+    },
+    "remaining_local_skip": "Windows symlink privilege; original Redis skip covered by additional run",
+    "frontend_api_tests": 55,
+    "backend_lint_format_typecheck": "passed",
+    "frontend_typecheck_lint_pricing_generation": "passed",
+    "production_build": {
+      "result": "PASS",
+      "bundler": "webpack",
+      "minimum_sampled_free_ram_mib": 1597,
+      "private_example_origins": true,
+      "deployed": false
+    },
+    "browser_tests": {
+      "preview_enabled": {
+        "passed": 3,
+        "skipped": 1
+      },
+      "preview_disabled": {
+        "passed": 1,
+        "skipped": 1
+      },
+      "skips": "opposite flag branch",
+      "temporary_servers_stopped": true
+    }
+  }
+}
