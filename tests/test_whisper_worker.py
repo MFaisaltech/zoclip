@@ -167,6 +167,35 @@ def test_chunks_requeue_under_existing_deadline_and_retry_only_unfinished_window
     assert simulator.windows.count((29, 61)) == (2 if failure else 1)
 
 
+def test_batch_headroom_stops_claim_before_a_batch_can_straddle_the_rq_timeout(
+    processing, monkeypatch
+):
+    from zoclip.media.models import Job
+
+    simulator = ChunkSimulator()
+    case, _extractions = chunk_case(processing, monkeypatch, simulator)
+    factory, users, settings, storage = case[0]
+    settings = settings.model_copy(
+        update={"whisper_parallelism": 2, "whisper_batch_headroom_seconds": 0}
+    )
+    with factory() as db:
+        generation = db.get(Job, case[2]).generation
+    # Headroom 0: after the first batch the claim must stop and requeue
+    # rather than start a batch that could cross the 660s RQ timeout.
+    test_ai.worker.run_job(case[2], generation, factory, settings, storage)
+    with factory() as db:
+        job = db.get(Job, case[2])
+        assert job.state == "QUEUED"
+        assert job.checkpoint["whisper_chunk_index"] == 2
+        assert "transcript_id" not in job.checkpoint
+    # A fresh claim always runs at least one batch, so progress converges.
+    test_ai.worker.run_job(case[2], generation, factory, settings, storage)
+    with factory() as db:
+        job = db.get(Job, case[2])
+        assert job.checkpoint["whisper_chunk_index"] == 3
+        assert job.checkpoint.get("transcript_id")
+
+
 def test_chunk_receipt_before_db_crash_recovers_without_reinference(processing, monkeypatch):
     from zoclip.media.models import Job
 

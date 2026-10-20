@@ -86,6 +86,10 @@ class Settings(BaseSettings):
     whisper_parallelism: int = Field(default=1, ge=1, le=4)
     whisper_cpu_threads: int = Field(default=2, ge=1, le=8)
     whisper_claim_budget_seconds: int = Field(default=480, ge=30, le=600)
+    # A new transcription batch starts only while elapsed claim time is
+    # below this: one batch can run up to the provider's 300s window
+    # deadline, and the RQ job timeout is 660s.
+    whisper_batch_headroom_seconds: int = Field(default=300, ge=30, le=600)
     deepgram_api_key: SecretStr = SecretStr("")
     deepgram_model: str = Field(default="", pattern=r"^[a-zA-Z0-9._-]{0,60}$")
     deepgram_version: str = Field(default="", pattern=r"^[a-zA-Z0-9._-]{0,60}$")

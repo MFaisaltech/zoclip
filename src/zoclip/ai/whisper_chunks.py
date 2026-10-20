@@ -131,7 +131,25 @@ def run_chunk(
     # local_request (replays are free), the checkpoint still appends request
     # ids strictly in window order after each batch, and the claim stops on
     # its time budget so the RQ timeout and job lease are never outlived.
+    # A batch may only START while the claim retains a full per-window
+    # deadline (300s in the provider) of headroom under the RQ hard timeout:
+    # the between-batch budget check alone cannot stop a slow batch from
+    # straddling the wall (observed: JobTimeoutException at 660s with
+    # 1-thread windows, 2026-10-20 benchmark).
+    initial_index = index
     while index < total:
+        if index > initial_index and (
+            time.monotonic() - claim_start
+            > min(
+                settings.whisper_claim_budget_seconds,
+                settings.whisper_batch_headroom_seconds,
+            )
+        ):
+            with factory() as db:
+                job = checked(db, owner, job_id, token)
+                requeue(db, job)
+                db.commit()
+            return
         batch = list(
             range(index, min(total, index + max(1, settings.whisper_parallelism)))
         )
