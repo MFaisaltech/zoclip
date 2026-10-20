@@ -18,6 +18,7 @@ x-env: &environment
   WHISPER_COMPUTE_TYPE: int8
   WHISPER_DEVICE: cpu
   WHISPER_MODEL_PATH: /opt/models/faster-whisper-small
+  WHISPER_PARALLELISM: "1"
   REDIS_URL: redis://redis:6379/0
   MEDIA_ROOT: /app/var/media
   MEDIA_ALLOWED_IMPORT_HOSTS: "[]"

@@ -185,7 +185,7 @@ def _load_whisper(settings: Settings) -> object:
         str(check_whisper_files(settings)),
         device=settings.whisper_device,
         compute_type=settings.whisper_compute_type,
-        cpu_threads=2,
+        cpu_threads=settings.whisper_cpu_threads,
         num_workers=1,
         local_files_only=True,
     )

@@ -79,7 +79,12 @@ class Settings(BaseSettings):
     whisper_model_path: str = "/opt/models/faster-whisper-small"
     whisper_chunk_seconds: int = Field(default=120, ge=30, le=180)
     whisper_overlap_seconds: float = Field(default=1.0, ge=0, le=2)
-    whisper_parallelism: int = Field(default=2, ge=1, le=4)
+    # Default stays 1 (serial): concurrent model instances can diverge on
+    # overlap words at window seams and trip the fail-closed boundary check
+    # (benchmark finding, 2026-10-20). Raise only paired with
+    # whisper_cpu_threads=1, the deterministic configuration.
+    whisper_parallelism: int = Field(default=1, ge=1, le=4)
+    whisper_cpu_threads: int = Field(default=2, ge=1, le=8)
     whisper_claim_budget_seconds: int = Field(default=480, ge=30, le=600)
     deepgram_api_key: SecretStr = SecretStr("")
     deepgram_model: str = Field(default="", pattern=r"^[a-zA-Z0-9._-]{0,60}$")
