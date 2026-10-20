@@ -129,9 +129,11 @@ services:
     <<: *app
     command: [python, -m, zoclip.workers.run]
     environment: {<<: *environment, WORKER_QUEUE: ai, WORKER_NAME: zoclip-ai}
-    # One RQ worker/work horse; shared-volume adapter lock also excludes replicas.
-    mem_limit: 2560m
-    cpus: 2.0
+    # One RQ worker/work horse. Transcription concurrency lives inside the
+    # process: whisper_parallelism slots (default 2) with per-slot lock files
+    # and model instances, so the full host CPU is available to them.
+    mem_limit: 3072m
+    cpus: 4.0
     networks: [data, queue, egress]
     healthcheck:
       test: [CMD, python, -m, zoclip.ops.health, worker]
@@ -143,7 +145,7 @@ services:
     command: [python, -m, zoclip.workers.run]
     environment: {<<: *environment, WORKER_QUEUE: render, WORKER_NAME: zoclip-render}
     mem_limit: 2048m
-    cpus: 2.0
+    cpus: 3.0
     pids_limit: 256
     healthcheck:
       test: [CMD, python, -m, zoclip.ops.health, worker]
