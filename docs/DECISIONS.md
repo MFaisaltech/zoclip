@@ -1,5 +1,10 @@
 # ZoClip decision register
 
+
+## 2026-10-20 ? Keep pricing gated after measured long-video failure
+
+5/30/120-minute synthetic pipeline runs completed with outcomes success/failure/failure. Two-hour Whisper OOM-killed under the real 2.5-GiB worker limit. Creator 2000/3700 and Pro 5000/9500 remain inactive; no deployment or ledger/catalog changes. Bounded FFmpeg filter threads fixed isolated long extraction; source fix remains undeployed. Short-only projection 1,128 jobs/month is not whole-plan certification. See [measured report](SYNTHETIC_CAPACITY_2026-10-20.md).
+
 2026-10-19: default transcription is local faster-whisper small/cpu/int8, with
 explicit Deepgram rollback only. Gemini/selection/API shapes and all customer
 financial rules stay unchanged. Offline image assets, one shared-volume inference

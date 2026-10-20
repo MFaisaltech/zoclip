@@ -33,6 +33,10 @@ def extract(
         "mov,matroska,webm",
         "-threads",
         "2",
+        # Auto-sized filter pools can fail pthread creation under the bounded
+        # extractor address space on long inputs. Keep one audio filter thread.
+        "-filter_threads",
+        "1",
         "-copyts",
         "-start_at_zero",
         "-i",

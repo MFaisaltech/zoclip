@@ -1,0 +1,726 @@
+{
+  "acceptance": {
+    "synthetic": true,
+    "real_provider_verified": false,
+    "paid_calls": 0,
+    "ASGI_upload_not_external_bandwidth": true,
+    "results": [
+      {
+        "minutes": 5,
+        "state": "COMPLETED",
+        "error": null,
+        "accepted_to_terminal_seconds": 210.50628378303372,
+        "wallet_available": 3640,
+        "wallet_reserved": 0,
+        "quote_credits": 60,
+        "outputs": 1,
+        "output_bytes": 5427380,
+        "queue_wait_samples_seconds": [
+          0.203793
+        ],
+        "queue_wait_scope": "SQL acceptance to first claim",
+        "recovered_without_reexecution": true
+      },
+      {
+        "minutes": 30,
+        "state": "FAILED",
+        "error": "provider_outcome_unknown",
+        "accepted_to_terminal_seconds": 386.49344482496963,
+        "wallet_available": 3700,
+        "wallet_reserved": 0,
+        "quote_credits": 158,
+        "outputs": 0,
+        "output_bytes": 0,
+        "queue_wait_samples_seconds": [
+          0.219163
+        ],
+        "queue_wait_scope": "SQL acceptance to first claim",
+        "recovered_without_reexecution": true
+      },
+      {
+        "minutes": 120,
+        "state": "FAILED",
+        "error": "audio_extraction_failed",
+        "accepted_to_terminal_seconds": 82.71517933800351,
+        "quote_credits": 608,
+        "wallet_available": 3700,
+        "wallet_reserved": 0,
+        "outputs": 0,
+        "output_bytes": 0,
+        "retained_materialized_bytes_all_cases": 3100071520,
+        "queue_wait_samples_seconds": [
+          0.030336,
+          0.016459
+        ]
+      }
+    ],
+    "phases": [
+      {
+        "minutes": 5,
+        "stage": "ASGI_HTTP_chunked_upload",
+        "result": "PASS",
+        "wall_seconds": 2.9831144720083103,
+        "cpu_seconds": 2.390555,
+        "process_peak_rss_kib": 148472,
+        "child_peak_rss_kib_cumulative": 0
+      },
+      {
+        "minutes": 5,
+        "stage": "validation_RQ",
+        "result": "PASS",
+        "wall_seconds": 1.868223047000356,
+        "cpu_seconds": 1.60884,
+        "process_peak_rss_kib": 148472,
+        "child_peak_rss_kib_cumulative": 148472
+      },
+      {
+        "minutes": 5,
+        "stage": "audio_extraction",
+        "result": "PASS",
+        "wall_seconds": 6.753334880020702,
+        "cpu_seconds": 10.755026,
+        "process_peak_rss_kib": 148472,
+        "child_peak_rss_kib_cumulative": 148472
+      },
+      {
+        "minutes": 5,
+        "stage": "concurrent_90s_render",
+        "result": "PASS",
+        "wall_seconds": 67.03428567000083,
+        "cpu_seconds": 202.67911299999997,
+        "process_peak_rss_kib": 929920,
+        "child_peak_rss_kib_cumulative": 929920
+      },
+      {
+        "minutes": 5,
+        "stage": "local_whisper",
+        "result": "PASS",
+        "wall_seconds": 179.78863705700496,
+        "cpu_seconds": 421.02258199999994,
+        "process_peak_rss_kib": 951956,
+        "child_peak_rss_kib_cumulative": 929920
+      },
+      {
+        "minutes": 5,
+        "stage": "captioned_render",
+        "result": "PASS",
+        "wall_seconds": 16.505640690011205,
+        "cpu_seconds": 35.99008899999997,
+        "process_peak_rss_kib": 951956,
+        "child_peak_rss_kib_cumulative": 951956
+      },
+      {
+        "minutes": 5,
+        "stage": "processing_RQ",
+        "result": "PASS",
+        "wall_seconds": 205.65494626402506,
+        "cpu_seconds": 469.4337409999999,
+        "process_peak_rss_kib": 951956,
+        "child_peak_rss_kib_cumulative": 951956
+      },
+      {
+        "minutes": 30,
+        "stage": "ASGI_HTTP_chunked_upload",
+        "result": "PASS",
+        "wall_seconds": 13.781966301990906,
+        "cpu_seconds": 10.655800000000001,
+        "process_peak_rss_kib": 148932,
+        "child_peak_rss_kib_cumulative": 0
+      },
+      {
+        "minutes": 30,
+        "stage": "validation_RQ",
+        "result": "PASS",
+        "wall_seconds": 10.691999622998992,
+        "cpu_seconds": 10.281054000000001,
+        "process_peak_rss_kib": 148932,
+        "child_peak_rss_kib_cumulative": 148932
+      },
+      {
+        "minutes": 30,
+        "stage": "audio_extraction",
+        "result": "PASS",
+        "wall_seconds": 37.694397084997036,
+        "cpu_seconds": 62.236199,
+        "process_peak_rss_kib": 148932,
+        "child_peak_rss_kib_cumulative": 148932
+      },
+      {
+        "minutes": 30,
+        "stage": "local_whisper",
+        "result": "FAIL",
+        "error_code": "ProviderFailure",
+        "wall_seconds": 323.5207124549779,
+        "cpu_seconds": 608.5633780000001,
+        "process_peak_rss_kib": 2406720,
+        "child_peak_rss_kib_cumulative": 148932
+      },
+      {
+        "minutes": 30,
+        "stage": "processing_RQ",
+        "result": "PASS",
+        "wall_seconds": 362.01947889997973,
+        "cpu_seconds": 671.3807609999999,
+        "process_peak_rss_kib": 2406720,
+        "child_peak_rss_kib_cumulative": 148932
+      },
+      {
+        "minutes": 120,
+        "stage": "ASGI_HTTP_chunked_upload",
+        "result": "PASS",
+        "wall_seconds": 59.77417403701111,
+        "cpu_seconds": 46.19556,
+        "process_peak_rss_kib": 148504,
+        "child_peak_rss_kib_cumulative": 0
+      },
+      {
+        "minutes": 120,
+        "stage": "validation_RQ",
+        "result": "PASS",
+        "wall_seconds": 21.3303786169854,
+        "cpu_seconds": 17.896302,
+        "process_peak_rss_kib": 148504,
+        "child_peak_rss_kib_cumulative": 148504
+      },
+      {
+        "minutes": 120,
+        "stage": "audio_extraction",
+        "result": "FAIL",
+        "error_code": "audio_extraction_failed",
+        "wall_seconds": 0.8418207539943978,
+        "cpu_seconds": 0.36723700000000403,
+        "process_peak_rss_kib": 148504,
+        "child_peak_rss_kib_cumulative": 148504
+      },
+      {
+        "minutes": 120,
+        "stage": "processing_RQ",
+        "result": "PASS",
+        "wall_seconds": 1.2260281300114002,
+        "cpu_seconds": 0.6383580000000049,
+        "process_peak_rss_kib": 148504,
+        "child_peak_rss_kib_cumulative": 148504
+      }
+    ],
+    "concurrent_pressure": {
+      "result": "PASS",
+      "output_bytes": 15592563,
+      "from_prior_completed_case": true
+    },
+    "resumed_without_repeating_completed_jobs": true,
+    "container_peak_memory_bytes": 4831838208,
+    "phase_cpu_overlap": "Concurrent phase CPU overlaps; do not sum render and inference CPU",
+    "activation_allowed": false
+  },
+  "manifest": {
+    "synthetic": true,
+    "video_seed_seconds": 30,
+    "audio": "Microsoft David offline SAPI speech; repeated seed",
+    "video": "FFmpeg testsrc2 motion",
+    "120_minute_assembly": "four copies of encoded30min fixture, no re-encode",
+    "files": [
+      {
+        "minutes": 5,
+        "file": "synthetic-5min.mp4",
+        "bytes": 99838604,
+        "sha256": "6bca2ea317e74fcabddcca9a6fa475ea7f1f8adfb0f61a309ff11ef999dd4deb",
+        "probe": {
+          "programs": [],
+          "stream_groups": [],
+          "streams": [
+            {
+              "codec_name": "h264",
+              "width": 1920,
+              "height": 1080
+            },
+            {
+              "codec_name": "aac"
+            }
+          ],
+          "format": {
+            "duration": "300.000000",
+            "size": "99838604",
+            "bit_rate": "2662362"
+          }
+        }
+      },
+      {
+        "minutes": 30,
+        "file": "synthetic-30min.mp4",
+        "bytes": 598970263,
+        "sha256": "a9c57c349445aa1f07b7ac4fbef4aa0ef72d2687d7c435d87bb37a90d9de39b2",
+        "probe": {
+          "programs": [],
+          "stream_groups": [],
+          "streams": [
+            {
+              "codec_name": "h264",
+              "width": 1920,
+              "height": 1080
+            },
+            {
+              "codec_name": "aac"
+            }
+          ],
+          "format": {
+            "duration": "1800.000000",
+            "size": "598970263",
+            "bit_rate": "2662090"
+          }
+        }
+      },
+      {
+        "minutes": 120,
+        "file": "synthetic-120min.mp4",
+        "bytes": 2395835273,
+        "sha256": "f2465494ebe312de149b122f77d3baf75b666f02c60f6103f0b9c513e9a38a01",
+        "probe": {
+          "programs": [],
+          "stream_groups": [],
+          "streams": [
+            {
+              "codec_name": "h264",
+              "width": 1920,
+              "height": 1080
+            },
+            {
+              "codec_name": "aac"
+            }
+          ],
+          "format": {
+            "duration": "7199.930729",
+            "size": "2395835273",
+            "bit_rate": "2662064"
+          }
+        },
+        "production_probe": {
+          "duration_seconds": 7200,
+          "duration_ms": 7199931,
+          "width": 1920,
+          "height": 1080,
+          "video_codec": "h264",
+          "audio_codecs": [
+            "aac"
+          ]
+        }
+      }
+    ],
+    "tail_trim_seconds_requested": "0.1; AAC packet boundary fits unchanged120min cap"
+  },
+  "extractor_diagnostic": {
+    "exit_code": 245,
+    "wall_seconds": 1.108123344980413,
+    "stderr": "[out#0/wav @ 0x61c377b73a00] pthread_create() failed: Resource temporarily unavailable\n[af#0:0 @ 0x61c377f34b00] Error sending frames to consumers: Resource temporarily unavailable\n[af#0:0 @ 0x61c377f34b00] Task finished with error code: -11 (Resource temporarily unavailable)\n[af#0:0 @ 0x61c377f34b00] Terminating thread with return code -11 (Resource temporarily unavailable)\n",
+    "unchanged_audio_limits": true
+  },
+  "fixture_accounting": {
+    "gemini": [
+      {
+        "component": "gemini_input",
+        "admission_units": 9831
+      },
+      {
+        "component": "gemini_output",
+        "admission_units": 2048
+      }
+    ],
+    "wallets": [
+      {
+        "email": "synthetic-5@example.com",
+        "available": 3640,
+        "reserved": 0
+      },
+      {
+        "email": "synthetic-30@example.com",
+        "available": 3700,
+        "reserved": 0
+      },
+      {
+        "email": "synthetic-120@example.com",
+        "available": 3700,
+        "reserved": 0
+      }
+    ],
+    "ledger_count": 9,
+    "settle_count": 1,
+    "release_count": 2
+  },
+  "host_resources": {
+    "samples": 422,
+    "minimum_available_memory_bytes": 4434685952,
+    "minimum_disk_free_bytes": 60182065152,
+    "max_host_cpu_busy_percent": 99.52380952380952,
+    "max_controller_cgroup_peak_bytes": 3930771456,
+    "sample_scope": "all recorded intervals; collector restarts leave brief sampling gaps"
+  },
+  "network_internal": true,
+  "filter_variant": {
+    "variant_only": true,
+    "changed_argument": "filter_threads=1",
+    "production_code_changed": false,
+    "exit_code": 0,
+    "wall_seconds": 56.50559967398294,
+    "child_cpu_seconds": 95.332294,
+    "stderr": "",
+    "same_cpu_as_file_limits": true
+  },
+  "preservation": {
+    "tables": {
+      "wallets": {
+        "count": 1,
+        "sha256": "b2aa1976d9c370c81072b89d20be78e15c77a9eb6c43d6bf63e5f46a475933b0"
+      },
+      "wallet_transactions": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "credit_reservations": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "billing_orders": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "user_entitlements": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "plan_price_versions": {
+        "count": 10,
+        "sha256": "33ec69072c5c0159e7711cd56a189a1bb8bef54b9eda3aa95ffed7af35dddac7"
+      },
+      "source_videos": {
+        "count": 2,
+        "sha256": "d43951102e309acae975073b303df8f41a6326c2d424969c205b9004a3a7cd26"
+      },
+      "storage_objects": {
+        "count": 2,
+        "sha256": "0cf8d36ed614f9a6071a3468be9afacf0a076c8e2bcee5e286a0628f924040fc"
+      },
+      "jobs": {
+        "count": 2,
+        "sha256": "a0e645f8fff1fd69fc10c39d3f6a010a467a680463072675a379e8c6a8089721"
+      },
+      "ai_requests": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "provider_usage": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "render_outputs": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "transcripts": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "all_13_tables_unchanged": true,
+    "two_retained_media_hashes_unchanged": true,
+    "image_unchanged": "sha256:2e421e33f1406e0b68ee7849c01db3054d49e2d2c0d5bcc10119c1b498d0f131",
+    "settings_after": {
+      "private_staging": true,
+      "ai_enabled": false,
+      "transcription_provider": "whisper",
+      "gemini_model": "",
+      "payment_provider": "disabled",
+      "enable_live_payments": false,
+      "enable_trial_credits": false,
+      "media_pending_limit": 10,
+      "media_user_processing_limit": 1,
+      "media_headroom_bytes": 21474836480,
+      "media_retained_bytes": 42949672960
+    },
+    "containers": [
+      {
+        "name": "zoclip-private-proxy-1",
+        "health": "healthy"
+      },
+      {
+        "name": "zoclip-private-api-1",
+        "health": "healthy"
+      },
+      {
+        "name": "zoclip-private-maintenance-1",
+        "health": "healthy"
+      },
+      {
+        "name": "zoclip-private-worker-render-1",
+        "health": "healthy"
+      },
+      {
+        "name": "zoclip-private-worker-ai-1",
+        "health": "healthy"
+      },
+      {
+        "name": "zoclip-private-db-1",
+        "health": "healthy"
+      },
+      {
+        "name": "zoclip-private-redis-1",
+        "health": "healthy"
+      }
+    ],
+    "disk_free_after_bytes": 64769167360,
+    "captured_utc": "2026-10-20T06:47:37Z"
+  },
+  "whisper_120_worker_diagnostic": {
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": true,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 137,
+      "Error": "",
+      "StartedAt": "2026-10-20T06:42:39.608029633Z",
+      "FinishedAt": "2026-10-20T06:43:26.358003197Z"
+    },
+    "result": null,
+    "elapsed_seconds": 46.749974,
+    "memory_limit_bytes": 2684354560
+  },
+  "retention_drill": {
+    "simulated_expiry_cleanup": true,
+    "first_deleted": 1,
+    "repeat_deleted": 0,
+    "state": "DELETED",
+    "wallets_and_ledger_unchanged": true,
+    "scope": "disposable fixture database only"
+  },
+  "cleanup": {
+    "removed_containers": [
+      "zoclip-synthetic-generator-20261020",
+      "zoclip-synthetic-assembly-20261020",
+      "zoclip-synthetic-trim-20261020",
+      "zoclip-synthetic-acceptance-first-20261020",
+      "zoclip-synthetic-acceptance-second-20261020",
+      "zoclip-synthetic-acceptance-20261020",
+      "zoclip-synthetic-filter-diagnostic-20261020",
+      "zoclip-synthetic-whisper120-20261020",
+      "zoclip-synthetic-db-20261020",
+      "zoclip-synthetic-redis-20261020"
+    ],
+    "internal_network_removed": true,
+    "owned_media_removed": true,
+    "disk_free_bytes": 64769171456,
+    "production_containers_modified": false
+  },
+  "access": {
+    "checked_at": "2026-10-20T06:47:38.222107+00:00",
+    "tls_verification": true,
+    "frontend": [
+      {
+        "url": "https://zoclip.technabeel.com",
+        "status": 302,
+        "vercel_auth_redirect": true
+      },
+      {
+        "url": "https://zoclip-l2tbcyu33-faisals-projects-160572e0.vercel.app",
+        "status": 302,
+        "vercel_auth_redirect": true
+      }
+    ],
+    "vpn": {
+      "/health/live": {
+        "status": 200,
+        "cors": "https://zoclip.technabeel.com"
+      },
+      "/health/ready": {
+        "status": 200,
+        "cors": "https://zoclip.technabeel.com"
+      },
+      "/api/v1/me": {
+        "status": 401,
+        "cors": "https://zoclip.technabeel.com"
+      },
+      "/docs": {
+        "status": 404,
+        "cors": null
+      },
+      "/api/v1/videos/9cced2b6-cf08-410c-b653-318eef1dc5fe/content": {
+        "status": 401,
+        "cors": "https://zoclip.technabeel.com"
+      },
+      "/api/v1/clips/00000000-0000-0000-0000-000000000000/download": {
+        "status": 401,
+        "cors": "https://zoclip.technabeel.com"
+      },
+      "/api/v1/admin/metrics": {
+        "status": 404,
+        "cors": "https://zoclip.technabeel.com"
+      }
+    },
+    "public_ports": {
+      "18443": "blocked",
+      "18444": "blocked",
+      "5432": "blocked",
+      "6379": "blocked"
+    }
+  },
+  "existing_retained_bytes": 229098014,
+  "gemini_input_admission_units": 9831,
+  "gemini_output_admission_units": 2048,
+  "capacity_model": {
+    "activation_allowed": false,
+    "synthetic_only": true,
+    "failed_or_missing_minutes": [
+      30,
+      120
+    ],
+    "all_duration_pipeline_acceptance": false,
+    "projected_five_minute_jobs_month": 1128,
+    "certified_monthly_capacity": null,
+    "capacity_breakdown": {
+      "ai_seconds": "186.541971937025662",
+      "four_90s_renders_seconds": "268.13714268000332",
+      "retained_bytes_per_job": "162208856",
+      "worker_ceiling_jobs_month": 3866,
+      "seven_day_storage_ceiling_jobs_month": 1128,
+      "assumptions": "4 renders, 7d uniform retention, 50% usable time, 25% retry work",
+      "measured_all_four_renders": false,
+      "existing_retained_bytes": 229098014
+    },
+    "gemini_admission_cost_envelope_usd_per_5min": "0.00552975",
+    "margin_basis": "VPS6+monthly provision6 once; fee field is provisional; API admission envelope+25%; traffic inclusion conditional",
+    "fx_pkr_usd": "277.0572",
+    "fee": "0.02",
+    "creator": {
+      "price_pkr": 2000,
+      "credits": 3700,
+      "five_minute_jobs": 61
+    },
+    "pro": {
+      "price_pkr": 5000,
+      "credits": 9500,
+      "five_minute_jobs": 158
+    },
+    "scenarios": [
+      {
+        "customers": 20,
+        "creator_customers": 10,
+        "pro_customers": 10,
+        "redemption": "low",
+        "fraction": "0.10",
+        "five_minute_jobs": 210,
+        "within_projected_five_minute_capacity": true,
+        "monthly_cost_usd": "13.4515593750",
+        "conditional_margin": "0.9267592660561250000000000000",
+        "margin_target_pass": true
+      },
+      {
+        "customers": 20,
+        "creator_customers": 10,
+        "pro_customers": 10,
+        "redemption": "average",
+        "fraction": "0.35",
+        "five_minute_jobs": 760,
+        "within_projected_five_minute_capacity": true,
+        "monthly_cost_usd": "17.2532625000",
+        "conditional_margin": "0.9117122771555000000000000000",
+        "margin_target_pass": true
+      },
+      {
+        "customers": 20,
+        "creator_customers": 10,
+        "pro_customers": 10,
+        "redemption": "high",
+        "fraction": "1",
+        "five_minute_jobs": 2190,
+        "within_projected_five_minute_capacity": false,
+        "monthly_cost_usd": "27.1376906250",
+        "conditional_margin": "0.8725901060138750000000000000",
+        "margin_target_pass": true
+      },
+      {
+        "customers": 35,
+        "creator_customers": 18,
+        "pro_customers": 17,
+        "redemption": "low",
+        "fraction": "0.10",
+        "five_minute_jobs": 363,
+        "within_projected_five_minute_capacity": true,
+        "monthly_cost_usd": "14.5091240625",
+        "conditional_margin": "0.9467780389486869834710743802",
+        "margin_target_pass": true
+      },
+      {
+        "customers": 35,
+        "creator_customers": 18,
+        "pro_customers": 17,
+        "redemption": "average",
+        "fraction": "0.35",
+        "five_minute_jobs": 1313,
+        "within_projected_five_minute_capacity": false,
+        "monthly_cost_usd": "21.0757021875",
+        "conditional_margin": "0.9317423550735320247933884298",
+        "margin_target_pass": true
+      },
+      {
+        "customers": 35,
+        "creator_customers": 18,
+        "pro_customers": 17,
+        "redemption": "high",
+        "fraction": "1",
+        "five_minute_jobs": 3784,
+        "within_projected_five_minute_capacity": false,
+        "monthly_cost_usd": "38.1557175000",
+        "conditional_margin": "0.8926337499624710743801652893",
+        "margin_target_pass": true
+      },
+      {
+        "customers": 50,
+        "creator_customers": 25,
+        "pro_customers": 25,
+        "redemption": "low",
+        "fraction": "0.10",
+        "five_minute_jobs": 525,
+        "within_projected_five_minute_capacity": true,
+        "monthly_cost_usd": "15.6288984375",
+        "conditional_margin": "0.9552565780561250000000000000",
+        "margin_target_pass": true
+      },
+      {
+        "customers": 50,
+        "creator_customers": 25,
+        "pro_customers": 25,
+        "redemption": "average",
+        "fraction": "0.35",
+        "five_minute_jobs": 1900,
+        "within_projected_five_minute_capacity": false,
+        "monthly_cost_usd": "25.1331562500",
+        "conditional_margin": "0.9402095891555000000000000000",
+        "margin_target_pass": true
+      },
+      {
+        "customers": 50,
+        "creator_customers": 25,
+        "pro_customers": 25,
+        "redemption": "high",
+        "fraction": "1",
+        "five_minute_jobs": 5475,
+        "within_projected_five_minute_capacity": false,
+        "monthly_cost_usd": "49.8442265625",
+        "conditional_margin": "0.9010874180138750000000000000",
+        "margin_target_pass": true
+      }
+    ],
+    "limitations": [
+      "Synthetic repeated motion/speech, not real-world mix",
+      "No measured paid tokens/latency; mock receipt usage is fictional",
+      "No sustained monthly test or arbitrary-format worst-case guarantee",
+      "Cold fork startup and retention bursts need headroom",
+      "Financial pass cannot override failed duration or capacity acceptance"
+    ]
+  },
+  "sensitivity_fx300_fee8_percent": {
+    "minimum_conditional_margin": "0.8036956116071428571428571428",
+    "all_margins_at_least_60_percent": true
+  }
+}
