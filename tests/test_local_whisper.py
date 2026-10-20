@@ -230,19 +230,20 @@ def test_installed_decoder_accepts_extracted_pcm_without_model_download(local):
     assert len(samples) == 40000 and samples.dtype.name == "float32"
 
 
-def test_threads_serialize_and_reuse_model(local, monkeypatch):
+def test_threads_bounded_parallel_and_reuse_models(local, monkeypatch):
     settings, audio, calls, model = local
     original = model.transcribe
     lock = threading.Lock()
     active = 0
+    peak = 0
 
     def transcribe(self, *a, **kw):
         def segments():
-            nonlocal active
+            nonlocal active, peak
             with lock:
                 active += 1
-                assert active == 1
-            time.sleep(0.03)
+                peak = max(peak, active)
+            time.sleep(0.1)
             yield from original(self, *a, **kw)[0]
             with lock:
                 active -= 1
@@ -254,4 +255,31 @@ def test_threads_serialize_and_reuse_model(local, monkeypatch):
         results = list(
             pool.map(lambda _: p.LocalWhisperProviders(settings).transcribe(audio), range(2))
         )
-    assert all(r["status"] == 200 for r in results) and calls.count("load") == 1
+    assert all(r["status"] == 200 for r in results)
+    assert peak == 2  # the configured slots transcribe truly in parallel
+    assert calls.count("load") == 2  # one model instance per slot, then reused
+
+
+def test_all_slots_busy_fails_closed(local, monkeypatch):
+    settings, audio, calls, model = local
+    settings = settings.model_copy(update={"whisper_parallelism": 1})
+    original = model.transcribe
+    started = threading.Event()
+    release = threading.Event()
+
+    def transcribe(self, *a, **kw):
+        def segments():
+            started.set()
+            assert release.wait(timeout=5)
+            yield from original(self, *a, **kw)[0]
+
+        return segments(), Item()
+
+    monkeypatch.setattr(model, "transcribe", transcribe)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(lambda: p.LocalWhisperProviders(settings).transcribe(audio))
+        assert started.wait(timeout=5)
+        with pytest.raises(p.ProviderFailure):
+            p.LocalWhisperProviders(settings).transcribe(audio)
+        release.set()
+        assert future.result(timeout=5)["status"] == 200

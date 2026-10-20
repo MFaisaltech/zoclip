@@ -79,6 +79,8 @@ class Settings(BaseSettings):
     whisper_model_path: str = "/opt/models/faster-whisper-small"
     whisper_chunk_seconds: int = Field(default=120, ge=30, le=180)
     whisper_overlap_seconds: float = Field(default=1.0, ge=0, le=2)
+    whisper_parallelism: int = Field(default=2, ge=1, le=4)
+    whisper_claim_budget_seconds: int = Field(default=480, ge=30, le=600)
     deepgram_api_key: SecretStr = SecretStr("")
     deepgram_model: str = Field(default="", pattern=r"^[a-zA-Z0-9._-]{0,60}$")
     deepgram_version: str = Field(default="", pattern=r"^[a-zA-Z0-9._-]{0,60}$")

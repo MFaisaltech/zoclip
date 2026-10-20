@@ -6,6 +6,7 @@ required by TranscriptData; PCM and intermediate chunk responses are never poole
 
 import math
 import time
+from concurrent.futures import ThreadPoolExecutor
 from uuid import UUID, uuid4
 
 from sqlalchemy.orm import sessionmaker
@@ -87,6 +88,7 @@ def run_chunk(
 ) -> None:
     from zoclip.ai.worker import checked, local_request, requeue, stage
 
+    claim_start = time.monotonic()
     last_heartbeat = 0.0
 
     def heartbeat() -> None:
@@ -124,36 +126,54 @@ def run_chunk(
             db.commit()
     seconds = min(saved["duration"], media_duration)
     total = math.ceil(seconds / settings.whisper_chunk_seconds)
-    if index < total:
-        start, stop, core_start, core_end = window(
-            index, seconds, settings.whisper_chunk_seconds, settings.whisper_overlap_seconds
+    # Transcribe windows in bounded parallel batches inside one claim instead
+    # of requeueing after every window. Receipts stay journaled per window via
+    # local_request (replays are free), the checkpoint still appends request
+    # ids strictly in window order after each batch, and the claim stops on
+    # its time budget so the RQ timeout and job lease are never outlived.
+    while index < total:
+        batch = list(
+            range(index, min(total, index + max(1, settings.whisper_parallelism)))
         )
-        key = money.fingerprint([transcript_key, job_id, "window", index, start, stop])
+        exhausted = index + len(batch) >= total
         with factory() as db:
             job = checked(db, owner, job_id, token)
             stage(db, job, "TRANSCRIBING")
             db.commit()
-        response = local_request(
-            factory,
-            settings,
-            storage,
-            providers,
-            owner,
-            job_id,
-            token,
-            key,
-            audio_id,
-            operation=lambda: providers.transcribe_chunk(
-                storage.path(audio_id),
-                start,
-                stop,
-                heartbeat,
-                owned_start=core_start - start,
-                owned_end=core_end - start,
-            ),
+
+        def transcribe_window(i: int) -> str:
+            start, stop, core_start, core_end = window(
+                i, seconds, settings.whisper_chunk_seconds, settings.whisper_overlap_seconds
+            )
+            key = money.fingerprint([transcript_key, job_id, "window", i, start, stop])
+            response = local_request(
+                factory,
+                settings,
+                storage,
+                providers,
+                owner,
+                job_id,
+                token,
+                key,
+                audio_id,
+                operation=lambda: providers.transcribe_chunk(
+                    storage.path(audio_id),
+                    start,
+                    stop,
+                    heartbeat,
+                    owned_start=core_start - start,
+                    owned_end=core_end - start,
+                ),
+            )
+            # Validate every chunk before durable progress. No partial transcript is exposed.
+            selection.transcript(response["body"], stop - start)
+            return str(response["local_request_id"])
+
+        with ThreadPoolExecutor(max_workers=len(batch)) as pool:
+            batch_ids = list(pool.map(transcribe_window, batch))
+        over_budget = (
+            time.monotonic() - claim_start > settings.whisper_claim_budget_seconds
         )
-        # Validate every chunk before durable progress. No partial transcript is exposed.
-        selection.transcript(response["body"], stop - start)
         with factory() as db:
             job = checked(db, owner, job_id, token)
             ids = job.checkpoint.get("whisper_chunk_requests", [])
@@ -161,12 +181,15 @@ def run_chunk(
                 raise ApiError(409, "invalid_transcription", "Local checkpoint index conflicted.")
             job.checkpoint = {
                 **job.checkpoint,
-                "whisper_chunk_index": index + 1,
-                "whisper_chunk_requests": [*ids, response["local_request_id"]],
+                "whisper_chunk_index": index + len(batch),
+                "whisper_chunk_requests": [*ids, *batch_ids],
             }
-            requeue(db, job)
+            if not exhausted and over_budget:
+                requeue(db, job)
             db.commit()
-        return
+        index += len(batch)
+        if not exhausted and over_budget:
+            return
 
     words: list[dict] = []
     with factory() as db:

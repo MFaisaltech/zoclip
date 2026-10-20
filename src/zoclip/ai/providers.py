@@ -111,7 +111,57 @@ class HTTPProviders:
         )
 
 
-_whisper_lock = threading.Lock()
+_whisper_slot_locks: dict[int, threading.Lock] = {}
+_whisper_slot_locks_guard = threading.Lock()
+
+
+def _slot_thread_lock(slot: int) -> threading.Lock:
+    with _whisper_slot_locks_guard:
+        return _whisper_slot_locks.setdefault(slot, threading.Lock())
+
+
+def _try_whisper_file_lock(path: Path):
+    """Open + nonblocking exclusive lock; return the handle, or None when busy."""
+    handle = path.open("a+b")
+    try:
+        if sys.platform != "win32":
+            import fcntl
+
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        else:
+            import msvcrt
+
+            handle.seek(0)
+            if not handle.read(1):
+                handle.write(b"0")
+                handle.flush()
+            handle.seek(0)
+            msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+    except OSError:
+        handle.close()
+        return None
+    return handle
+
+
+def _acquire_whisper_slot(settings: Settings) -> tuple[int, threading.Lock, object]:
+    """Reserve one of the bounded host-wide transcription slots.
+
+    Nonblocking acquisition fails closed rather than holding job leases, as the
+    previous single lock did. Each slot carries its own model instance, so slot
+    holders transcribe truly in parallel across the host's cores.
+    """
+    for slot in range(max(1, settings.whisper_parallelism)):
+        thread_lock = _slot_thread_lock(slot)
+        if not thread_lock.acquire(blocking=False):
+            continue
+        handle = _try_whisper_file_lock(
+            Path(settings.media_root) / f".whisper-transcription-{slot}.lock"
+        )
+        if handle is None:
+            thread_lock.release()
+            continue
+        return slot, thread_lock, handle
+    raise ProviderFailure("whisper_transcription_failed")
 _whisper_models: dict[tuple, object] = {}
 WHISPER_FILES = ("config.json", "model.bin", "tokenizer.json", "vocabulary.txt")
 
@@ -144,8 +194,9 @@ def _load_whisper(settings: Settings) -> object:
 class LocalWhisperProviders(HTTPProviders):
     """Local audio, shared unchanged Gemini adapter; never automatic paid fallback.
 
-    Lazy process-local reuse is safe for RQ's forked work horses. The shared media
-    lock also serializes separate processes/containers, released by the OS on crash.
+    Lazy process-local reuse is safe for RQ's forked work horses. Host-wide
+    transcription is bounded to the configured slot count across processes and
+    containers via per-slot lock files, released by the OS on crash.
     Speaker 0 is a placeholder, not diarization.
     """
 
@@ -205,26 +256,12 @@ class LocalWhisperProviders(HTTPProviders):
             raise ProviderFailure("whisper_invalid_audio") from None
 
         try:
-            with _whisper_lock:
-                # One host-wide transcription on the existing shared private volume.
-                # Nonblocking acquisition fails closed rather than holding job leases.
-                lock_path = Path(self.settings.media_root) / ".whisper-transcription.lock"
-                with lock_path.open("a+b") as lock:
-                    if sys.platform != "win32":
-                        import fcntl
-
-                        fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-                    else:
-                        import msvcrt
-
-                        lock.seek(0)
-                        if not lock.read(1):
-                            lock.write(b"0")
-                            lock.flush()
-                        lock.seek(0)
-                        msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
+            slot, thread_lock, file_lock = _acquire_whisper_slot(self.settings)
+            try:
+                with file_lock:
                     key = (
                         os.getpid(),
+                        slot,
                         self.settings.whisper_model_path,
                         self.settings.whisper_model,
                         self.settings.whisper_device,
@@ -331,6 +368,8 @@ class LocalWhisperProviders(HTTPProviders):
                             },
                         },
                     }
+            finally:
+                thread_lock.release()
         except (ProviderFailure, ApiError):
             raise
         except Exception:
