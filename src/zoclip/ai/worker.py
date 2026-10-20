@@ -666,7 +666,11 @@ def run(
         all_chunks = list(selection.chunks(data.words, settings))
         collected = [Moment.model_validate(m) for m in job.checkpoint.get("candidates", [])]
         db.commit()
-    if index < len(all_chunks):
+    # Process every remaining chunk in this run instead of requeueing
+    # after each one. The checkpoint commits after each chunk, so a crash
+    # or a rate-limit return resumes at the next unprocessed chunk,
+    # exactly as the previous one-chunk-per-run flow did.
+    while index < len(all_chunks):
         words = all_chunks[index]
         text = selection.prompt(words, settings, count)
         body = gemini_body(text, settings)
@@ -707,63 +711,64 @@ def run(
             raise ApiError(
                 422, "invalid_suggestions", "Provider suggestions failed validation."
             ) from exc
-    with factory() as db:
-        job = checked(db, owner, job_id, token)
-        if index + 1 < len(all_chunks):
+        index += 1
+        with factory() as db:
+            job = checked(db, owner, job_id, token)
             job.checkpoint = {
                 **job.checkpoint,
-                "analysis_chunk": index + 1,
+                "analysis_chunk": index,
                 "candidates": [m.model_dump() for m in collected],
             }
-            requeue(db, job)
+            db.commit()
+    with factory() as db:
+        job = checked(db, owner, job_id, token)
+        final = (
+            selection.select_moments(collected, data.words, duration, settings, count)
+            if data.words
+            else []
+        )
+        if not final:
+            service.terminate(db, job, "FAILED", "no_suggestions")
         else:
-            final = (
-                selection.select_moments(collected, data.words, duration, settings, count)
-                if data.words
-                else []
-            )
-            if not final:
-                service.terminate(db, job, "FAILED", "no_suggestions")
-            else:
-                for rank, moment in enumerate(final, 1):
-                    db.add(
-                        ClipSuggestion(
-                            user_id=owner,
-                            video_id=job.video_id,
-                            job_id=job.id,
-                            transcript_id=cached_id,
-                            rank=rank,
-                            data=moment.model_dump(),
-                        )
+            for rank, moment in enumerate(final, 1):
+                db.add(
+                    ClipSuggestion(
+                        user_id=owner,
+                        video_id=job.video_id,
+                        job_id=job.id,
+                        transcript_id=cached_id,
+                        rank=rank,
+                        data=moment.model_dump(),
                     )
-                service.event(db, job, "SUGGESTIONS_READY")
-                job.checkpoint = {k: v for k, v in job.checkpoint.items() if k != "candidates"}
-                job.lease_token, job.lease_until = None, None
-                if job.checkpoint.get("auto_render"):
-                    from zoclip.rendering import service as rendering
+                )
+            service.event(db, job, "SUGGESTIONS_READY")
+            job.checkpoint = {k: v for k, v in job.checkpoint.items() if k != "candidates"}
+            job.lease_token, job.lease_until = None, None
+            if job.checkpoint.get("auto_render"):
+                from zoclip.rendering import service as rendering
 
-                    # The user authorized rendering with the original quote. Reuse
-                    # selection admission, quotas, disk guards and durable outbox.
-                    db.flush()
-                    suggestions = list(
-                        db.scalars(
-                            select(ClipSuggestion)
-                            .where(ClipSuggestion.job_id == job.id)
-                            .order_by(ClipSuggestion.rank)
-                        )
+                # The user authorized rendering with the original quote. Reuse
+                # selection admission, quotas, disk guards and durable outbox.
+                db.flush()
+                suggestions = list(
+                    db.scalars(
+                        select(ClipSuggestion)
+                        .where(ClipSuggestion.job_id == job.id)
+                        .order_by(ClipSuggestion.rank)
                     )
-                    clips = [
-                        rendering.create(db, owner, suggestion.id) for suggestion in suggestions
-                    ]
-                    rendering.select_clips(
-                        db,
-                        owner,
-                        job.id,
-                        [clip.id for clip in clips],
-                        "auto-render:" + str(job.id),
-                        settings,
-                        storage,
-                    )
+                )
+                clips = [
+                    rendering.create(db, owner, suggestion.id) for suggestion in suggestions
+                ]
+                rendering.select_clips(
+                    db,
+                    owner,
+                    job.id,
+                    [clip.id for clip in clips],
+                    "auto-render:" + str(job.id),
+                    settings,
+                    storage,
+                )
         db.commit()
 
 

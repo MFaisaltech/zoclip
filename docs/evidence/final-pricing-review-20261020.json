@@ -106,10 +106,10 @@
       "projected_ingress_plus_three_downloads_gb": "324.000",
       "job_cost": {
         "hosting_and_monthly_reserves_usd": "0.02",
-        "gemini_usd": "0.0033220625",
+        "gemini_usd": "0.002275875",
         "additional_storage_traffic_usd": "0",
-        "retry_failure_reserve_usd": "0.000830515625",
-        "total_usd": "0.024152578125"
+        "retry_failure_reserve_usd": "0.00056896875",
+        "total_usd": "0.02284484375"
       }
     },
     {
@@ -181,10 +181,10 @@
       "projected_ingress_plus_three_downloads_gb": "567.000",
       "job_cost": {
         "hosting_and_monthly_reserves_usd": "0.01142857142857142857142857143",
-        "gemini_usd": "0.0033220625",
+        "gemini_usd": "0.002275875",
         "additional_storage_traffic_usd": "0",
-        "retry_failure_reserve_usd": "0.000830515625",
-        "total_usd": "0.01558114955357142857142857143"
+        "retry_failure_reserve_usd": "0.00056896875",
+        "total_usd": "0.01427341517857142857142857143"
       }
     },
     {
@@ -256,10 +256,10 @@
       "projected_ingress_plus_three_downloads_gb": "810.000",
       "job_cost": {
         "hosting_and_monthly_reserves_usd": "0.008",
-        "gemini_usd": "0.0033220625",
+        "gemini_usd": "0.002275875",
         "additional_storage_traffic_usd": "0",
-        "retry_failure_reserve_usd": "0.000830515625",
-        "total_usd": "0.012152578125"
+        "retry_failure_reserve_usd": "0.00056896875",
+        "total_usd": "0.01084484375"
       }
     }
   ],
@@ -370,8 +370,8 @@
       "plan": "creator",
       "projected_hosts_required": 2,
       "fleet_and_operations_usd": "18",
-      "full_credit_cost_customer_usd": "1.202246753246753246753246753",
-      "margin": "0.8134544404181818181818181819",
+      "full_credit_cost_customer_usd": "1.089578377016129032258064516",
+      "margin": "0.8290622328416834677419354839",
       "implemented": false
     },
     {
@@ -379,8 +379,8 @@
       "plan": "pro",
       "projected_hosts_required": 4,
       "fleet_and_operations_usd": "30",
-      "full_credit_cost_customer_usd": "2.276038961038961038961038961",
-      "margin": "0.8538814036727272727272727272",
+      "full_credit_cost_customer_usd": "1.986755292338709677419354839",
+      "margin": "0.8699110283238911290322580645",
       "implemented": false
     },
     {
@@ -388,8 +388,8 @@
       "plan": "creator",
       "projected_hosts_required": 3,
       "fleet_and_operations_usd": "24",
-      "full_credit_cost_customer_usd": "0.9879610389610389610389610390",
-      "margin": "0.8431391404181818181818181818",
+      "full_credit_cost_customer_usd": "0.8752926627304147465437788018",
+      "margin": "0.8587469328416834677419354839",
       "implemented": false
     },
     {
@@ -397,8 +397,8 @@
       "plan": "pro",
       "projected_hosts_required": 6,
       "fleet_and_operations_usd": "42",
-      "full_credit_cost_customer_usd": "1.976038961038961038961038961",
-      "margin": "0.8705048356727272727272727273",
+      "full_credit_cost_customer_usd": "1.686755292338709677419354839",
+      "margin": "0.8865344603238911290322580645",
       "implemented": false
     },
     {
@@ -406,8 +406,8 @@
       "plan": "creator",
       "projected_hosts_required": 4,
       "fleet_and_operations_usd": "30",
-      "full_credit_cost_customer_usd": "0.9022467532467532467532467533",
-      "margin": "0.8550130204181818181818181818",
+      "full_credit_cost_customer_usd": "0.7895783770161290322580645161",
+      "margin": "0.8706208128416834677419354839",
       "implemented": false
     },
     {
@@ -415,8 +415,8 @@
       "plan": "pro",
       "projected_hosts_required": 9,
       "fleet_and_operations_usd": "60",
-      "full_credit_cost_customer_usd": "1.976038961038961038961038961",
-      "margin": "0.8705048356727272727272727273",
+      "full_credit_cost_customer_usd": "1.686755292338709677419354839",
+      "margin": "0.8865344603238911290322580645",
       "implemented": false
     }
   ],
@@ -490,10 +490,10 @@
       },
       "expected_cost_at_35_customers_20_jobs": {
         "hosting_and_monthly_reserves_usd": "0.01714285714285714285714285714",
-        "gemini_usd": "0.0091378750",
+        "gemini_usd": "0.004950875",
         "additional_storage_traffic_usd": "0",
-        "retry_failure_reserve_usd": "0.002284468750",
-        "total_usd": "0.02856520089285714285714285714"
+        "retry_failure_reserve_usd": "0.00123771875",
+        "total_usd": "0.02333145089285714285714285714"
       },
       "completion_verified": false
     },
@@ -509,10 +509,10 @@
       },
       "expected_cost_at_35_customers_20_jobs": {
         "hosting_and_monthly_reserves_usd": "0.01714285714285714285714285714",
-        "gemini_usd": "0.0337453750",
+        "gemini_usd": "0.0224768125",
         "additional_storage_traffic_usd": "0",
-        "retry_failure_reserve_usd": "0.008436343750",
-        "total_usd": "0.05932457589285714285714285714"
+        "retry_failure_reserve_usd": "0.005619203125",
+        "total_usd": "0.04523887276785714285714285714"
       },
       "completion_verified": false
     }
@@ -521,15 +521,15 @@
     "expected": {
       "20": {
         "creator": {
-          "financial_credit_ceiling": 26235,
+          "financial_credit_ceiling": 41827,
           "single_host_all_same_plan_credit_ceiling": 2828,
-          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
           "financial_budget_after_pool_usd": "2.143115861995284728207749158"
         },
         "pro": {
-          "financial_credit_ceiling": 76605,
+          "financial_credit_ceiling": 122133,
           "single_host_all_same_plan_credit_ceiling": 2828,
-          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
           "financial_budget_after_pool_usd": "6.257789654988211820519372893"
         },
         "balanced_mix_joint_ceiling": {
@@ -540,15 +540,15 @@
       },
       "35": {
         "creator": {
-          "financial_credit_ceiling": 29383,
+          "financial_credit_ceiling": 46845,
           "single_host_all_same_plan_credit_ceiling": 1616,
-          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
           "financial_budget_after_pool_usd": "2.400258719138141871064892015"
         },
         "pro": {
-          "financial_credit_ceiling": 79753,
+          "financial_credit_ceiling": 127151,
           "single_host_all_same_plan_credit_ceiling": 1616,
-          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
           "financial_budget_after_pool_usd": "6.514932512131068963376515750"
         },
         "balanced_mix_joint_ceiling": {
@@ -559,15 +559,15 @@
       },
       "50": {
         "creator": {
-          "financial_credit_ceiling": 30642,
+          "financial_credit_ceiling": 48853,
           "single_host_all_same_plan_credit_ceiling": 1131,
-          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
           "financial_budget_after_pool_usd": "2.503115861995284728207749158"
         },
         "pro": {
-          "financial_credit_ceiling": 81012,
+          "financial_credit_ceiling": 129159,
           "single_host_all_same_plan_credit_ceiling": 1131,
-          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
           "financial_budget_after_pool_usd": "6.617789654988211820519372893"
         },
         "balanced_mix_joint_ceiling": {
@@ -580,15 +580,15 @@
     "high_usage": {
       "20": {
         "creator": {
-          "financial_credit_ceiling": 18890,
+          "financial_credit_ceiling": 30116,
           "single_host_all_same_plan_credit_ceiling": 2828,
-          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
           "financial_budget_after_pool_usd": "1.543115861995284728207749158"
         },
         "pro": {
-          "financial_credit_ceiling": 69260,
+          "financial_credit_ceiling": 110423,
           "single_host_all_same_plan_credit_ceiling": 2828,
-          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
           "financial_budget_after_pool_usd": "5.657789654988211820519372893"
         },
         "balanced_mix_joint_ceiling": {
@@ -599,15 +599,15 @@
       },
       "35": {
         "creator": {
-          "financial_credit_ceiling": 25185,
+          "financial_credit_ceiling": 40154,
           "single_host_all_same_plan_credit_ceiling": 1616,
-          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
           "financial_budget_after_pool_usd": "2.057401576280999013922034872"
         },
         "pro": {
-          "financial_credit_ceiling": 75556,
+          "financial_credit_ceiling": 120460,
           "single_host_all_same_plan_credit_ceiling": 1616,
-          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
           "financial_budget_after_pool_usd": "6.172075369273926106233658607"
         },
         "balanced_mix_joint_ceiling": {
@@ -618,15 +618,15 @@
       },
       "50": {
         "creator": {
-          "financial_credit_ceiling": 27704,
+          "financial_credit_ceiling": 44169,
           "single_host_all_same_plan_credit_ceiling": 1131,
-          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
           "financial_budget_after_pool_usd": "2.263115861995284728207749158"
         },
         "pro": {
-          "financial_credit_ceiling": 78074,
+          "financial_credit_ceiling": 124475,
           "single_host_all_same_plan_credit_ceiling": 1131,
-          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
           "financial_budget_after_pool_usd": "6.377789654988211820519372893"
         },
         "balanced_mix_joint_ceiling": {
@@ -639,34 +639,34 @@
     "conservative": {
       "20": {
         "creator": {
-          "financial_credit_ceiling": 332,
-          "single_host_all_same_plan_credit_ceiling": 332,
-          "variable_cost_per_credit_usd": "0.00283220625",
+          "financial_credit_ceiling": 345,
+          "single_host_all_same_plan_credit_ceiling": 345,
+          "variable_cost_per_credit_usd": "0.0027275875",
           "financial_budget_after_pool_usd": "0.943115861995284728207749158"
         },
         "pro": {
-          "financial_credit_ceiling": 1785,
+          "financial_credit_ceiling": 1854,
           "single_host_all_same_plan_credit_ceiling": 1395,
-          "variable_cost_per_credit_usd": "0.00283220625",
+          "variable_cost_per_credit_usd": "0.0027275875",
           "financial_budget_after_pool_usd": "5.057789654988211820519372893"
         },
         "balanced_mix_joint_ceiling": {
-          "creator": 332,
-          "pro": 830
+          "creator": 345,
+          "pro": 862
         },
         "total_host_credit_capacity": "27913.84615384615384615384616"
       },
       "35": {
         "creator": {
-          "financial_credit_ceiling": 605,
-          "single_host_all_same_plan_credit_ceiling": 605,
-          "variable_cost_per_credit_usd": "0.002832206250000000000000000",
+          "financial_credit_ceiling": 628,
+          "single_host_all_same_plan_credit_ceiling": 628,
+          "variable_cost_per_credit_usd": "0.002727587500000000000000000",
           "financial_budget_after_pool_usd": "1.714544433423856156779177729"
         },
         "pro": {
-          "financial_credit_ceiling": 2058,
+          "financial_credit_ceiling": 2137,
           "single_host_all_same_plan_credit_ceiling": 797,
-          "variable_cost_per_credit_usd": "0.002832206250000000000000000",
+          "variable_cost_per_credit_usd": "0.002727587500000000000000000",
           "financial_budget_after_pool_usd": "5.829218226416783249090801464"
         },
         "balanced_mix_joint_ceiling": {
@@ -677,15 +677,15 @@
       },
       "50": {
         "creator": {
-          "financial_credit_ceiling": 714,
+          "financial_credit_ceiling": 741,
           "single_host_all_same_plan_credit_ceiling": 558,
-          "variable_cost_per_credit_usd": "0.00283220625",
+          "variable_cost_per_credit_usd": "0.0027275875",
           "financial_budget_after_pool_usd": "2.023115861995284728207749158"
         },
         "pro": {
-          "financial_credit_ceiling": 2167,
+          "financial_credit_ceiling": 2250,
           "single_host_all_same_plan_credit_ceiling": 558,
-          "variable_cost_per_credit_usd": "0.00283220625",
+          "variable_cost_per_credit_usd": "0.0027275875",
           "financial_budget_after_pool_usd": "6.137789654988211820519372893"
         },
         "balanced_mix_joint_ceiling": {
@@ -699,15 +699,15 @@
   "fee_sensitivity": {
     "0.02": {
       "creator": {
-        "financial_credit_ceiling": 27704,
+        "financial_credit_ceiling": 44169,
         "single_host_all_same_plan_credit_ceiling": 1131,
-        "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+        "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
         "financial_budget_after_pool_usd": "2.263115861995284728207749158"
       },
       "pro": {
-        "financial_credit_ceiling": 78074,
+        "financial_credit_ceiling": 124475,
         "single_host_all_same_plan_credit_ceiling": 1131,
-        "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+        "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
         "financial_budget_after_pool_usd": "6.377789654988211820519372893"
       },
       "balanced_mix_joint_ceiling": {
@@ -718,15 +718,15 @@
     },
     "0.05": {
       "creator": {
-        "financial_credit_ceiling": 25053,
+        "financial_credit_ceiling": 39942,
         "single_host_all_same_plan_credit_ceiling": 1131,
-        "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+        "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
         "financial_budget_after_pool_usd": "2.046554083416709618086084751"
       },
       "pro": {
-        "financial_credit_ceiling": 71447,
+        "financial_credit_ceiling": 113908,
         "single_host_all_same_plan_credit_ceiling": 1131,
-        "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+        "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
         "financial_budget_after_pool_usd": "5.836385208541774045215211876"
       },
       "balanced_mix_joint_ceiling": {
@@ -737,15 +737,15 @@
     },
     "0.08": {
       "creator": {
-        "financial_credit_ceiling": 22402,
+        "financial_credit_ceiling": 35715,
         "single_host_all_same_plan_credit_ceiling": 1131,
-        "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+        "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
         "financial_budget_after_pool_usd": "1.829992304838134507964420344"
       },
       "pro": {
-        "financial_credit_ceiling": 64819,
+        "financial_credit_ceiling": 103342,
         "single_host_all_same_plan_credit_ceiling": 1131,
-        "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+        "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
         "financial_budget_after_pool_usd": "5.294980762095336269911050858"
       },
       "balanced_mix_joint_ceiling": {
@@ -756,15 +756,15 @@
     },
     "0.10": {
       "creator": {
-        "financial_credit_ceiling": 20634,
+        "financial_credit_ceiling": 32898,
         "single_host_all_same_plan_credit_ceiling": 1131,
-        "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+        "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
         "financial_budget_after_pool_usd": "1.685617785785751101216644072"
       },
       "pro": {
-        "financial_credit_ceiling": 60400,
+        "financial_credit_ceiling": 96297,
         "single_host_all_same_plan_credit_ceiling": 1131,
-        "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+        "variable_cost_per_credit_usd": "0.00005123739919354838709677419355",
         "financial_budget_after_pool_usd": "4.934044464464377753041610179"
       },
       "balanced_mix_joint_ceiling": {

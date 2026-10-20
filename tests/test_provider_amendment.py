@@ -33,6 +33,7 @@ def config():
         deepgram_language="en",
         ai_max_chunks=1,
         ai_max_candidates=1,
+        ai_chunk_bytes=16000,
         ai_max_output_tokens=2048,
         ai_enabled=False,
     )

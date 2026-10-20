@@ -68,6 +68,7 @@ class Settings(BaseSettings):
     ffprobe_binary: str = "ffprobe"
     ffmpeg_binary: str = "ffmpeg"
     render_deadline_seconds: int = Field(default=240, ge=10, le=300)
+    render_threads: int = Field(default=4, ge=1, le=16)
     render_max_bytes: int = Field(default=256 * 1024**2, ge=1024**2, le=512 * 1024**2)
     ai_enabled: bool = False
     transcription_provider: Literal["whisper", "deepgram"] = "whisper"
@@ -89,9 +90,9 @@ class Settings(BaseSettings):
     gemini_api_key: SecretStr = SecretStr("")
     gemini_model: str = Field(default="", pattern=r"^[a-zA-Z0-9._-]{0,100}$")
     ai_provider_timeout_seconds: int = Field(default=120, ge=1, le=180)
-    ai_calls_per_minute: int = Field(default=6, ge=1, le=60)
-    ai_chunk_bytes: int = Field(default=16000, ge=1000, le=32000)
-    ai_max_chunks: int = Field(default=32, ge=1, le=64)
+    ai_calls_per_minute: int = Field(default=30, ge=1, le=60)
+    ai_chunk_bytes: int = Field(default=65536, ge=1000, le=262144)
+    ai_max_chunks: int = Field(default=64, ge=1, le=256)
     ai_max_output_tokens: int = Field(default=2048, ge=128, le=8192)
     ai_max_candidates: int = Field(default=10, ge=1, le=20)
     ai_min_clip_seconds: int = Field(default=15, ge=1, le=60)
