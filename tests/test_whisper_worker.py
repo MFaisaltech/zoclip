@@ -189,6 +189,8 @@ def test_batch_headroom_stops_claim_before_a_batch_can_straddle_the_rq_timeout(
         assert job.checkpoint["whisper_chunk_index"] == 2
         assert "transcript_id" not in job.checkpoint
     # A fresh claim always runs at least one batch, so progress converges.
+    with factory() as db:
+        generation = db.get(Job, case[2]).generation
     test_ai.worker.run_job(case[2], generation, factory, settings, storage)
     with factory() as db:
         job = db.get(Job, case[2])
