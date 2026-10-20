@@ -1,5 +1,9 @@
 # ZoClip decision register
 
+## 2026-10-20 - Checkpoint bounded local ASR; deploy the fix only
+
+Use configurable 120-second cores with one-second overlap, one transcription and one renderer. Preserve CPU INT8, all existing runtime deadlines, paid-provider safeguards and TranscriptData. Local-only retry and checkpoint recovery reuse completed windows; no whole-file waveform is held. 5/30/120-minute synthetic pipelines completed in 235.78/1102.09/5713.48s; peak RSS 1.39 GiB, no OOM. Two-hour transcription used 60 durable windows and recovered two bounded failures. 683 backend tests passed, 82 skipped; six focused capacity checks and an actual isolated off-server backup restore passed. The verified fix is deployed to protected staging with seven healthy services, Whisper default, Deepgram inactive, public AI/payments disabled and all historical table/media fingerprints preserved. Creator 2000/3700 and Pro 5000/9500 remain inactive. Synthetic planning ceilings are 379/93/25 jobs/month for 5/30/120-minute sources; sustainable commercial capacity remains uncertified because retained storage, high-redemption worker capacity, backup retention and real workload/cost acceptance remain unresolved. See [measured report](WHISPER_CHUNKS_2026-10-20.md).
+
 
 ## 2026-10-20 ? Keep pricing gated after measured long-video failure
 

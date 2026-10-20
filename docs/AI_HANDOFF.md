@@ -5,6 +5,14 @@ Deepgram is an explicit inactive fallback. Gemini still receives transcript data
 Historical Deepgram-specific sections below describe that fallback. API and
 TranscriptData shapes and paid authorization requirements remain unchanged.
 
+Local Whisper now checkpoints bounded audio windows across RQ claims. Defaults
+are 120-second cores with one second of neighboring context on each side;
+settings are pinned per job. Word times in the existing API remain absolute
+source seconds. Each claim records its local receipt before advancing, so retry
+and lease recovery reuse completed work. An unfinished local window can retry
+within the existing failure budget; this does not authorize paid redispatch.
+See [local operating details](LOCAL_WHISPER.md).
+
 Phase 4 produces private transcripts and suggestions, not rendered clips. Live
 provider acceptance remains unverified. AI is disabled by default. Existing
 authentication, CSRF, credits, ingestion and durable outbox contracts still apply.

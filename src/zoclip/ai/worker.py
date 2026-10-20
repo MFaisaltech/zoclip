@@ -8,7 +8,9 @@ import json
 import math
 import os
 import time
+from collections.abc import Callable
 from datetime import timedelta
+from typing import cast
 from uuid import UUID, uuid4
 
 from sqlalchemy import func, select
@@ -21,6 +23,7 @@ from zoclip.ai.providers import (
     MAX_RESPONSE,
     HTTPProviders,
     LocalWhisperProviders,
+    ProviderFailure,
     Providers,
     gemini_body,
 )
@@ -40,6 +43,8 @@ CONFIG_KEYS = (
     "whisper_model",
     "whisper_device",
     "whisper_compute_type",
+    "whisper_chunk_seconds",
+    "whisper_overlap_seconds",
     "deepgram_model",
     "deepgram_version",
     "deepgram_language",
@@ -73,7 +78,9 @@ def transcription_options(settings: Settings) -> dict:
         "device": settings.whisper_device,
         "compute_type": settings.whisper_compute_type,
         "language": settings.deepgram_language,
-        "adapter": "local-whisper-v1",
+        "adapter": "local-whisper-chunks-v2",
+        "chunk_seconds": settings.whisper_chunk_seconds,
+        "overlap_seconds": settings.whisper_overlap_seconds,
     }
 
 
@@ -224,6 +231,9 @@ def record_response(db: Session, row: AIRequest) -> dict | None:
 
 
 def finalize_pending(db: Session, job: Job, storage: LocalStorage | None) -> None:
+    saved = job.checkpoint.get("whisper_audio")
+    if saved and storage is not None:
+        storage.delete(UUID(saved["id"]))
     for row in db.scalars(
         select(AIRequest).where(
             AIRequest.job_id == job.id,
@@ -428,6 +438,8 @@ def local_request(
     token: UUID,
     cache_key: str,
     path: UUID,
+    *,
+    operation: Callable[[], dict] | None = None,
 ) -> dict:
     """Durable local receipt, no paid admission and no fabricated provider expense.
 
@@ -467,19 +479,20 @@ def local_request(
             assert row.response is not None
             return {**row.response, "local_request_id": str(request_id)}
         db.commit()
-    if fresh:
+    receipt = read_receipt(storage, request_id) if not fresh else None
+    if receipt:
+        checkpoint_response(factory, owner, request_id, receipt)
+    elif fresh or operation is not None:
+        # Only explicit LOCAL chunk work can be recomputed without a receipt.
+        # Paid calls and the legacy adapter retain their unknown-outcome behavior.
         with factory() as db:
             job = checked(db, owner, job_id, token)
             _, _, limits = money.locked_limits(db)
             money.configured_rates(db, limits)
             money.check_budgets(db, limits, owner, job.reservation_id, money.ZERO)
-        result = providers.transcribe(storage.path(path))
+        result = operation() if operation is not None else providers.transcribe(storage.path(path))
         journal(storage, request_id, result)
         checkpoint_response(factory, owner, request_id, result)
-    else:
-        receipt = read_receipt(storage, request_id)
-        if receipt:
-            checkpoint_response(factory, owner, request_id, receipt)
     result = reconcile_response(factory, owner, request_id)
     return {**result, "local_request_id": str(request_id)}
 
@@ -541,6 +554,28 @@ def run(
         stage(db, job, "ANALYZING" if cached else "EXTRACTING_AUDIO")
         db.commit()
     providers = providers or default_providers(settings)
+    if (
+        not cached_id
+        and settings.transcription_provider == "whisper"
+        and hasattr(providers, "transcribe_chunk")
+    ):
+        from zoclip.ai.whisper_chunks import run_chunk
+
+        run_chunk(
+            factory,
+            settings,
+            storage,
+            cast(LocalWhisperProviders, providers),
+            owner,
+            job_id,
+            token,
+            transcript_key,
+            source_id,
+            source_digest,
+            duration,
+            media_duration,
+        )
+        return
     if not cached_id:
         audio_id = uuid4()
         last_heartbeat = 0.0
@@ -773,9 +808,19 @@ def handle_error(
             )
         )
     )
-    recoverable = recovering or any(
-        r.response is not None or (storage is not None and storage.path(r.id).is_file())
-        for r in pending
+    local_retry = (
+        job.checkpoint.get("whisper_chunks_v2")
+        and pending
+        and all(r.provider == "whisper" for r in pending)
+        and isinstance(exc, (ProviderFailure, OSError, TimeoutError, SQLAlchemyError))
+    )
+    recoverable = (
+        recovering
+        or local_retry
+        or any(
+            r.response is not None or (storage is not None and storage.path(r.id).is_file())
+            for r in pending
+        )
     )
     if failures < 3 and (
         recoverable or (not pending and isinstance(exc, (OSError, TimeoutError, SQLAlchemyError)))
@@ -790,4 +835,10 @@ def handle_error(
         if isinstance(exc, ApiError)
         else ("provider_outcome_unknown" if pending else "ai_processing_failed")
     )
+    if not isinstance(exc, ApiError) and pending and all(r.provider == "whisper" for r in pending):
+        code = (
+            "whisper_deadline_exceeded"
+            if str(exc) == "whisper_deadline_exceeded"
+            else "whisper_transcription_failed"
+        )
     service.terminate(db, job, "FAILED", code)

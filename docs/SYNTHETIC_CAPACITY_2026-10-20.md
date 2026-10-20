@@ -1,5 +1,9 @@
 # Synthetic capacity acceptance — 2026-10-20
 
+## Follow-up: bounded Whisper validation
+
+The measurements and no-deployment statements below describe the earlier whole-file experiment. They are superseded for transcription and deployment status by [bounded Whisper acceptance](WHISPER_CHUNKS_2026-10-20.md). Pricing remains inactive.
+
 Creator PKR 2,000 / 3,700 credits and Pro PKR 5,000 / 9,500 credits remain **inactive**. No deployment was performed. Continue from backend `920322d` and frontend `a9105df`; existing catalog, trial configuration, credits, quote rules, CostRates and customer records were preserved.
 
 ## Actual runs

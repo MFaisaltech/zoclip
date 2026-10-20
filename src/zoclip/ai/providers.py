@@ -8,6 +8,7 @@ import sys
 import threading
 import time
 import wave
+from collections.abc import Callable
 from pathlib import Path
 from typing import Protocol
 
@@ -15,6 +16,7 @@ import httpx
 
 from zoclip.ai.schemas import Moments
 from zoclip.core.config import Settings
+from zoclip.core.errors import ApiError
 
 MAX_RESPONSE = 8 * 1024**2
 
@@ -148,6 +150,24 @@ class LocalWhisperProviders(HTTPProviders):
     """
 
     def transcribe(self, path: Path) -> dict:
+        return self.transcribe_chunk(path, 0, None)
+
+    def transcribe_chunk(
+        self,
+        path: Path,
+        start: float,
+        end: float | None,
+        progress: Callable[[], None] = lambda: None,
+        *,
+        owned_start: float = 0,
+        owned_end: float | None = None,
+    ) -> dict:
+        # Never give the decoder/VAD a whole long recording. Read only this bounded
+        # PCM window; the worker checkpoints each window in a separate RQ claim.
+        import numpy as np
+
+        deadline = time.monotonic() + 300
+        progress()
         try:
             # The existing extractor supplies bounded mono 16kHz PCM WAV. Validate
             # actual samples rather than VAD's shorter duration_after_vad value.
@@ -161,11 +181,25 @@ class LocalWhisperProviders(HTTPProviders):
                     or path.stat().st_size > 240 * 1024**2
                 ):
                     raise ValueError
-                # Reject truncated payloads without loading the full audio into RAM.
-                frames = 0
-                while data := source.readframes(32768):
-                    frames += len(data) // 2
-                if frames != source.getnframes():
+                stop = duration if end is None else end
+                if (
+                    not 0 <= start < stop <= duration
+                    or stop - start
+                    > self.settings.whisper_chunk_seconds
+                    + 2 * self.settings.whisper_overlap_seconds
+                ):
+                    raise ValueError
+                first, last = round(start * 16000), round(stop * 16000)
+                source.setpos(first)
+                data = source.readframes(last - first)
+                if len(data) != (last - first) * 2:
+                    raise ValueError
+                samples = np.frombuffer(data, dtype="<i2").astype(np.float32)
+                samples /= 32768.0
+                del data
+                duration = (last - first) / 16000
+                owned_stop = duration if owned_end is None else owned_end
+                if not 0 <= owned_start < owned_stop <= duration + 1 / 16000:
                     raise ValueError
         except Exception:
             raise ProviderFailure("whisper_invalid_audio") from None
@@ -200,18 +234,18 @@ class LocalWhisperProviders(HTTPProviders):
                         _whisper_models[key] = _load_whisper(self.settings)
                     model = _whisper_models[key]
                     segments, _info = model.transcribe(  # type: ignore[attr-defined]
-                        str(path),
+                        samples,
                         language=self.settings.deepgram_language,
                         vad_filter=True,
                         word_timestamps=True,
                     )
                     words: list[dict] = []
                     pending: list = []
-                    deadline = time.monotonic() + 300
                     # Iteration performs inference; exceptions must not yield success.
                     for segment in segments:
+                        progress()
                         if time.monotonic() > deadline:
-                            raise ValueError
+                            raise ProviderFailure("whisper_deadline_exceeded")
                         if segment.words is None:
                             raise ValueError
                         for w in segment.words:
@@ -239,6 +273,13 @@ class LocalWhisperProviders(HTTPProviders):
                                     not words
                                     or not words[-1]["start"] <= w.start <= words[-1]["end"]
                                 ):
+                                    # Only unanchored context is deferred to its
+                                    # neighboring chunk. Anchored punctuation still
+                                    # belongs to its timed word, even at the seam.
+                                    if w.start < owned_start or (
+                                        owned_stop < duration and w.start >= owned_stop
+                                    ):
+                                        continue
                                     if len(pending) >= 20:
                                         raise ValueError
                                     pending.append(w)
@@ -275,6 +316,9 @@ class LocalWhisperProviders(HTTPProviders):
                                     "speaker": 0,
                                 }
                             )
+                    progress()
+                    if time.monotonic() > deadline:
+                        raise ProviderFailure("whisper_deadline_exceeded")
                     if pending:
                         raise ValueError
                     return {
@@ -287,6 +331,8 @@ class LocalWhisperProviders(HTTPProviders):
                             },
                         },
                     }
+        except (ProviderFailure, ApiError):
+            raise
         except Exception:
             # No decoder/native-model error or chained sensitive path reaches logs.
             raise ProviderFailure("whisper_transcription_failed") from None

@@ -95,6 +95,9 @@ def cleanup(factory: sessionmaker, storage: LocalStorage) -> int:
                 storage.delete(request.id)
                 request.response = None  # Retain cost references/hashes, remove private text.
             for job in db.scalars(select(Job).where(Job.video_id == video.id)):
+                saved = job.checkpoint.get("whisper_audio")
+                if saved:
+                    storage.delete(UUID(saved["id"]))
                 job.checkpoint = {k: v for k, v in job.checkpoint.items() if k != "candidates"}
             if upload:
                 for part in db.scalars(select(UploadPart).where(UploadPart.upload_id == upload.id)):
@@ -143,6 +146,14 @@ def cleanup(factory: sessionmaker, storage: LocalStorage) -> int:
                 )
                 and not db.get(UploadPart, key)
                 and not db.get(AIRequest, key)
+                and not db.scalar(
+                    select(Job.id)
+                    .where(
+                        Job.state.in_(service.ACTIVE),
+                        Job.checkpoint["whisper_audio"]["id"].as_string() == str(key),
+                    )
+                    .limit(1)
+                )
             ):
                 storage.delete(key)
     return count

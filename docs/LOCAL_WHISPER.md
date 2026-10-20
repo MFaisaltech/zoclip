@@ -23,7 +23,8 @@ Sensitive paths and chained native exceptions are suppressed.
 Native alignment occasionally emits a zero-length token. If its timestamp lies
 at a neighboring timed word boundary, the adapter joins its original text to that
 caption word while preserving that word's timestamps and taking the lower
-confidence. It invents no interval and drops no text. An unanchored token fails
+confidence. It invents no interval. An unanchored token in the neighboring
+chunk's context is deferred to that neighbor; an owned unanchored token fails
 closed. ONNX telemetry is explicitly disabled before VAD inference.
 
 Gemini still receives transcript-related data through the unchanged HTTP adapter
@@ -35,7 +36,9 @@ privacy settings. Source permission, retention and deletion obligations remain.
 records a durable `AIRequest(provider='whisper', attempt_ids=[])` and fsynced
 receipt, never fictitious paid Deepgram usage. Cache identities separate providers
 and model/device/precision/language. Legacy pinned jobs retain Deepgram. Recovery
-can consume an existing receipt; unknown outcomes stop without redispatch.
+can consume an existing receipt. Bounded local chunk computation can retry the
+unfinished chunk within the existing three-failure budget; uncertain paid
+outcomes still stop without redispatch.
 Migration `e7319c2b504a` only widens the request-provider CHECK; it changes no
 existing customer, financial or media rows. Downgrade refuses Whisper history.
 
@@ -58,10 +61,22 @@ single-VPS contract. API concurrency stays 32. AI worker limits are 2 CPUs and
 2560 MiB, two inference threads and one native worker. Health checks verify model
 availability, a >=2 GiB cgroup limit and heartbeat without inference/download.
 
-Existing RQ timeout 660s, lease 900s and extraction bound 300s remain. A 300s
-generator deadline stops further inference segments; a native operation may only
-be interrupted by RQ's hard timeout. Long sources may exceed these limits and
-are not guaranteed to complete on this host. The render worker is unchanged.
+Audio extraction writes one bounded PCM WAV to private disk. Each RQ claim reads
+at most `WHISPER_CHUNK_SECONDS` (default 120, range 30..180) plus
+`WHISPER_OVERLAP_SECONDS` (default 1, range 0..2) on each side. It retains neither
+the whole waveform nor decoded PCM in memory. Chunk settings are pinned per job.
+Each chunk is durably recorded before progress and requeue. Final assembly reads
+one receipt at a time, retaining only the contract's bounded word list. Sample
+offsets restore global timestamps; half-open midpoint ownership and overlap-only
+duplicate checks handle seams without deleting legitimate repeated words.
+
+Existing RQ timeout 660s, lease 900s and extraction bound 300s remain. The 300s
+generator guard applies to each chunk, including model load; a blocking native
+operation may only be interrupted by RQ's hard timeout. Cancellation and capacity
+checks run between segments and during extraction. Maintenance protects the
+active WAV against orphan sweeping; completion, cancellation and retention
+cleanup remove it. The render worker is unchanged. Synthetic acceptance does not
+guarantee every natural recording or accepted format completes on this host.
 
 ## Financial and authorization boundaries
 

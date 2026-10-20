@@ -21,12 +21,13 @@ from uuid import UUID, uuid4
 from alembic.config import Config
 from fastapi.testclient import TestClient
 from redis import Redis
-from rq import Queue, SimpleWorker
+from rq import Queue, Worker
 from sqlalchemy import func, select
 from sqlalchemy.engine import make_url
 
 from alembic import command
 from zoclip.ai import audio
+from zoclip.ai.models import AIRequest, Transcript
 from zoclip.ai.providers import HTTPProviders, LocalWhisperProviders, ProviderFailure
 from zoclip.auth.models import AuthSession, User
 from zoclip.core.config import Settings
@@ -44,6 +45,7 @@ from zoclip.credits.schemas import (
 from zoclip.main import create_app
 from zoclip.media import service, worker
 from zoclip.media.models import Job, JobEvent, StorageObject
+from zoclip.media.storage import LocalStorage
 from zoclip.rendering import engine
 from zoclip.rendering.models import RenderOutput
 from zoclip.rendering.schemas import Preferences
@@ -73,6 +75,7 @@ def run(base: Path) -> None:
     command.upgrade(Config("alembic.ini"), "head")
     app = create_app(settings)
     factory = app.state.session_factory
+    storage = LocalStorage(settings.media_root)
     reason = "Disposable synthetic benchmark, never real customer credit or cost"
     rules = ConsumptionRules(
         minimum_job_credits=60,
@@ -180,7 +183,7 @@ def run(base: Path) -> None:
     current = {"minutes": None}
     original_extract, original_transcribe, original_render = (
         audio.extract,
-        LocalWhisperProviders.transcribe,
+        LocalWhisperProviders.transcribe_chunk,
         engine.render,
     )
     pressure = {}
@@ -206,6 +209,7 @@ def run(base: Path) -> None:
                         "whisper_transcription_failed",
                         "whisper_invalid_audio",
                         "whisper_model_unavailable",
+                        "whisper_deadline_exceeded",
                     }
                     else "redacted"
                 )
@@ -213,7 +217,7 @@ def run(base: Path) -> None:
                 trace = cause.__traceback__ if cause else None
                 while trace:
                     if (
-                        trace.tb_frame.f_code.co_name == "transcribe"
+                        trace.tb_frame.f_code.co_name in {"transcribe", "transcribe_chunk"}
                         and Path(trace.tb_frame.f_code.co_filename).name == "providers.py"
                     ):
                         row["adapter_failure_source_line"] = trace.tb_lineno
@@ -242,24 +246,41 @@ def run(base: Path) -> None:
     def extract(*args, **kwargs):
         return measure("audio_extraction", lambda: original_extract(*args, **kwargs))
 
-    def transcribe(self, path):
+    def transcribe(self, path, start, stop, progress=lambda: None, **bounds):
         nonlocal pressure_future
-        if current["minutes"] == 5:
-            # One render overlaps the single real inference; no second transcription.
-            pressure_future = pool.submit(
-                lambda: measure(
-                    "concurrent_90s_render",
-                    lambda: original_render(
-                        base / "media/synthetic-5min.mp4",
-                        base / "pressure-render.mp4",
-                        Preferences(start_ms=0, end_ms=90000),
-                        [{"word": "Synthetic", "start": 0, "end": 1}],
-                        settings,
-                        lambda: None,
-                    ),
-                )
-            )
-        return measure("local_whisper", lambda: original_transcribe(self, path))
+        marker = base / "pressure-started"
+        if current["minutes"] == 5 and not marker.exists():
+            marker.touch(exist_ok=False)
+
+            def pressure_render():
+                try:
+                    result = measure(
+                        "concurrent_90s_render",
+                        lambda: original_render(
+                            base / "media/synthetic-5min.mp4",
+                            base / "pressure-render.mp4",
+                            Preferences(start_ms=0, end_ms=90000),
+                            [{"word": "Synthetic", "start": 0, "end": 1}],
+                            settings,
+                            lambda: None,
+                        ),
+                    )
+                    receipt = {"result": "PASS", "output_bytes": result["size_bytes"]}
+                except Exception:
+                    receipt = {"result": "FAIL", "output_bytes": 0}
+                    raise
+                finally:
+                    (base / "pressure-result.json").write_text(json.dumps(receipt))
+                return result
+
+            pressure_future = pool.submit(pressure_render)
+        result = measure(
+            "local_whisper",
+            lambda: original_transcribe(self, path, start, stop, progress, **bounds),
+        )
+        if pressure_future is not None:
+            pressure_future.result(timeout=300)  # Finish before this RQ work horse exits.
+        return result
 
     def mock_analyze(self, body):
         prompt = body["contents"][0]["parts"][0]["text"]
@@ -299,8 +320,53 @@ def run(base: Path) -> None:
     def forbid(*args, **kwargs):
         raise RuntimeError("Paid provider dispatch forbidden in synthetic acceptance")
 
+    original_popen = audio.subprocess.Popen
+
+    class ObservedExtractor(original_popen):
+        def __init__(self, args, **kwargs):
+            self.started = time.monotonic()
+            self.cpu_start = resource.getrusage(resource.RUSAGE_CHILDREN)
+            self.error_path = base / ("extract-error-" + uuid4().hex + ".log")
+            self.error_handle = self.error_path.open("wb")
+            kwargs["stderr"] = self.error_handle
+            super().__init__(args, **kwargs)
+
+        def __exit__(self, *args):
+            try:
+                return super().__exit__(*args)
+            finally:
+                self.error_handle.close()
+                child = resource.getrusage(resource.RUSAGE_CHILDREN)
+                with self.error_path.open("rb") as handle:
+                    handle.seek(max(0, self.error_path.stat().st_size - 3000))
+                    stderr = handle.read().decode(errors="replace")
+                row = {
+                    "return_code": self.returncode,
+                    "wall_seconds": time.monotonic() - self.started,
+                    "child_cpu_seconds": child.ru_utime
+                    + child.ru_stime
+                    - self.cpu_start.ru_utime
+                    - self.cpu_start.ru_stime,
+                    "command": self.args,
+                    "stderr": stderr,
+                }
+                with (base / "extraction-processes.jsonl").open("a") as handle:
+                    handle.write(json.dumps(row) + "\n")
+
+    def observe_audio(args, *positional, **kwargs):
+        if isinstance(args, list) and "zoclip.ai.audio_runner" in args:
+            return ObservedExtractor(args, **kwargs)
+        return original_popen(args, *positional, **kwargs)
+
+    audio.subprocess.Popen = observe_audio
+    original_run_job = worker.run_job
+
+    def measured_claim(*args, **kwargs):
+        return measure("worker_claim", lambda: original_run_job(*args, **kwargs))
+
+    worker.run_job = measured_claim
     audio.extract = extract
-    LocalWhisperProviders.transcribe = transcribe
+    LocalWhisperProviders.transcribe_chunk = transcribe
     LocalWhisperProviders.analyze = mock_analyze
     HTTPProviders.request = forbid
     engine.render = lambda *a, **k: measure("captioned_render", lambda: original_render(*a, **k))
@@ -439,7 +505,7 @@ def run(base: Path) -> None:
                         for item in queue.get_jobs():
                             if item.enqueued_at:
                                 waits.append(max(0, (utcnow() - item.enqueued_at).total_seconds()))
-                    SimpleWorker([q, qr], connection=redis, log_job_description=False).work(
+                    Worker([q, qr], connection=redis, log_job_description=False).work(
                         burst=True, logging_level="WARNING", with_scheduler=False
                     )
                 raise TimeoutError("Synthetic driver deadline; runtime job timeouts unchanged")
@@ -459,8 +525,11 @@ def run(base: Path) -> None:
                 {"quote_id": quote["id"], "auto_render": True},
             )
             state, error, processing_waits = measure(
-                "processing_RQ", lambda job=job: drive(job["id"], 900)
+                "processing_RQ",
+                lambda job=job, minutes=minutes: drive(job["id"], minutes * 60 + 900),
             )
+            if (base / "pressure-result.json").exists():
+                pressure.update(json.loads((base / "pressure-result.json").read_text()))
             if pressure_future is not None and minutes == 5:
                 try:
                     result = pressure_future.result(timeout=300)
@@ -489,7 +558,40 @@ def run(base: Path) -> None:
                 with factory() as db:
                     w = db.scalar(select(Wallet).where(Wallet.user_id == users[minutes]))
                     assert before == (w.available, w.reserved) == (3700, 0)
+            with factory() as db:
+                transcript = db.scalar(
+                    select(Transcript).where(Transcript.job_id == UUID(job["id"]))
+                )
+                local_ids = list(
+                    db.scalars(
+                        select(AIRequest.id).where(
+                            AIRequest.job_id == UUID(job["id"]), AIRequest.provider == "whisper"
+                        )
+                    )
+                )
+                receipt_bytes = sum(
+                    storage.path(rid).stat().st_size
+                    for rid in local_ids
+                    if storage.path(rid).exists()
+                )
+                transcript_stats = (
+                    None
+                    if transcript is None
+                    else {
+                        "words": len(transcript.data["words"]),
+                        "first_start": transcript.data["words"][0]["start"]
+                        if transcript.data["words"]
+                        else None,
+                        "last_end": transcript.data["words"][-1]["end"]
+                        if transcript.data["words"]
+                        else None,
+                        "duration_seconds": transcript.data["duration_seconds"],
+                    }
+                )
             row = {
+                "local_chunks": len(local_ids),
+                "local_receipt_bytes": receipt_bytes,
+                "transcript_stats": transcript_stats,
                 "minutes": minutes,
                 "state": state,
                 "error": error,
@@ -504,10 +606,16 @@ def run(base: Path) -> None:
             }
             results.append(row)
             (base / f"result-{minutes}.json").write_text(json.dumps(row, indent=2))
+            if state != "COMPLETED":
+                break  # Diagnose the failed duration before starting a longer run.
     pool.shutdown()
+    # Real RQ work horses fork; child measurements are fsynced to this shared log,
+    # not retained in the controller's private Python list.
+    phases = [json.loads(line) for line in (base / "phases.jsonl").read_text().splitlines()]
     memory = Path("/sys/fs/cgroup/memory.peak")
     result = {
         "synthetic": True,
+        "queue_worker": "RQ Worker with forked work horses (production class)",
         "real_provider_verified": False,
         "paid_calls": 0,
         "ASGI_upload_not_external_bandwidth": True,
@@ -518,7 +626,9 @@ def run(base: Path) -> None:
             "result": next(
                 (p["result"] for p in phases if p["stage"] == "concurrent_90s_render"), "UNVERIFIED"
             ),
-            "output_bytes": (base / "pressure-render.mp4").stat().st_size,
+            "output_bytes": (base / "pressure-render.mp4").stat().st_size
+            if (base / "pressure-render.mp4").exists()
+            else 0,
             "from_prior_completed_case": True,
         },
         "resumed_without_repeating_completed_jobs": resume,
