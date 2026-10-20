@@ -78,7 +78,7 @@ class Settings(BaseSettings):
     whisper_device: Literal["cpu"] = "cpu"
     whisper_model_path: str = "/opt/models/faster-whisper-small"
     whisper_chunk_seconds: int = Field(default=120, ge=30, le=180)
-    whisper_overlap_seconds: float = Field(default=1.0, ge=0, le=2)
+    whisper_overlap_seconds: float = Field(default=1.0, ge=0, le=5)
     # Default stays 1 (serial): concurrent model instances can diverge on
     # overlap words at window seams and trip the fail-closed boundary check
     # (benchmark finding, 2026-10-20). Raise only paired with
