@@ -232,6 +232,7 @@ def test_installed_decoder_accepts_extracted_pcm_without_model_download(local):
 
 def test_threads_bounded_parallel_and_reuse_models(local, monkeypatch):
     settings, audio, calls, model = local
+    settings.whisper_parallelism = 2  # mechanism test; production default is 1
     original = model.transcribe
     lock = threading.Lock()
     active = 0
