@@ -78,13 +78,16 @@ class Settings(BaseSettings):
     whisper_device: Literal["cpu"] = "cpu"
     whisper_model_path: str = "/opt/models/faster-whisper-small"
     whisper_chunk_seconds: int = Field(default=120, ge=30, le=180)
-    whisper_overlap_seconds: float = Field(default=1.0, ge=0, le=5)
-    # Default stays 1 (serial): concurrent model instances can diverge on
-    # overlap words at window seams and trip the fail-closed boundary check
-    # (benchmark finding, 2026-10-20). Raise only paired with
-    # whisper_cpu_threads=1, the deterministic configuration.
-    whisper_parallelism: int = Field(default=1, ge=1, le=4)
-    whisper_cpu_threads: int = Field(default=2, ge=1, le=8)
+    # 5s of context anchors seam words inside both windows: at 1s a window
+    # starting cold time-shifts its first words (~0.7s observed) and trips
+    # the fail-closed boundary merge (receipt forensics, 2026-10-20).
+    whisper_overlap_seconds: float = Field(default=5.0, ge=0, le=5)
+    # Benchmarked fastest on the 4-vCPU host (30-min fixture, 2026-10-21):
+    # 4 slots x 1 thread = 12m48s end-to-end vs 18m22s serial (1x2) and
+    # 17m09s at 2x2; 1x4 threads thrashed (~27m projected). Per-slot model
+    # instances + the headroom guard keep claims inside the RQ timeout.
+    whisper_parallelism: int = Field(default=4, ge=1, le=4)
+    whisper_cpu_threads: int = Field(default=1, ge=1, le=8)
     whisper_claim_budget_seconds: int = Field(default=480, ge=30, le=600)
     # A new transcription batch starts only while elapsed claim time is
     # below this: one batch can run up to the provider's 300s window

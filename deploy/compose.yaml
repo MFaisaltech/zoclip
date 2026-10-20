@@ -18,7 +18,11 @@ x-env: &environment
   WHISPER_COMPUTE_TYPE: int8
   WHISPER_DEVICE: cpu
   WHISPER_MODEL_PATH: /opt/models/faster-whisper-small
-  WHISPER_PARALLELISM: "1"
+  # Benchmarked fastest on this host (2026-10-21, 30-min fixture 12m48s
+  # vs 18m22s serial): 4 slots x 1 thread, 5s seam overlap.
+  WHISPER_PARALLELISM: "4"
+  WHISPER_CPU_THREADS: "1"
+  WHISPER_OVERLAP_SECONDS: "5"
   REDIS_URL: redis://redis:6379/0
   MEDIA_ROOT: /app/var/media
   MEDIA_ALLOWED_IMPORT_HOSTS: "[]"
@@ -131,9 +135,9 @@ services:
     command: [python, -m, zoclip.workers.run]
     environment: {<<: *environment, WORKER_QUEUE: ai, WORKER_NAME: zoclip-ai}
     # One RQ worker/work horse. Transcription concurrency lives inside the
-    # process: whisper_parallelism slots (default 2) with per-slot lock files
+    # process: whisper_parallelism slots (default 4) with per-slot lock files
     # and model instances, so the full host CPU is available to them.
-    mem_limit: 3072m
+    mem_limit: 4096m
     cpus: 4.0
     networks: [data, queue, egress]
     healthcheck:
