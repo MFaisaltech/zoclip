@@ -361,3 +361,13 @@ and known operational limitations are recorded in IMPLEMENTATION_STATUS.md.
   Image rollback additionally requires current-schema compatibility and never runs
   an old migrator. Incompatible recovery is a separate empty-target restore with
   privacy and post-backup financial/provider reconciliation before promotion.
+
+## 2026-10-20 final owner-cost review decision
+
+Retain unapproved two-package target PKR2000/3700 credits and PKR5000/9500 credits
+as the value recommendation under included-cost projections, conditional on
+capacity funding and verification before sale. Supersedes the old280/720
+financial recommendation; it does not approve activation or guarantee current
+single-host full-redemption capacity. See [assumptions, exact ceilings and
+risks](FINAL_PRICING_REVIEW_2026-10-20.md). CostRates, quotes, historical balances,
+active plans, completed Whisper and provider/launch gates are unchanged.

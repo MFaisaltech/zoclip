@@ -1,3 +1,6 @@
+> Historical review: cost assumptions and recommendations below are superseded by the
+> [final owner-cost review](FINAL_PRICING_REVIEW_2026-10-20.md). Original arithmetic is preserved.
+
 # ZoClip pricing simulation and conditional recommendation
 
 2026-10-20, Asia/Karachi. **Audit complete; allocations not certified or activated.**

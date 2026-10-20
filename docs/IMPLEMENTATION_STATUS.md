@@ -1,5 +1,30 @@
 # ZoClip implementation status
 
+## 2026-10-20 final owner-cost pricing recalculation (review only)
+
+Owner updates replace the old USD13.20 hosting and 5% + USD0.05 fee assumptions
+with USD5.30-6/month and provisional 2%, no fixed fee. Retain inactive commercial
+target Creator2000/3700, Pro5000/9500: included-cost projections clear60% cash
+contribution, but full redemption requires separately implemented and measured
+capacity expansion. Current single-VPS projected envelope is roughly2165/month
+five-minute/one-output jobs including assumed retention,1329 three-output jobs,
+and968 ten-minute/three-output/one-edit accounting jobs; none is measured full
+pipeline capacity. Supplemental backup/traffic and slower-capacity case fails
+the original grant pair. A440/1100 current-host fallback is conditional on the
+specified base-capacity scenario, not certified or activated.
+
+New pure Decimal simulator and saved replay cover20/35/50 customers with5/20/60
+jobs/customer, fixed pool once, Gemini, failures, output/edit work, disk, all-quote
+financial/capacity ceilings, fee sensitivity, legacy comparisons and hypothetical
+fleet funding. No catalog/proposal terms, balances, CostRates, quote engine,
+Whisper, public AI/payments, frontend, configuration or deployment changed.
+Historical reviews now link to the superseding [final review](FINAL_PRICING_REVIEW_2026-10-20.md).
+Verification: 14 focused final/prior audit tests passed (23.42s); Ruff lint and
+format check passed; git diff --check passed. Full integration/model tests were
+not rerun for this offline arithmetic/documentation review. No new migration or
+environment setting. Capacity/model-account/merchant evidence remains unresolved.
+
+
 
 ## 2026-10-20 deep economics audit (no activation)
 

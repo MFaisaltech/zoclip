@@ -1,0 +1,821 @@
+{
+  "date": "2026-10-20",
+  "activation_allowed": false,
+  "certified": false,
+  "pricing_rules_changed": false,
+  "default_deepgram_usd": "0",
+  "owner_vps_range_usd": [
+    "5.30",
+    "6"
+  ],
+  "modeled_vps_usd": "6",
+  "fee_assumption": "0.02",
+  "fixed_fee_usd": "0",
+  "fx_pkr_usd": "277.0572",
+  "fx_status": "Prior audit dated 2026-10-16 reference; not refreshed settlement FX",
+  "profiles": {
+    "expected": {
+      "pool": "12",
+      "risk": "0.25",
+      "traffic": "0",
+      "utilization": "0.50",
+      "slowdown": "1"
+    },
+    "high_usage": {
+      "pool": "24",
+      "risk": "0.25",
+      "traffic": "0",
+      "utilization": "0.50",
+      "slowdown": "1"
+    },
+    "conservative": {
+      "pool": "36",
+      "risk": "0.50",
+      "traffic": "0.02",
+      "utilization": "0.35",
+      "slowdown": "1.25"
+    }
+  },
+  "workloads": [
+    {
+      "customers": 20,
+      "workload": "low",
+      "jobs_per_customer": 5,
+      "source_minutes": 5,
+      "outputs": 1,
+      "edits": 0,
+      "jobs_month": 100,
+      "initial_clips_month": 100,
+      "renders_including_edits": 100,
+      "consumed_credits_per_customer": 300,
+      "ai_busy_hours": "9.616298688226346817246418597",
+      "render_busy_hours": "9.027777777777777777777777778",
+      "within_projected_capacity": true,
+      "projected_host_count": 1,
+      "projected_retained_gb": "1.983333333333333333333333333",
+      "projected_ingress_plus_three_downloads_gb": "10.500",
+      "job_cost": {
+        "hosting_and_monthly_reserves_usd": "0.12",
+        "gemini_usd": "0.001611625",
+        "additional_storage_traffic_usd": "0",
+        "retry_failure_reserve_usd": "0.00040290625",
+        "total_usd": "0.12201453125"
+      }
+    },
+    {
+      "customers": 20,
+      "workload": "medium",
+      "jobs_per_customer": 20,
+      "source_minutes": 5,
+      "outputs": 3,
+      "edits": 0,
+      "jobs_month": 400,
+      "initial_clips_month": 1200,
+      "renders_including_edits": 1200,
+      "consumed_credits_per_customer": 1200,
+      "ai_busy_hours": "38.46519475290538726898567439",
+      "render_busy_hours": "108.3333333333333333333333333",
+      "within_projected_capacity": true,
+      "projected_host_count": 1,
+      "projected_retained_gb": "9.800",
+      "projected_ingress_plus_three_downloads_gb": "66.000",
+      "job_cost": {
+        "hosting_and_monthly_reserves_usd": "0.03",
+        "gemini_usd": "0.001611625",
+        "additional_storage_traffic_usd": "0",
+        "retry_failure_reserve_usd": "0.00040290625",
+        "total_usd": "0.03201453125"
+      }
+    },
+    {
+      "customers": 20,
+      "workload": "high",
+      "jobs_per_customer": 60,
+      "source_minutes": 10,
+      "outputs": 3,
+      "edits": 1,
+      "jobs_month": 1200,
+      "initial_clips_month": 3600,
+      "renders_including_edits": 4800,
+      "consumed_credits_per_customer": 3600,
+      "ai_busy_hours": "218.2911685174323236139140463",
+      "render_busy_hours": "433.3333333333333333333333333",
+      "within_projected_capacity": false,
+      "projected_host_count": 2,
+      "projected_retained_gb": "53.200",
+      "projected_ingress_plus_three_downloads_gb": "324.000",
+      "job_cost": {
+        "hosting_and_monthly_reserves_usd": "0.02",
+        "gemini_usd": "0.0033220625",
+        "additional_storage_traffic_usd": "0",
+        "retry_failure_reserve_usd": "0.000830515625",
+        "total_usd": "0.024152578125"
+      }
+    },
+    {
+      "customers": 35,
+      "workload": "low",
+      "jobs_per_customer": 5,
+      "source_minutes": 5,
+      "outputs": 1,
+      "edits": 0,
+      "jobs_month": 175,
+      "initial_clips_month": 175,
+      "renders_including_edits": 175,
+      "consumed_credits_per_customer": 300,
+      "ai_busy_hours": "16.82852270439610693018123254",
+      "render_busy_hours": "15.79861111111111111111111111",
+      "within_projected_capacity": true,
+      "projected_host_count": 1,
+      "projected_retained_gb": "3.470833333333333333333333333",
+      "projected_ingress_plus_three_downloads_gb": "18.375",
+      "job_cost": {
+        "hosting_and_monthly_reserves_usd": "0.06857142857142857142857142857",
+        "gemini_usd": "0.001611625",
+        "additional_storage_traffic_usd": "0",
+        "retry_failure_reserve_usd": "0.00040290625",
+        "total_usd": "0.07058595982142857142857142857"
+      }
+    },
+    {
+      "customers": 35,
+      "workload": "medium",
+      "jobs_per_customer": 20,
+      "source_minutes": 5,
+      "outputs": 3,
+      "edits": 0,
+      "jobs_month": 700,
+      "initial_clips_month": 2100,
+      "renders_including_edits": 2100,
+      "consumed_credits_per_customer": 1200,
+      "ai_busy_hours": "67.31409081758442772072493017",
+      "render_busy_hours": "189.5833333333333333333333333",
+      "within_projected_capacity": true,
+      "projected_host_count": 1,
+      "projected_retained_gb": "17.150",
+      "projected_ingress_plus_three_downloads_gb": "115.500",
+      "job_cost": {
+        "hosting_and_monthly_reserves_usd": "0.01714285714285714285714285714",
+        "gemini_usd": "0.001611625",
+        "additional_storage_traffic_usd": "0",
+        "retry_failure_reserve_usd": "0.00040290625",
+        "total_usd": "0.01915738839285714285714285714"
+      }
+    },
+    {
+      "customers": 35,
+      "workload": "high",
+      "jobs_per_customer": 60,
+      "source_minutes": 10,
+      "outputs": 3,
+      "edits": 1,
+      "jobs_month": 2100,
+      "initial_clips_month": 6300,
+      "renders_including_edits": 8400,
+      "consumed_credits_per_customer": 3600,
+      "ai_busy_hours": "382.0095449055065663243495808",
+      "render_busy_hours": "758.3333333333333333333333333",
+      "within_projected_capacity": false,
+      "projected_host_count": 3,
+      "projected_retained_gb": "93.100",
+      "projected_ingress_plus_three_downloads_gb": "567.000",
+      "job_cost": {
+        "hosting_and_monthly_reserves_usd": "0.01142857142857142857142857143",
+        "gemini_usd": "0.0033220625",
+        "additional_storage_traffic_usd": "0",
+        "retry_failure_reserve_usd": "0.000830515625",
+        "total_usd": "0.01558114955357142857142857143"
+      }
+    },
+    {
+      "customers": 50,
+      "workload": "low",
+      "jobs_per_customer": 5,
+      "source_minutes": 5,
+      "outputs": 1,
+      "edits": 0,
+      "jobs_month": 250,
+      "initial_clips_month": 250,
+      "renders_including_edits": 250,
+      "consumed_credits_per_customer": 300,
+      "ai_busy_hours": "24.04074672056586704311604649",
+      "render_busy_hours": "22.56944444444444444444444444",
+      "within_projected_capacity": true,
+      "projected_host_count": 1,
+      "projected_retained_gb": "4.958333333333333333333333333",
+      "projected_ingress_plus_three_downloads_gb": "26.250",
+      "job_cost": {
+        "hosting_and_monthly_reserves_usd": "0.048",
+        "gemini_usd": "0.001611625",
+        "additional_storage_traffic_usd": "0",
+        "retry_failure_reserve_usd": "0.00040290625",
+        "total_usd": "0.05001453125"
+      }
+    },
+    {
+      "customers": 50,
+      "workload": "medium",
+      "jobs_per_customer": 20,
+      "source_minutes": 5,
+      "outputs": 3,
+      "edits": 0,
+      "jobs_month": 1000,
+      "initial_clips_month": 3000,
+      "renders_including_edits": 3000,
+      "consumed_credits_per_customer": 1200,
+      "ai_busy_hours": "96.16298688226346817246418597",
+      "render_busy_hours": "270.8333333333333333333333333",
+      "within_projected_capacity": true,
+      "projected_host_count": 1,
+      "projected_retained_gb": "24.500",
+      "projected_ingress_plus_three_downloads_gb": "165.000",
+      "job_cost": {
+        "hosting_and_monthly_reserves_usd": "0.012",
+        "gemini_usd": "0.001611625",
+        "additional_storage_traffic_usd": "0",
+        "retry_failure_reserve_usd": "0.00040290625",
+        "total_usd": "0.01401453125"
+      }
+    },
+    {
+      "customers": 50,
+      "workload": "high",
+      "jobs_per_customer": 60,
+      "source_minutes": 10,
+      "outputs": 3,
+      "edits": 1,
+      "jobs_month": 3000,
+      "initial_clips_month": 9000,
+      "renders_including_edits": 12000,
+      "consumed_credits_per_customer": 3600,
+      "ai_busy_hours": "545.7279212935808090347851156",
+      "render_busy_hours": "1083.333333333333333333333333",
+      "within_projected_capacity": false,
+      "projected_host_count": 4,
+      "projected_retained_gb": "133.000",
+      "projected_ingress_plus_three_downloads_gb": "810.000",
+      "job_cost": {
+        "hosting_and_monthly_reserves_usd": "0.008",
+        "gemini_usd": "0.0033220625",
+        "additional_storage_traffic_usd": "0",
+        "retry_failure_reserve_usd": "0.000830515625",
+        "total_usd": "0.012152578125"
+      }
+    }
+  ],
+  "comparisons": [
+    {
+      "package": "Old Starter",
+      "price_pkr": 299,
+      "credits": 500,
+      "five_minute_jobs": 8,
+      "conditional_initial_clips": 24,
+      "renders_with_prepaid_edits": 32,
+      "cost_usd": "1.21611625000",
+      "margin": "-0.146868772908026755852842810",
+      "render_hours_customer": "2.888888888888888888888888889"
+    },
+    {
+      "package": "Old Creator",
+      "price_pkr": 699,
+      "credits": 1300,
+      "five_minute_jobs": 21,
+      "conditional_initial_clips": 63,
+      "renders_with_prepaid_edits": 84,
+      "cost_usd": "1.242305156250000000000000000",
+      "margin": "0.4875971557422210300429184549",
+      "render_hours_customer": "7.583333333333333333333333333"
+    },
+    {
+      "package": "Old Pro",
+      "price_pkr": 1299,
+      "credits": 2400,
+      "five_minute_jobs": 40,
+      "conditional_initial_clips": 120,
+      "renders_with_prepaid_edits": 160,
+      "cost_usd": "1.28058125000",
+      "margin": "0.7068712428810623556581986143",
+      "render_hours_customer": "14.44444444444444444444444444"
+    },
+    {
+      "package": "Original Creator",
+      "price_pkr": 2000,
+      "credits": 3700,
+      "five_minute_jobs": 61,
+      "conditional_initial_clips": 183,
+      "renders_with_prepaid_edits": 244,
+      "cost_usd": "1.322886406250000000000000000",
+      "margin": "0.7967423981831562500000000000",
+      "render_hours_customer": "22.02777777777777777777777778"
+    },
+    {
+      "package": "Original Pro",
+      "price_pkr": 5000,
+      "credits": 9500,
+      "five_minute_jobs": 158,
+      "conditional_initial_clips": 474,
+      "renders_with_prepaid_edits": 632,
+      "cost_usd": "1.518295937500000000000000000",
+      "margin": "0.8958690357569750000000000000",
+      "render_hours_customer": "57.05555555555555555555555556"
+    },
+    {
+      "package": "Previous conservative Creator",
+      "price_pkr": 2000,
+      "credits": 280,
+      "five_minute_jobs": 4,
+      "conditional_initial_clips": 12,
+      "renders_with_prepaid_edits": 16,
+      "cost_usd": "1.20805812500",
+      "margin": "0.8126493992251250000000000000",
+      "render_hours_customer": "1.444444444444444444444444444"
+    },
+    {
+      "package": "Previous conservative Pro",
+      "price_pkr": 5000,
+      "credits": 720,
+      "five_minute_jobs": 12,
+      "conditional_initial_clips": 36,
+      "renders_with_prepaid_edits": 48,
+      "cost_usd": "1.22417437500",
+      "margin": "0.9121667350701500000000000000",
+      "render_hours_customer": "4.333333333333333333333333333"
+    },
+    {
+      "package": "Single-host fallback Creator",
+      "price_pkr": 2000,
+      "credits": 440,
+      "five_minute_jobs": 7,
+      "conditional_initial_clips": 21,
+      "renders_with_prepaid_edits": 28,
+      "cost_usd": "1.214101718750000000000000000",
+      "margin": "0.8118121886439687500000000000",
+      "render_hours_customer": "2.527777777777777777777777778"
+    },
+    {
+      "package": "Single-host fallback Pro",
+      "price_pkr": 5000,
+      "credits": 1100,
+      "five_minute_jobs": 18,
+      "conditional_initial_clips": 54,
+      "renders_with_prepaid_edits": 72,
+      "cost_usd": "1.236261562500000000000000000",
+      "margin": "0.9114969666052250000000000000",
+      "render_hours_customer": "6.50"
+    }
+  ],
+  "original_allocation_scaling": [
+    {
+      "customers": 20,
+      "plan": "creator",
+      "projected_hosts_required": 2,
+      "fleet_and_operations_usd": "18",
+      "full_credit_cost_customer_usd": "1.202246753246753246753246753",
+      "margin": "0.8134544404181818181818181819",
+      "implemented": false
+    },
+    {
+      "customers": 20,
+      "plan": "pro",
+      "projected_hosts_required": 4,
+      "fleet_and_operations_usd": "30",
+      "full_credit_cost_customer_usd": "2.276038961038961038961038961",
+      "margin": "0.8538814036727272727272727272",
+      "implemented": false
+    },
+    {
+      "customers": 35,
+      "plan": "creator",
+      "projected_hosts_required": 3,
+      "fleet_and_operations_usd": "24",
+      "full_credit_cost_customer_usd": "0.9879610389610389610389610390",
+      "margin": "0.8431391404181818181818181818",
+      "implemented": false
+    },
+    {
+      "customers": 35,
+      "plan": "pro",
+      "projected_hosts_required": 6,
+      "fleet_and_operations_usd": "42",
+      "full_credit_cost_customer_usd": "1.976038961038961038961038961",
+      "margin": "0.8705048356727272727272727273",
+      "implemented": false
+    },
+    {
+      "customers": 50,
+      "plan": "creator",
+      "projected_hosts_required": 4,
+      "fleet_and_operations_usd": "30",
+      "full_credit_cost_customer_usd": "0.9022467532467532467532467533",
+      "margin": "0.8550130204181818181818181818",
+      "implemented": false
+    },
+    {
+      "customers": 50,
+      "plan": "pro",
+      "projected_hosts_required": 9,
+      "fleet_and_operations_usd": "60",
+      "full_credit_cost_customer_usd": "1.976038961038961038961038961",
+      "margin": "0.8705048356727272727272727273",
+      "implemented": false
+    }
+  ],
+  "representative_jobs": [
+    {
+      "minutes": 5,
+      "outputs": 1,
+      "edits": 0,
+      "credits": 60,
+      "projected_resources": {
+        "ai_seconds": "276.9494022209187883366968556",
+        "render_seconds": "260",
+        "cpu_seconds": "995.3880205589080316933263079"
+      },
+      "expected_cost_at_35_customers_20_jobs": {
+        "hosting_and_monthly_reserves_usd": "0.01714285714285714285714285714",
+        "gemini_usd": "0.001611625",
+        "additional_storage_traffic_usd": "0",
+        "retry_failure_reserve_usd": "0.00040290625",
+        "total_usd": "0.01915738839285714285714285714"
+      },
+      "completion_verified": false
+    },
+    {
+      "minutes": 5,
+      "outputs": 3,
+      "edits": 0,
+      "credits": 60,
+      "projected_resources": {
+        "ai_seconds": "276.9494022209187883366968556",
+        "render_seconds": "780",
+        "cpu_seconds": "2035.388020558908031693326308"
+      },
+      "expected_cost_at_35_customers_20_jobs": {
+        "hosting_and_monthly_reserves_usd": "0.01714285714285714285714285714",
+        "gemini_usd": "0.001611625",
+        "additional_storage_traffic_usd": "0",
+        "retry_failure_reserve_usd": "0.00040290625",
+        "total_usd": "0.01915738839285714285714285714"
+      },
+      "completion_verified": false
+    },
+    {
+      "minutes": 5,
+      "outputs": 3,
+      "edits": 1,
+      "credits": 60,
+      "projected_resources": {
+        "ai_seconds": "276.9494022209187883366968556",
+        "render_seconds": "1040",
+        "cpu_seconds": "2555.388020558908031693326308"
+      },
+      "expected_cost_at_35_customers_20_jobs": {
+        "hosting_and_monthly_reserves_usd": "0.01714285714285714285714285714",
+        "gemini_usd": "0.001611625",
+        "additional_storage_traffic_usd": "0",
+        "retry_failure_reserve_usd": "0.00040290625",
+        "total_usd": "0.01915738839285714285714285714"
+      },
+      "completion_verified": false
+    },
+    {
+      "minutes": 30,
+      "outputs": 1,
+      "edits": 0,
+      "credits": 152,
+      "projected_resources": {
+        "ai_seconds": "1511.696413325512730020181133",
+        "render_seconds": "260",
+        "cpu_seconds": "3372.328123353448190159957847"
+      },
+      "expected_cost_at_35_customers_20_jobs": {
+        "hosting_and_monthly_reserves_usd": "0.01714285714285714285714285714",
+        "gemini_usd": "0.0091378750",
+        "additional_storage_traffic_usd": "0",
+        "retry_failure_reserve_usd": "0.002284468750",
+        "total_usd": "0.02856520089285714285714285714"
+      },
+      "completion_verified": false
+    },
+    {
+      "minutes": 120,
+      "outputs": 1,
+      "edits": 0,
+      "credits": 602,
+      "projected_resources": {
+        "ai_seconds": "5956.785653302050920080724533",
+        "render_seconds": "260",
+        "cpu_seconds": "11929.31249341379276063983139"
+      },
+      "expected_cost_at_35_customers_20_jobs": {
+        "hosting_and_monthly_reserves_usd": "0.01714285714285714285714285714",
+        "gemini_usd": "0.0337453750",
+        "additional_storage_traffic_usd": "0",
+        "retry_failure_reserve_usd": "0.008436343750",
+        "total_usd": "0.05932457589285714285714285714"
+      },
+      "completion_verified": false
+    }
+  ],
+  "ceilings": {
+    "expected": {
+      "20": {
+        "creator": {
+          "financial_credit_ceiling": 26235,
+          "single_host_all_same_plan_credit_ceiling": 2828,
+          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "financial_budget_after_pool_usd": "2.143115861995284728207749158"
+        },
+        "pro": {
+          "financial_credit_ceiling": 76605,
+          "single_host_all_same_plan_credit_ceiling": 2828,
+          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "financial_budget_after_pool_usd": "6.257789654988211820519372893"
+        },
+        "balanced_mix_joint_ceiling": {
+          "creator": 1616,
+          "pro": 4040
+        },
+        "total_host_credit_capacity": "56567.86194731707317073170732"
+      },
+      "35": {
+        "creator": {
+          "financial_credit_ceiling": 29383,
+          "single_host_all_same_plan_credit_ceiling": 1616,
+          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "financial_budget_after_pool_usd": "2.400258719138141871064892015"
+        },
+        "pro": {
+          "financial_credit_ceiling": 79753,
+          "single_host_all_same_plan_credit_ceiling": 1616,
+          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "financial_budget_after_pool_usd": "6.514932512131068963376515750"
+        },
+        "balanced_mix_joint_ceiling": {
+          "creator": 923,
+          "pro": 2308
+        },
+        "total_host_credit_capacity": "56567.86194731707317073170732"
+      },
+      "50": {
+        "creator": {
+          "financial_credit_ceiling": 30642,
+          "single_host_all_same_plan_credit_ceiling": 1131,
+          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "financial_budget_after_pool_usd": "2.503115861995284728207749158"
+        },
+        "pro": {
+          "financial_credit_ceiling": 81012,
+          "single_host_all_same_plan_credit_ceiling": 1131,
+          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "financial_budget_after_pool_usd": "6.617789654988211820519372893"
+        },
+        "balanced_mix_joint_ceiling": {
+          "creator": 646,
+          "pro": 1616
+        },
+        "total_host_credit_capacity": "56567.86194731707317073170732"
+      }
+    },
+    "high_usage": {
+      "20": {
+        "creator": {
+          "financial_credit_ceiling": 18890,
+          "single_host_all_same_plan_credit_ceiling": 2828,
+          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "financial_budget_after_pool_usd": "1.543115861995284728207749158"
+        },
+        "pro": {
+          "financial_credit_ceiling": 69260,
+          "single_host_all_same_plan_credit_ceiling": 2828,
+          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "financial_budget_after_pool_usd": "5.657789654988211820519372893"
+        },
+        "balanced_mix_joint_ceiling": {
+          "creator": 1616,
+          "pro": 4040
+        },
+        "total_host_credit_capacity": "56567.86194731707317073170732"
+      },
+      "35": {
+        "creator": {
+          "financial_credit_ceiling": 25185,
+          "single_host_all_same_plan_credit_ceiling": 1616,
+          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "financial_budget_after_pool_usd": "2.057401576280999013922034872"
+        },
+        "pro": {
+          "financial_credit_ceiling": 75556,
+          "single_host_all_same_plan_credit_ceiling": 1616,
+          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "financial_budget_after_pool_usd": "6.172075369273926106233658607"
+        },
+        "balanced_mix_joint_ceiling": {
+          "creator": 923,
+          "pro": 2308
+        },
+        "total_host_credit_capacity": "56567.86194731707317073170732"
+      },
+      "50": {
+        "creator": {
+          "financial_credit_ceiling": 27704,
+          "single_host_all_same_plan_credit_ceiling": 1131,
+          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "financial_budget_after_pool_usd": "2.263115861995284728207749158"
+        },
+        "pro": {
+          "financial_credit_ceiling": 78074,
+          "single_host_all_same_plan_credit_ceiling": 1131,
+          "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+          "financial_budget_after_pool_usd": "6.377789654988211820519372893"
+        },
+        "balanced_mix_joint_ceiling": {
+          "creator": 646,
+          "pro": 1616
+        },
+        "total_host_credit_capacity": "56567.86194731707317073170732"
+      }
+    },
+    "conservative": {
+      "20": {
+        "creator": {
+          "financial_credit_ceiling": 332,
+          "single_host_all_same_plan_credit_ceiling": 332,
+          "variable_cost_per_credit_usd": "0.00283220625",
+          "financial_budget_after_pool_usd": "0.943115861995284728207749158"
+        },
+        "pro": {
+          "financial_credit_ceiling": 1785,
+          "single_host_all_same_plan_credit_ceiling": 1395,
+          "variable_cost_per_credit_usd": "0.00283220625",
+          "financial_budget_after_pool_usd": "5.057789654988211820519372893"
+        },
+        "balanced_mix_joint_ceiling": {
+          "creator": 332,
+          "pro": 830
+        },
+        "total_host_credit_capacity": "27913.84615384615384615384616"
+      },
+      "35": {
+        "creator": {
+          "financial_credit_ceiling": 605,
+          "single_host_all_same_plan_credit_ceiling": 605,
+          "variable_cost_per_credit_usd": "0.002832206250000000000000000",
+          "financial_budget_after_pool_usd": "1.714544433423856156779177729"
+        },
+        "pro": {
+          "financial_credit_ceiling": 2058,
+          "single_host_all_same_plan_credit_ceiling": 797,
+          "variable_cost_per_credit_usd": "0.002832206250000000000000000",
+          "financial_budget_after_pool_usd": "5.829218226416783249090801464"
+        },
+        "balanced_mix_joint_ceiling": {
+          "creator": 455,
+          "pro": 1139
+        },
+        "total_host_credit_capacity": "27913.84615384615384615384616"
+      },
+      "50": {
+        "creator": {
+          "financial_credit_ceiling": 714,
+          "single_host_all_same_plan_credit_ceiling": 558,
+          "variable_cost_per_credit_usd": "0.00283220625",
+          "financial_budget_after_pool_usd": "2.023115861995284728207749158"
+        },
+        "pro": {
+          "financial_credit_ceiling": 2167,
+          "single_host_all_same_plan_credit_ceiling": 558,
+          "variable_cost_per_credit_usd": "0.00283220625",
+          "financial_budget_after_pool_usd": "6.137789654988211820519372893"
+        },
+        "balanced_mix_joint_ceiling": {
+          "creator": 319,
+          "pro": 797
+        },
+        "total_host_credit_capacity": "27913.84615384615384615384616"
+      }
+    }
+  },
+  "fee_sensitivity": {
+    "0.02": {
+      "creator": {
+        "financial_credit_ceiling": 27704,
+        "single_host_all_same_plan_credit_ceiling": 1131,
+        "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+        "financial_budget_after_pool_usd": "2.263115861995284728207749158"
+      },
+      "pro": {
+        "financial_credit_ceiling": 78074,
+        "single_host_all_same_plan_credit_ceiling": 1131,
+        "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+        "financial_budget_after_pool_usd": "6.377789654988211820519372893"
+      },
+      "balanced_mix_joint_ceiling": {
+        "creator": 646,
+        "pro": 1616
+      },
+      "total_host_credit_capacity": "56567.86194731707317073170732"
+    },
+    "0.05": {
+      "creator": {
+        "financial_credit_ceiling": 25053,
+        "single_host_all_same_plan_credit_ceiling": 1131,
+        "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+        "financial_budget_after_pool_usd": "2.046554083416709618086084751"
+      },
+      "pro": {
+        "financial_credit_ceiling": 71447,
+        "single_host_all_same_plan_credit_ceiling": 1131,
+        "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+        "financial_budget_after_pool_usd": "5.836385208541774045215211876"
+      },
+      "balanced_mix_joint_ceiling": {
+        "creator": 646,
+        "pro": 1616
+      },
+      "total_host_credit_capacity": "56567.86194731707317073170732"
+    },
+    "0.08": {
+      "creator": {
+        "financial_credit_ceiling": 22402,
+        "single_host_all_same_plan_credit_ceiling": 1131,
+        "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+        "financial_budget_after_pool_usd": "1.829992304838134507964420344"
+      },
+      "pro": {
+        "financial_credit_ceiling": 64819,
+        "single_host_all_same_plan_credit_ceiling": 1131,
+        "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+        "financial_budget_after_pool_usd": "5.294980762095336269911050858"
+      },
+      "balanced_mix_joint_ceiling": {
+        "creator": 646,
+        "pro": 1616
+      },
+      "total_host_credit_capacity": "56567.86194731707317073170732"
+    },
+    "0.10": {
+      "creator": {
+        "financial_credit_ceiling": 20634,
+        "single_host_all_same_plan_credit_ceiling": 1131,
+        "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+        "financial_budget_after_pool_usd": "1.685617785785751101216644072"
+      },
+      "pro": {
+        "financial_credit_ceiling": 60400,
+        "single_host_all_same_plan_credit_ceiling": 1131,
+        "variable_cost_per_credit_usd": "0.00008168831168831168831168831169",
+        "financial_budget_after_pool_usd": "4.934044464464377753041610179"
+      },
+      "balanced_mix_joint_ceiling": {
+        "creator": 646,
+        "pro": 1616
+      },
+      "total_host_credit_capacity": "56567.86194731707317073170732"
+    }
+  },
+  "capacities": {
+    "expected": {
+      "5m_1out_0edit": {
+        "projected_jobs_month": 2165,
+        "measured": false
+      },
+      "5m_3out_0edit": {
+        "projected_jobs_month": 1329,
+        "measured": false
+      },
+      "10m_3out_1edit": {
+        "projected_jobs_month": 968,
+        "measured": false
+      }
+    },
+    "high_usage": {
+      "5m_1out_0edit": {
+        "projected_jobs_month": 2165,
+        "measured": false
+      },
+      "5m_3out_0edit": {
+        "projected_jobs_month": 1329,
+        "measured": false
+      },
+      "10m_3out_1edit": {
+        "projected_jobs_month": 968,
+        "measured": false
+      }
+    },
+    "conservative": {
+      "5m_1out_0edit": {
+        "projected_jobs_month": 1747,
+        "measured": false
+      },
+      "5m_3out_0edit": {
+        "projected_jobs_month": 620,
+        "measured": false
+      },
+      "10m_3out_1edit": {
+        "projected_jobs_month": 465,
+        "measured": false
+      }
+    }
+  }
+}
