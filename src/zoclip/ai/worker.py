@@ -78,6 +78,7 @@ def transcription_options(settings: Settings) -> dict:
         "device": settings.whisper_device,
         "compute_type": settings.whisper_compute_type,
         "language": settings.deepgram_language,
+        "beam_size": settings.whisper_beam_size,
         "adapter": "local-whisper-chunks-v2",
         "chunk_seconds": settings.whisper_chunk_seconds,
         "overlap_seconds": settings.whisper_overlap_seconds,

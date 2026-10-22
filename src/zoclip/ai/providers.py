@@ -273,6 +273,7 @@ class LocalWhisperProviders(HTTPProviders):
                     segments, _info = model.transcribe(  # type: ignore[attr-defined]
                         samples,
                         language=self.settings.deepgram_language,
+                        beam_size=self.settings.whisper_beam_size,
                         vad_filter=True,
                         word_timestamps=True,
                     )
