@@ -88,10 +88,13 @@ class Settings(BaseSettings):
     # instances + the headroom guard keep claims inside the RQ timeout.
     whisper_parallelism: int = Field(default=4, ge=1, le=4)
     whisper_cpu_threads: int = Field(default=1, ge=1, le=8)
-    # Beam search width for decoding. faster-whisper's default is 5;
-    # lower is faster (greedy at 1) at some accuracy cost — benchmarked
-    # before changing the default.
-    whisper_beam_size: int = Field(default=5, ge=1, le=10)
+    # Beam search width for decoding. faster-whisper's library default
+    # is 5; benchmarked 2026-10-22: beam 2 is ~23% faster end-to-end
+    # than 5 with 99.8% word agreement on the capacity fixture, and
+    # keeps real beam search for noisy real-world audio (beam 1 /
+    # greedy measured the same speed within noise but no robustness
+    # margin).
+    whisper_beam_size: int = Field(default=2, ge=1, le=10)
     whisper_claim_budget_seconds: int = Field(default=480, ge=30, le=600)
     # A new transcription batch starts only while elapsed claim time is
     # below this: one batch can run up to the provider's 300s window

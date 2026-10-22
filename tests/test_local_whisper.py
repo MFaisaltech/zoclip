@@ -34,7 +34,7 @@ def local(tmp_path, monkeypatch):
         def transcribe(self, path, **options):
             assert options == {
                 "language": "en",
-                "beam_size": 5,
+                "beam_size": 2,
                 "vad_filter": True,
                 "word_timestamps": True,
             }
