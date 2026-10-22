@@ -32,7 +32,12 @@ def local(tmp_path, monkeypatch):
 
     class Model:
         def transcribe(self, path, **options):
-            assert options == {"language": "en", "vad_filter": True, "word_timestamps": True}
+            assert options == {
+                "language": "en",
+                "beam_size": 5,
+                "vad_filter": True,
+                "word_timestamps": True,
+            }
 
             def segments():
                 calls.append("inference")
