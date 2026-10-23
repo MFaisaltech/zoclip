@@ -239,7 +239,8 @@ def test_active_pcm_survives_orphan_sweep_and_cancel_releases_once(processing, m
     simulator = ChunkSimulator()
     case, _ = chunk_case(processing, monkeypatch, simulator)
     factory, users, settings, storage = case[0]
-    settings = settings.model_copy(update={"whisper_batch_headroom_seconds": 0})  # one batch per claim: this test drives the per-window claim cadence
+    # one batch per claim: this test drives the per-window claim cadence
+    settings = settings.model_copy(update={"whisper_batch_headroom_seconds": 0})
     with factory() as db:
         generation = db.get(Job, case[2]).generation
     test_ai.worker.run_job(case[2], generation, factory, settings, storage)
@@ -268,7 +269,8 @@ def test_local_worker_loss_resumes_after_last_committed_chunk(processing, monkey
     simulator = ChunkSimulator()
     case, extractions = chunk_case(processing, monkeypatch, simulator)
     factory, users, settings, storage = case[0]
-    settings = settings.model_copy(update={"whisper_batch_headroom_seconds": 0})  # one batch per claim: this test drives the per-window claim cadence
+    # one batch per claim: this test drives the per-window claim cadence
+    settings = settings.model_copy(update={"whisper_batch_headroom_seconds": 0})
     original = simulator.transcribe_chunk
     lost = []
 
@@ -317,7 +319,8 @@ def test_new_job_after_cancel_has_separate_partial_receipts(processing, monkeypa
     simulator = ChunkSimulator()
     case, extractions = chunk_case(processing, monkeypatch, simulator)
     factory, users, settings, storage = case[0]
-    settings = settings.model_copy(update={"whisper_batch_headroom_seconds": 0})  # one batch per claim: this test drives the per-window claim cadence
+    # one batch per claim: this test drives the per-window claim cadence
+    settings = settings.model_copy(update={"whisper_batch_headroom_seconds": 0})
     with factory() as db:
         generation = db.get(Job, case[2]).generation
     test_ai.worker.run_job(case[2], generation, factory, settings, storage)

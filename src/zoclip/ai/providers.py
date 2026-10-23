@@ -10,7 +10,7 @@ import time
 import wave
 from collections.abc import Callable
 from pathlib import Path
-from typing import Protocol
+from typing import BinaryIO, Protocol
 
 import httpx
 
@@ -120,7 +120,7 @@ def _slot_thread_lock(slot: int) -> threading.Lock:
         return _whisper_slot_locks.setdefault(slot, threading.Lock())
 
 
-def _try_whisper_file_lock(path: Path):
+def _try_whisper_file_lock(path: Path) -> BinaryIO | None:
     """Open + nonblocking exclusive lock; return the handle, or None when busy."""
     handle = path.open("a+b")
     try:
@@ -143,7 +143,7 @@ def _try_whisper_file_lock(path: Path):
     return handle
 
 
-def _acquire_whisper_slot(settings: Settings) -> tuple[int, threading.Lock, object]:
+def _acquire_whisper_slot(settings: Settings) -> tuple[int, threading.Lock, BinaryIO]:
     """Reserve one of the bounded host-wide transcription slots.
 
     Nonblocking acquisition fails closed rather than holding job leases, as the
@@ -162,6 +162,8 @@ def _acquire_whisper_slot(settings: Settings) -> tuple[int, threading.Lock, obje
             continue
         return slot, thread_lock, handle
     raise ProviderFailure("whisper_transcription_failed")
+
+
 _whisper_models: dict[tuple, object] = {}
 WHISPER_FILES = ("config.json", "model.bin", "tokenizer.json", "vocabulary.txt")
 

@@ -758,9 +758,7 @@ def run(
                         .order_by(ClipSuggestion.rank)
                     )
                 )
-                clips = [
-                    rendering.create(db, owner, suggestion.id) for suggestion in suggestions
-                ]
+                clips = [rendering.create(db, owner, suggestion.id) for suggestion in suggestions]
                 rendering.select_clips(
                     db,
                     owner,

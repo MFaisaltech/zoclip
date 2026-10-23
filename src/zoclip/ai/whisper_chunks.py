@@ -150,9 +150,7 @@ def run_chunk(
                 requeue(db, job)
                 db.commit()
             return
-        batch = list(
-            range(index, min(total, index + max(1, settings.whisper_parallelism)))
-        )
+        batch = list(range(index, min(total, index + max(1, settings.whisper_parallelism))))
         exhausted = index + len(batch) >= total
         with factory() as db:
             job = checked(db, owner, job_id, token)
@@ -189,9 +187,7 @@ def run_chunk(
 
         with ThreadPoolExecutor(max_workers=len(batch)) as pool:
             batch_ids = list(pool.map(transcribe_window, batch))
-        over_budget = (
-            time.monotonic() - claim_start > settings.whisper_claim_budget_seconds
-        )
+        over_budget = time.monotonic() - claim_start > settings.whisper_claim_budget_seconds
         with factory() as db:
             job = checked(db, owner, job_id, token)
             ids = job.checkpoint.get("whisper_chunk_requests", [])
