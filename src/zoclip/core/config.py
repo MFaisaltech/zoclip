@@ -90,11 +90,19 @@ class Settings(BaseSettings):
     whisper_cpu_threads: int = Field(default=1, ge=1, le=8)
     # Beam search width for decoding. faster-whisper's library default
     # is 5; benchmarked 2026-10-22: beam 2 is ~23% faster end-to-end
-    # than 5 with 99.8% word agreement on the capacity fixture, and
-    # keeps real beam search for noisy real-world audio (beam 1 /
-    # greedy measured the same speed within noise but no robustness
-    # margin).
-    whisper_beam_size: int = Field(default=2, ge=1, le=10)
+    # than 5 with 99.8% word agreement on the capacity fixture. Beam 1
+    # measured the same speed within noise in sequential decoding, but
+    # pairs with batched inference (whisper_batch_size) as the
+    # production configuration from 2026-10-27 (the combination is
+    # benchmarked before deployment; agreement re-checked then).
+    whisper_beam_size: int = Field(default=1, ge=1, le=10)
+    # BatchedInferencePipeline batch size: segments decoded together
+    # per slot model. 0 disables batching (plain sequential decoding).
+    whisper_batch_size: int = Field(default=8, ge=0, le=32)
+    # Moment selection: "local" scores the transcript with deterministic
+    # heuristics on-box (no paid API call, no transcript leaves the
+    # server); "gemini" uses the paid Gemini analysis path.
+    analysis_provider: str = Field(default="local", pattern="^(local|gemini)$")
     whisper_claim_budget_seconds: int = Field(default=480, ge=30, le=600)
     # A new transcription batch starts only while elapsed claim time is
     # below this: one batch can run up to the provider's 300s window

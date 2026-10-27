@@ -12,6 +12,22 @@ from zoclip.core.config import Settings
 from zoclip.core.errors import ApiError
 
 
+@pytest.fixture(autouse=True)
+def _fake_batched_pipeline(monkeypatch):
+    """These tests fake the model; give the batched path a delegating fake too."""
+
+    class Pipeline:
+        def __init__(self, model):
+            self.model = model
+
+        def transcribe(self, audio, **options):
+            options.pop("batch_size")
+            return self.model.transcribe(audio, **options)
+
+    monkeypatch.setattr(p, "_load_batched_pipeline", Pipeline)
+    monkeypatch.setattr(p, "_batched_pipelines", {})
+
+
 def raw(words, duration):
     return {
         "metadata": {"duration": duration},

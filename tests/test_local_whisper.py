@@ -34,7 +34,7 @@ def local(tmp_path, monkeypatch):
         def transcribe(self, path, **options):
             assert options == {
                 "language": "en",
-                "beam_size": 2,
+                "beam_size": 1,
                 "vad_filter": True,
                 "word_timestamps": True,
             }
@@ -54,11 +54,24 @@ def local(tmp_path, monkeypatch):
         calls.append("load")
         return Model()
 
+    class Pipeline:
+        """Fake BatchedInferencePipeline: records the batch, delegates the rest."""
+
+        def __init__(self, model):
+            self.model = model
+
+        def transcribe(self, audio, **options):
+            batch = options.pop("batch_size")
+            assert batch == settings.whisper_batch_size and batch > 0
+            return self.model.transcribe(audio, **options)
+
     def blocked(*args, **kwargs):
         pytest.fail("Local transcription attempted HTTP")
 
     monkeypatch.setattr(p, "_load_whisper", load)
+    monkeypatch.setattr(p, "_load_batched_pipeline", Pipeline)
     monkeypatch.setattr(p, "_whisper_models", {})
+    monkeypatch.setattr(p, "_batched_pipelines", {})
     monkeypatch.setattr(httpx.HTTPTransport, "handle_request", blocked)
     return settings, audio, calls, Model
 

@@ -165,6 +165,7 @@ def _acquire_whisper_slot(settings: Settings) -> tuple[int, threading.Lock, Bina
 
 
 _whisper_models: dict[tuple, object] = {}
+_batched_pipelines: dict[tuple, object] = {}
 WHISPER_FILES = ("config.json", "model.bin", "tokenizer.json", "vocabulary.txt")
 
 
@@ -193,8 +194,14 @@ def _load_whisper(settings: Settings) -> object:
     )
 
 
+def _load_batched_pipeline(model: object) -> object:
+    from faster_whisper import BatchedInferencePipeline
+
+    return BatchedInferencePipeline(model=model)
+
+
 class LocalWhisperProviders(HTTPProviders):
-    """Local audio, shared unchanged Gemini adapter; never automatic paid fallback.
+    """Local audio transcription; never automatic paid fallback.
 
     Lazy process-local reuse is safe for RQ's forked work horses. Host-wide
     transcription is bounded to the configured slot count across processes and
@@ -272,13 +279,26 @@ class LocalWhisperProviders(HTTPProviders):
                     if key not in _whisper_models:
                         _whisper_models[key] = _load_whisper(self.settings)
                     model = _whisper_models[key]
-                    segments, _info = model.transcribe(  # type: ignore[attr-defined]
-                        samples,
-                        language=self.settings.deepgram_language,
-                        beam_size=self.settings.whisper_beam_size,
-                        vad_filter=True,
-                        word_timestamps=True,
-                    )
+                    if self.settings.whisper_batch_size > 0:
+                        pipe_key = key + (self.settings.whisper_batch_size,)
+                        if pipe_key not in _batched_pipelines:
+                            _batched_pipelines[pipe_key] = _load_batched_pipeline(model)
+                        segments, _info = _batched_pipelines[pipe_key].transcribe(  # type: ignore[attr-defined]
+                            samples,
+                            batch_size=self.settings.whisper_batch_size,
+                            language=self.settings.deepgram_language,
+                            beam_size=self.settings.whisper_beam_size,
+                            vad_filter=True,
+                            word_timestamps=True,
+                        )
+                    else:
+                        segments, _info = model.transcribe(  # type: ignore[attr-defined]
+                            samples,
+                            language=self.settings.deepgram_language,
+                            beam_size=self.settings.whisper_beam_size,
+                            vad_filter=True,
+                            word_timestamps=True,
+                        )
                     words: list[dict] = []
                     pending: list = []
                     # Iteration performs inference; exceptions must not yield success.

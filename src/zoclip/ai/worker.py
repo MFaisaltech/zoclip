@@ -17,7 +17,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
-from zoclip.ai import audio, selection
+from zoclip.ai import audio, local_selection, selection
 from zoclip.ai.models import AIRequest, ClipSuggestion, Transcript
 from zoclip.ai.providers import (
     MAX_RESPONSE,
@@ -45,6 +45,9 @@ CONFIG_KEYS = (
     "whisper_compute_type",
     "whisper_chunk_seconds",
     "whisper_overlap_seconds",
+    "whisper_beam_size",
+    "whisper_batch_size",
+    "analysis_provider",
     "deepgram_model",
     "deepgram_version",
     "deepgram_language",
@@ -79,6 +82,7 @@ def transcription_options(settings: Settings) -> dict:
         "compute_type": settings.whisper_compute_type,
         "language": settings.deepgram_language,
         "beam_size": settings.whisper_beam_size,
+        "batch_size": settings.whisper_batch_size,
         "adapter": "local-whisper-chunks-v2",
         "chunk_seconds": settings.whisper_chunk_seconds,
         "overlap_seconds": settings.whisper_overlap_seconds,
@@ -664,9 +668,29 @@ def run(
         job = checked(db, owner, job_id, token)
         job.checkpoint = {**job.checkpoint, "transcript_id": str(cached.id)}
         index = job.checkpoint.get("analysis_chunk", 0)
-        all_chunks = list(selection.chunks(data.words, settings))
+        # Local analysis scores the whole transcript deterministically;
+        # it needs no chunking (and must not inherit the paid path's
+        # bounded-chunk transcript limit).
+        all_chunks = (
+            []
+            if settings.analysis_provider == "local"
+            else list(selection.chunks(data.words, settings))
+        )
         collected = [Moment.model_validate(m) for m in job.checkpoint.get("candidates", [])]
         db.commit()
+    if settings.analysis_provider == "local":
+        # No paid call, nothing leaves the box: score once, checkpoint
+        # the candidates, and let the shared final selection below run.
+        # The Gemini chunk loop is skipped because all_chunks is empty.
+        collected = local_selection.candidates(data.words, settings, count)
+        with factory() as db:
+            job = checked(db, owner, job_id, token)
+            job.checkpoint = {
+                **job.checkpoint,
+                "analysis_chunk": 0,
+                "candidates": [m.model_dump() for m in collected],
+            }
+            db.commit()
     # Process every remaining chunk in this run instead of requeueing
     # after each one. The checkpoint commits after each chunk, so a crash
     # or a rate-limit return resumes at the next unprocessed chunk,
