@@ -258,6 +258,7 @@ def test_batched_word_times_clamped_to_slice(local, monkeypatch):
 
     monkeypatch.setattr(p, "_load_batched_pipeline", OvershootPipeline)
     monkeypatch.setattr(p, "_batched_pipelines", {})
+    settings = settings.model_copy(update={"whisper_batch_size": 8})
     result = p.LocalWhisperProviders(settings).transcribe_chunk(audio, 0, 2)
     words = result["body"]["results"]["channels"][0]["alternatives"][0]["words"]
     assert [w["word"] for w in words] == ["Hello", "edge"]

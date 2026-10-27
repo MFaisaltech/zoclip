@@ -100,14 +100,20 @@ class Settings(BaseSettings):
     # Beam search width for decoding. faster-whisper's library default
     # is 5; benchmarked 2026-10-22: beam 2 is ~23% faster end-to-end
     # than 5 with 99.8% word agreement on the capacity fixture. Beam 1
-    # measured the same speed within noise in sequential decoding, but
-    # pairs with batched inference (whisper_batch_size) as the
-    # production configuration from 2026-10-27 (the combination is
-    # benchmarked before deployment; agreement re-checked then).
+    # measured the same speed within noise and matches the reference
+    # deployment's recipe, so it is the default from 2026-10-27;
+    # agreement against a beam-5 reference is re-verified in the
+    # 2026-10-27 benchmark round.
     whisper_beam_size: int = Field(default=1, ge=1, le=10)
     # BatchedInferencePipeline batch size: segments decoded together
     # per slot model. 0 disables batching (plain sequential decoding).
-    whisper_batch_size: int = Field(default=8, ge=0, le=32)
+    # Benchmarked 2026-10-27 on the 4-vCPU staging box: no batched
+    # configuration beat the tuned slot-parallel sequential pipeline
+    # (best batched 599.4s vs 594.2s on the 30-min fixture; 4 slots x
+    # batch 4 exceeded the 2,700s driver deadline), so batching ships
+    # available but OFF by default; enable per deployment after
+    # measuring on that hardware.
+    whisper_batch_size: int = Field(default=0, ge=0, le=32)
     # Moment selection: "local" scores the transcript with deterministic
     # heuristics on-box (no paid API call, no transcript leaves the
     # server); "gemini" uses the paid Gemini analysis path.
