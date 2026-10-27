@@ -235,6 +235,35 @@ def test_unreviewed_configuration_rejected(local, key, value):
         Settings(_env_file=None, **(local[0].model_dump() | {key: value}))
 
 
+def test_batched_word_times_clamped_to_slice(local, monkeypatch):
+    # Regression: batched DTW alignment can end a word past the slice
+    # edge (observed 130.33 in a 130.0 slice) and start words beyond it.
+    settings, audio, calls, model = local
+
+    class OvershootPipeline:
+        def __init__(self, model):
+            pass
+
+        def transcribe(self, samples, **options):
+            def segments():
+                yield Item(
+                    words=[
+                        Item(word=" Hello", start=0.2, end=0.6, probability=0.9),
+                        Item(word=" edge", start=1.9, end=2.4, probability=0.8),
+                        Item(word=" beyond", start=2.1, end=2.3, probability=0.7),
+                    ]
+                )
+
+            return segments(), Item(duration=2.5)
+
+    monkeypatch.setattr(p, "_load_batched_pipeline", OvershootPipeline)
+    monkeypatch.setattr(p, "_batched_pipelines", {})
+    result = p.LocalWhisperProviders(settings).transcribe_chunk(audio, 0, 2)
+    words = result["body"]["results"]["channels"][0]["alternatives"][0]["words"]
+    assert [w["word"] for w in words] == ["Hello", "edge"]
+    assert words[-1]["end"] == 2.0
+
+
 def test_missing_model_files_never_download(local):
     with pytest.raises(p.ProviderFailure, match="whisper_model_unavailable"):
         p.check_whisper_files(local[0])

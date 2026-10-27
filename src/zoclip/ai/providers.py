@@ -1,5 +1,6 @@
 """Official HTTPS REST adapters, no implicit retries or configurable destinations."""
 
+import copy
 import json
 import math
 import os
@@ -200,6 +201,36 @@ def _load_batched_pipeline(model: object) -> object:
     return BatchedInferencePipeline(model=model)
 
 
+def _clamp_batched_segments(segments, duration: float):  # type: ignore[no-untyped-def]
+    """Keep batched-alignment word times inside the transcribed slice.
+
+    The batched pipeline's DTW alignment can place an edge word's end
+    slightly past the slice edge (observed: end 130.33 in a 130.0
+    slice), which the strict word validation rightly rejects. Clamp
+    only that case — a word starting in the slice's last second and
+    overshooting by at most a second; drop words that start beyond
+    the slice (the overlapping neighboring window owns that speech).
+    Anything else passes through untouched, so corrupt output still
+    fails closed in validation. Laziness is preserved: inference
+    still runs as the caller iterates.
+    """
+    for segment in segments:
+        if segment.words is None:
+            yield segment
+            continue
+        words = []
+        for w in segment.words:
+            if w.start >= duration:
+                continue
+            if w.end > duration and w.start >= duration - 1.0 and w.end - duration <= 1.0:
+                w = copy.copy(w)
+                w.end = duration
+            words.append(w)
+        segment = copy.copy(segment)
+        segment.words = words
+        yield segment
+
+
 class LocalWhisperProviders(HTTPProviders):
     """Local audio transcription; never automatic paid fallback.
 
@@ -283,7 +314,7 @@ class LocalWhisperProviders(HTTPProviders):
                         pipe_key = key + (self.settings.whisper_batch_size,)
                         if pipe_key not in _batched_pipelines:
                             _batched_pipelines[pipe_key] = _load_batched_pipeline(model)
-                        segments, _info = _batched_pipelines[pipe_key].transcribe(  # type: ignore[attr-defined]
+                        raw_segments, _info = _batched_pipelines[pipe_key].transcribe(  # type: ignore[attr-defined]
                             samples,
                             batch_size=self.settings.whisper_batch_size,
                             language=self.settings.deepgram_language,
@@ -291,6 +322,7 @@ class LocalWhisperProviders(HTTPProviders):
                             vad_filter=True,
                             word_timestamps=True,
                         )
+                        segments = _clamp_batched_segments(raw_segments, duration)
                     else:
                         segments, _info = model.transcribe(  # type: ignore[attr-defined]
                             samples,
