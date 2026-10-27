@@ -105,7 +105,5 @@ def test_download_failure_is_422(settings, tmp_path, monkeypatch):
         subprocess, "Popen", lambda args, **kw: FakeProc(tmp_path / "o.mp4", 0, returncode=1)
     )
     with pytest.raises(ApiError) as exc:
-        link_import.download_youtube(
-            "https://youtu.be/aqz-KE-bpKQ", tmp_path / "o.mp4", settings
-        )
+        link_import.download_youtube("https://youtu.be/aqz-KE-bpKQ", tmp_path / "o.mp4", settings)
     assert exc.value.code == "link_download_failed"

@@ -50,7 +50,7 @@ def test_candidates_feed_select_moments(settings):
     )
     chosen = selection.select_moments(found, words, int(words[-1].end) + 1, settings, 3)
     assert 1 <= len(chosen) <= 3
-    for a, b in zip(chosen, chosen[1:]):
+    for a, b in zip(chosen, chosen[1:], strict=False):
         assert a.end_sec <= b.start_sec or b.end_sec <= a.start_sec
 
 
