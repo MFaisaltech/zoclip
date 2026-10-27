@@ -65,6 +65,15 @@ class Settings(BaseSettings):
     media_upload_ttl_seconds: int = Field(default=86400, ge=300, le=86400)
     media_retention_seconds: int = Field(default=604800, ge=300, le=604800)
     media_allowed_import_hosts: list[str] = []
+    # YouTube link import (paste-a-link ingestion). yt-dlp runs as a
+    # constrained subprocess; the proxy/extractor args are configuration
+    # because datacenter IPs are bot-challenged without them. The
+    # extractor-args default is the combination verified working on the
+    # staging host (WARP egress + bgutil PO-token provider).
+    ytdlp_binary: str = "yt-dlp"
+    link_proxy_url: str = ""
+    link_extractor_args: str = "youtube:player_client=web;player_skip=webpage;fetch_pot=always"
+    link_deadline_seconds: int = Field(default=3600, ge=300, le=14400)
     ffprobe_binary: str = "ffprobe"
     ffmpeg_binary: str = "ffmpeg"
     render_deadline_seconds: int = Field(default=240, ge=10, le=300)

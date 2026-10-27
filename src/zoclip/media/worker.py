@@ -19,6 +19,7 @@ from zoclip.core.errors import ApiError
 from zoclip.credits import service as financial
 from zoclip.media import service
 from zoclip.media.importer import download
+from zoclip.media.link_import import download_youtube
 from zoclip.media.models import Job, Outbox, SourceVideo, StorageObject, UploadPart, UploadSession
 from zoclip.media.probe import probe
 from zoclip.media.storage import LocalStorage
@@ -134,6 +135,9 @@ def run_job(
             job.heartbeat_at = utcnow()
             db.commit()
         deadline = time.monotonic() + 600
+        if kind == "IMPORT" and payload.get("source") == "youtube":
+            # Link downloads scale with the source, not the assembly budget.
+            deadline = time.monotonic() + settings.link_deadline_seconds
         last_heartbeat = time.monotonic()
 
         def heartbeat() -> None:
@@ -151,13 +155,25 @@ def run_job(
         digest, size = hashlib.sha256(), 0
         with storage.create(token) as output:
             if kind == "IMPORT":
-                size = download(
-                    payload["url"],
-                    settings.media_allowed_import_hosts,
-                    output,
-                    payload["max_bytes"],
-                    progress=heartbeat,
-                )
+                if payload.get("source") == "youtube":
+                    tmp = storage.path(token).with_name(storage.path(token).name + ".linksrc")
+                    try:
+                        download_youtube(payload["url"], tmp, settings, progress=heartbeat)
+                        size = tmp.stat().st_size
+                        with open(tmp, "rb") as source_file:
+                            while chunk := source_file.read(1024 * 1024):
+                                heartbeat()
+                                output.write(chunk)
+                    finally:
+                        tmp.unlink(missing_ok=True)
+                else:
+                    size = download(
+                        payload["url"],
+                        settings.media_allowed_import_hosts,
+                        output,
+                        payload["max_bytes"],
+                        progress=heartbeat,
+                    )
             else:
                 for part_id, part_size, part_hash in parts:
                     part_digest, measured = hashlib.sha256(), 0

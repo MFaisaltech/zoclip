@@ -22,6 +22,7 @@ from zoclip.media.schemas import (
     Hash,
     ImportInput,
     JobView,
+    LinkImportInput,
     PartView,
     ProcessInput,
     UploadInput,
@@ -191,6 +192,22 @@ def import_url(
 ) -> JobView:
     rate_limit(request, "media-admission", str(user.id))
     job = service.import_url(db, user.id, data, key, request.app.state.settings, storage(request))
+    result = JobView.model_validate(job)
+    db.commit()
+    return result
+
+
+@router.post("/videos/import-link", response_model=JobView, status_code=202)
+def import_link(
+    data: LinkImportInput,
+    key: OperationKey,
+    request: Request,
+    db: DB,
+    user: CurrentUser,
+    csrf: CsrfSession,
+) -> JobView:
+    rate_limit(request, "media-admission", str(user.id))
+    job = service.import_link(db, user.id, data, key, request.app.state.settings, storage(request))
     result = JobView.model_validate(job)
     db.commit()
     return result

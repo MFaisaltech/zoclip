@@ -38,6 +38,12 @@ class ImportInput(BaseModel):
     rights_attested: Literal[True]
 
 
+class LinkImportInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    url: SecretStr = Field(min_length=1, max_length=2048)
+    rights_attested: Literal[True]
+
+
 class ProcessInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     video_id: UUID

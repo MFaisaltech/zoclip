@@ -13,6 +13,7 @@ from zoclip.credits import service as money
 from zoclip.credits.models import Quote, SystemLimits
 from zoclip.credits.schemas import ConsumptionRules
 from zoclip.media.importer import validate_url
+from zoclip.media.link_import import youtube_video_id
 from zoclip.media.models import (
     Job,
     JobEvent,
@@ -24,7 +25,7 @@ from zoclip.media.models import (
     UploadPart,
     UploadSession,
 )
-from zoclip.media.schemas import ImportInput, ProcessInput, UploadInput
+from zoclip.media.schemas import ImportInput, LinkImportInput, ProcessInput, UploadInput
 from zoclip.media.storage import LocalStorage
 
 ACTIVE = {"QUEUED", "RUNNING", "CANCEL_REQUESTED", "WAITING_ENGINE", "SUGGESTIONS_READY"}
@@ -313,6 +314,34 @@ def import_url(
         raise ApiError(413, "media_too_large", "Import exceeds configured size.")
     ingestion_gate(db, owner, settings)
     video = source(db, owner, data.max_bytes, "IMPORTING", settings, storage)
+    return queue_job(db, owner, video.id, "IMPORT", key, payload, hashed)
+
+
+def import_link(
+    db: Session,
+    owner: UUID,
+    data: LinkImportInput,
+    key: str,
+    settings: Settings,
+    storage: LocalStorage,
+) -> Job:
+    url = data.url.get_secret_value()
+    video_id = youtube_video_id(url)
+    mutex(db, owner)
+    payload = {
+        "source": "youtube",
+        "url": url,
+        "video_id": video_id,
+        "max_bytes": settings.media_max_bytes,
+        "rights_attested": True,
+    }
+    hashed = money.fingerprint(payload)
+    old = db.scalar(select(Job).where(Job.user_id == owner, Job.operation_key == key))
+    if old:
+        money.same(old.request_hash, hashed)
+        return old
+    ingestion_gate(db, owner, settings)
+    video = source(db, owner, settings.media_max_bytes, "IMPORTING", settings, storage)
     return queue_job(db, owner, video.id, "IMPORT", key, payload, hashed)
 
 

@@ -134,6 +134,7 @@ VideoView. Customer DTOs omit private paths, import URLs, worker tokens and payl
 | POST /uploads/{id}/complete | 202 durable async assembly/validation job |
 | DELETE /uploads/{id} | Revoke source, cancel safely and schedule cleanup |
 | POST /videos/import-url | 202 allowlisted, rights-attested direct HTTPS import |
+| POST /videos/import-link | 202 rights-attested YouTube link import (yt-dlp subprocess, ≤1080p merge; proxy/PO-token via LINK_PROXY_URL / LINK_EXTRACTOR_ARGS) |
 | GET /videos; GET /videos/{id} | Own retained assets and actual validated metadata |
 | GET /videos/{id}/content | Owner-authorized private attachment; no public path/range |
 | DELETE /videos/{id} | Immediate access revocation, lease-aware cleanup |
