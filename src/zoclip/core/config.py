@@ -100,11 +100,12 @@ class Settings(BaseSettings):
     # Beam search width for decoding. faster-whisper's library default
     # is 5; benchmarked 2026-10-22: beam 2 is ~23% faster end-to-end
     # than 5 with 99.8% word agreement on the capacity fixture. Beam 1
-    # measured the same speed within noise and matches the reference
-    # deployment's recipe, so it is the default from 2026-10-27;
-    # agreement against a beam-5 reference is re-verified in the
-    # 2026-10-27 benchmark round.
-    whisper_beam_size: int = Field(default=1, ge=1, le=10)
+    # measured the same speed within noise, but on 2026-10-28 it failed
+    # the 120-min fixture with whisper_boundary_conflict (greedy
+    # decoding's cold-start timing wobble breaks an overlap seam in 60
+    # windows), while beam 2 completed that fixture in round 2. Beam 2
+    # is therefore the default: proven at full length, same speed.
+    whisper_beam_size: int = Field(default=2, ge=1, le=10)
     # BatchedInferencePipeline batch size: segments decoded together
     # per slot model. 0 disables batching (plain sequential decoding).
     # Benchmarked 2026-10-27 on the 4-vCPU staging box: no batched
