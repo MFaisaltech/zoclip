@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from zoclip.auth.dependencies import DB, AdminUser, CurrentUser
 from zoclip.auth.models import User
-from zoclip.billing.models import EntitlementRevocation
+from zoclip.billing.models import BillingOrder, EntitlementRevocation
 from zoclip.core.db import utcnow
 from zoclip.core.errors import ApiError
 from zoclip.credits import service
@@ -58,11 +58,17 @@ class ReservationPage(StrictModel):
 class CustomerView(StrictModel):
     id: UUID
     email: str
+    # Name recorded on the customer's latest manual purchase; registered
+    # accounts have no name field of their own, so this can be None.
+    name: str | None
+    role: str
     status: str
     verified: bool
     created_at: datetime
     available_credits: int
     reserved_credits: int
+    plan_slug: str | None
+    access_ends_at: datetime | None
 
 
 class CustomerPage(StrictModel):
@@ -194,29 +200,66 @@ def customers(
     cursor: UUID | None = None,
     search: str = Query("", max_length=100),
 ) -> CustomerPage:
-    query = (
-        select(User, Wallet.available, Wallet.reserved)
-        .outerjoin(Wallet, Wallet.user_id == User.id)
-        .where(User.role == "customer")
+    # Every registered account is listed, including staff accounts and
+    # accounts without a wallet or any purchase. (The previous role filter
+    # hid the administrator's own account, so an exact-email search for it
+    # returned zero rows and the tab looked broken.)
+    query = select(User, Wallet.available, Wallet.reserved).outerjoin(
+        Wallet, Wallet.user_id == User.id
     )
     if search.strip():
         query = query.where(User.email.icontains(search.strip(), autoescape=True))
     if cursor:
         query = query.where(User.id > cursor)
     rows = db.execute(query.order_by(User.id).limit(limit + 1)).all()
-    result = CustomerPage(
-        items=[
+    items = []
+    for u, available, reserved in rows[:limit]:
+        name = db.scalar(
+            select(BillingOrder.customer_name)
+            .where(BillingOrder.user_id == u.id, BillingOrder.customer_name.is_not(None))
+            .order_by(BillingOrder.created_at.desc(), BillingOrder.id.desc())
+            .limit(1)
+        )
+        plan_slug = None
+        access_ends_at = None
+        try:
+            price = service.active_price(db, u.id)
+        except ApiError as exc:
+            if exc.code not in {"plan_unconfigured", "plan_unavailable"}:
+                raise
+        else:
+            catalog = db.get(Plan, price.plan_id)
+            plan_slug = catalog.slug if catalog else None
+            entitlement = db.scalar(
+                select(Entitlement)
+                .where(
+                    Entitlement.user_id == u.id,
+                    Entitlement.price_version_id == price.id,
+                    Entitlement.starts_at <= utcnow(),
+                    or_(Entitlement.ends_at.is_(None), Entitlement.ends_at > utcnow()),
+                    ~Entitlement.id.in_(select(EntitlementRevocation.entitlement_id)),
+                )
+                .order_by(Entitlement.starts_at.desc(), Entitlement.id.desc())
+                .limit(1)
+            )
+            access_ends_at = entitlement.ends_at if entitlement else None
+        items.append(
             CustomerView(
                 id=u.id,
                 email=u.email,
+                name=name,
+                role=u.role,
                 status=u.status,
                 verified=u.verified,
                 created_at=u.created_at,
                 available_credits=available or 0,
                 reserved_credits=reserved or 0,
+                plan_slug=plan_slug,
+                access_ends_at=access_ends_at,
             )
-            for u, available, reserved in rows[:limit]
-        ],
+        )
+    result = CustomerPage(
+        items=items,
         next_cursor=rows[limit - 1][0].id if len(rows) > limit else None,
     )
     service.audit(db, user.id, "billing.customers_read", user.id)
@@ -227,7 +270,7 @@ def customers(
 @router.get("/admin/customers/{user_id}/billing", response_model=BillingOverview, tags=["admin"])
 def customer_billing(user_id: UUID, db: DB, user: AdminUser) -> BillingOverview:
     target = db.get(User, user_id)
-    if not target or target.role != "customer":
+    if not target:
         raise ApiError(404, "not_found", "Customer not found.")
     result = overview(db, target.id)
     service.audit(db, user.id, "billing.customer_read", target.id)
@@ -259,11 +302,8 @@ def admin_dashboard(db: DB, user: AdminUser) -> AdminOverview:
     now = utcnow()
     system = db.get(SystemLimits, 1)
     result = AdminOverview(
-        customers=db.scalar(select(func.count()).select_from(User).where(User.role == "customer"))
-        or 0,
-        verified_customers=db.scalar(
-            select(func.count()).select_from(User).where(User.role == "customer", User.verified)
-        )
+        customers=db.scalar(select(func.count()).select_from(User)) or 0,
+        verified_customers=db.scalar(select(func.count()).select_from(User).where(User.verified))
         or 0,
         available_credits=int(db.scalar(select(func.sum(Wallet.available))) or 0),
         reserved_credits=int(db.scalar(select(func.sum(Wallet.reserved))) or 0),

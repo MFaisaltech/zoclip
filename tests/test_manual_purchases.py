@@ -68,6 +68,7 @@ def input_for(users, slug="creator", reference="BANK-RECEIPT-123456"):
     return ManualPaymentInput(
         price_version_id=users["manual_prices"][slug],
         amount_paisa=100000 if slug == "creator" else 200000,
+        customer_name="Alice Example",
         payment_reference=reference,
         independently_verified=True,
         reason="Independently checked fictional bank statement",
@@ -89,8 +90,12 @@ def test_verified_activation_is_atomic_and_idempotent(purchases, slug, credits):
     with factory() as db:
         test_credits.assert_wallet(db, users["alice"], credits + 5, 0)
         assert db.get(BillingOrder, order).state == "PAID"
-        assert db.get(BillingOrder, order).valid_days == 0
+        assert db.get(BillingOrder, order).valid_days == 30
+        assert db.get(BillingOrder, order).customer_name == "Alice Example"
         assert len(list(db.scalars(select(Entitlement)))) == 1
+        entitlement = db.scalar(select(Entitlement))
+        assert entitlement is not None and entitlement.ends_at is not None
+        assert (entitlement.ends_at - entitlement.starts_at).days == 30
         assert db.scalar(
             select(AuditLog.id).where(AuditLog.action == "billing.manual_payment_verified")
         )
@@ -272,6 +277,7 @@ def test_manual_confirmation_and_paid_provider_configuration_fail_closed():
         ManualPaymentInput(
             price_version_id=uuid4(),
             amount_paisa=100000,
+            customer_name="Fake Buyer",
             payment_reference="FAKE123456",
             independently_verified=False,
             reason="Unverified screenshot",
@@ -292,9 +298,10 @@ def test_maximum_length_request_key_stays_idempotent(purchases):
     with factory() as db:
         row = manual.activate(db, settings, users["admin"], users["alice"], input_for(users), key)
         assert len(row.operation_key) <= 128
-        assert manual.activate(
-            db, settings, users["admin"], users["alice"], input_for(users), key
-        ).id == row.id
+        assert (
+            manual.activate(db, settings, users["admin"], users["alice"], input_for(users), key).id
+            == row.id
+        )
         db.commit()
     with factory() as db:
         test_credits.assert_wallet(db, users["alice"], 10005, 0)

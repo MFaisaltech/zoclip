@@ -24,6 +24,10 @@ class BillingOrder(IdentityMixin, Base):
         ),
     )
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    # Name the payer was recorded under at purchase time (manual sales enter
+    # it in Admin -> Purchases). Registered accounts have no name field, so
+    # this is the only customer-name record; NULL for legacy/sandbox orders.
+    customer_name: Mapped[str | None] = mapped_column(String(120))
     price_version_id: Mapped[UUID] = mapped_column(ForeignKey("plan_price_versions.id"), index=True)
     provider: Mapped[str] = mapped_column(String(30))
     fee_schedule_version: Mapped[str] = mapped_column(String(60))

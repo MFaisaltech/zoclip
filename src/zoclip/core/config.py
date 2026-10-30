@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     enable_live_payments: bool = False
     enable_trial_credits: bool = False
     manual_payments_enabled: bool = False
+    # Credit expiry sweep (maintenance worker). Default OFF: expiring unused
+    # plan credits changes customer balances, so it is enabled only after an
+    # explicit migration review of already-ended entitlements.
+    credits_expiry_enabled: bool = False
     payment_provider: Literal["disabled", "mock", "jazzcash"] = "disabled"
     payment_mock_webhook_secret: SecretStr = SecretStr("")
     media_root: str = "var/media"

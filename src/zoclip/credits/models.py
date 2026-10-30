@@ -65,6 +65,21 @@ class Entitlement(IdentityMixin, Base):
     reason: Mapped[str] = mapped_column(String(500))
 
 
+class CreditExpiryEvent(IdentityMixin, Base):
+    """Append-only record that the expiry sweep processed an entitlement.
+
+    user_entitlements is immutable, so the sweep cannot stamp the row it
+    processed; it records the processing (and any deduction) here instead,
+    mirroring the billing entitlement-revocations pattern.
+    """
+
+    __tablename__ = "credit_expiry_events"
+    __table_args__ = (CheckConstraint("deducted_credits >= 0", name="nonnegative"),)
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    entitlement_id: Mapped[UUID] = mapped_column(ForeignKey("user_entitlements.id"), unique=True)
+    deducted_credits: Mapped[int] = mapped_column(BigInteger, default=0)
+
+
 class Quote(IdentityMixin, Base):
     __tablename__ = "credit_quotes"
     __table_args__ = (
@@ -107,7 +122,8 @@ class CreditTransaction(IdentityMixin, Base):
             "(operation = 'RELEASE' AND available_delta > 0 "
             "AND reserved_delta = -available_delta) OR "
             "(operation IN ('REFUND', 'ADMIN_ADJUST') "
-            "AND available_delta != 0 AND reserved_delta = 0)",
+            "AND available_delta != 0 AND reserved_delta = 0) OR "
+            "(operation = 'EXPIRE' AND available_delta < 0 AND reserved_delta = 0)",
             name="operation_deltas",
         ),
     )

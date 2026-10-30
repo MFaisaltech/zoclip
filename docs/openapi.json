@@ -3954,7 +3954,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/QuoteInput"
+                "$ref": "#/components/schemas/GenerationQuoteInput"
               }
             }
           }
@@ -4201,7 +4201,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/QuoteInput"
+                "$ref": "#/components/schemas/GenerationQuoteInput"
               }
             }
           }
@@ -17452,6 +17452,21 @@
             "type": "string",
             "title": "Email"
           },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
           "status": {
             "type": "string",
             "title": "Status"
@@ -17472,6 +17487,29 @@
           "reserved_credits": {
             "type": "integer",
             "title": "Reserved Credits"
+          },
+          "plan_slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Slug"
+          },
+          "access_ends_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access Ends At"
           }
         },
         "additionalProperties": false,
@@ -17479,11 +17517,15 @@
         "required": [
           "id",
           "email",
+          "name",
+          "role",
           "status",
           "verified",
           "created_at",
           "available_credits",
-          "reserved_credits"
+          "reserved_credits",
+          "plan_slug",
+          "access_ends_at"
         ],
         "title": "CustomerView"
       },
@@ -17688,6 +17730,47 @@
           "quote_id"
         ],
         "title": "GenerateInput"
+      },
+      "GenerationQuoteInput": {
+        "properties": {
+          "source_seconds": {
+            "type": "integer",
+            "maximum": 7200.0,
+            "minimum": 1.0,
+            "title": "Source Seconds"
+          },
+          "output_count": {
+            "type": "integer",
+            "maximum": 6.0,
+            "minimum": 1.0,
+            "title": "Output Count"
+          },
+          "edit_count": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Edit Count",
+            "default": 0
+          },
+          "captions": {
+            "type": "boolean",
+            "title": "Captions",
+            "default": true
+          },
+          "reframe": {
+            "type": "boolean",
+            "title": "Reframe",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source_seconds",
+          "output_count"
+        ],
+        "title": "GenerationQuoteInput",
+        "description": "Customer-facing generation quotes: the product sells 1-6 clips per job.\n\nInternal pricing math (calculate) keeps the wider QuoteInput bound; only\nthe quote endpoints customers actually confirm are capped at 6 outputs."
       },
       "Health": {
         "properties": {
@@ -17929,6 +18012,12 @@
             "minimum": 1.0,
             "title": "Amount Paisa"
           },
+          "customer_name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 2,
+            "title": "Customer Name"
+          },
           "payment_reference": {
             "type": "string",
             "maxLength": 100,
@@ -17953,6 +18042,7 @@
         "required": [
           "price_version_id",
           "amount_paisa",
+          "customer_name",
           "payment_reference",
           "independently_verified",
           "reason"
@@ -19394,6 +19484,49 @@
                 "type": "null"
               }
             ]
+          },
+          "customer_email": {
+            "type": "string",
+            "title": "Customer Email"
+          },
+          "customer_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Name"
+          },
+          "plan_slug": {
+            "type": "string",
+            "title": "Plan Slug"
+          },
+          "access_starts_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access Starts At"
+          },
+          "access_ends_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access Ends At"
           }
         },
         "additionalProperties": false,
@@ -19402,7 +19535,12 @@
           "order",
           "user_id",
           "reference",
-          "refund"
+          "refund",
+          "customer_email",
+          "customer_name",
+          "plan_slug",
+          "access_starts_at",
+          "access_ends_at"
         ],
         "title": "StaffOrderView"
       },

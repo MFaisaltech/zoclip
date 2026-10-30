@@ -112,6 +112,16 @@ class QuoteInput(StrictModel):
     reframe: bool = True
 
 
+class GenerationQuoteInput(QuoteInput):
+    """Customer-facing generation quotes: the product sells 1-6 clips per job.
+
+    Internal pricing math (calculate) keeps the wider QuoteInput bound; only
+    the quote endpoints customers actually confirm are capped at 6 outputs.
+    """
+
+    output_count: Annotated[int, Field(strict=True, ge=1, le=6)]
+
+
 class QuoteView(StrictModel):
     id: UUID
     price_version_id: UUID

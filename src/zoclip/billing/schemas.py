@@ -64,11 +64,24 @@ class RefundInput(StrictModel):
 class ManualPaymentInput(StrictModel):
     price_version_id: UUID
     amount_paisa: PositiveCredit
+    # The name the payer used (WhatsApp/bank sender name), entered in
+    # Admin -> Purchases. Accounts carry no name field, so this record is
+    # what Payments and Customers display; it is bound into the payload
+    # fingerprint, so a replay under a different name conflicts.
+    customer_name: Annotated[str, Field(min_length=2, max_length=120)]
     payment_reference: Annotated[
         str, Field(min_length=6, max_length=100, pattern=r"^[A-Za-z0-9 .:_-]+$")
     ]
     independently_verified: Literal[True]
     reason: Reason
+
+    @field_validator("customer_name")
+    @classmethod
+    def canonical_name(cls, value: str) -> str:
+        name = " ".join(value.split())
+        if len(name) < 2:
+            raise ValueError("Enter the customer's name")
+        return name
 
     @field_validator("payment_reference")
     @classmethod
@@ -112,6 +125,13 @@ class StaffOrderView(StrictModel):
     user_id: UUID
     reference: str
     refund: RefundView | None
+    # Readable payment-table fields (Admin -> Payments). Technical IDs stay
+    # on the order itself for the secondary details view.
+    customer_email: str
+    customer_name: str | None
+    plan_slug: str
+    access_starts_at: datetime | None
+    access_ends_at: datetime | None
 
 
 class RefundRequestView(StrictModel):

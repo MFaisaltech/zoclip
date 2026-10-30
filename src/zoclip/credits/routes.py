@@ -27,13 +27,13 @@ from zoclip.credits.schemas import (
     ConsumptionRules,
     EntitlementInput,
     EntitlementView,
+    GenerationQuoteInput,
     Key,
     PlanVersionInput,
     PlanView,
     PolicyInput,
     PolicyView,
     PriceView,
-    QuoteInput,
     QuotePreviewView,
     QuoteView,
     RateInput,
@@ -134,7 +134,7 @@ def entitlements(
 
 @router.post("/jobs/quote-preview", response_model=QuotePreviewView)
 def quote_preview(
-    data: QuoteInput, request: Request, db: DB, user: CurrentUser, csrf: CsrfSession
+    data: GenerationQuoteInput, request: Request, db: DB, user: CurrentUser, csrf: CsrfSession
 ) -> QuotePreviewView:
     rate_limit(request, "credit-quote", str(user.id))
     return service.preview_quote(db, user.id, data, request.app.state.settings)
@@ -142,7 +142,7 @@ def quote_preview(
 
 @router.post("/jobs/quote", response_model=QuoteView)
 def quote(
-    data: QuoteInput,
+    data: GenerationQuoteInput,
     key: OperationKey,
     request: Request,
     db: DB,

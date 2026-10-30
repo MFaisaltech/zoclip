@@ -27,7 +27,7 @@ from zoclip.billing.schemas import (
 )
 from zoclip.core.errors import ApiError
 from zoclip.core.rate_limit import rate_limit
-from zoclip.credits.models import Wallet
+from zoclip.credits.models import Entitlement, Plan, PlanPrice, Wallet
 from zoclip.credits.schemas import Key
 from zoclip.credits.service import audit, staff
 
@@ -185,11 +185,20 @@ async def webhook(
 
 def staff_view(db: DB, row: BillingOrder) -> StaffOrderView:
     refund = db.scalar(select(BillingRefund).where(BillingRefund.order_id == row.id))
+    account = db.get(User, row.user_id)
+    price = db.get(PlanPrice, row.price_version_id)
+    plan = db.get(Plan, price.plan_id) if price else None
+    entitlement = db.get(Entitlement, row.entitlement_id) if row.entitlement_id else None
     return StaffOrderView(
         order=service.view(row),
         user_id=row.user_id,
         reference=service.reference(db, row),
         refund=RefundView.model_validate(refund) if refund else None,
+        customer_email=account.email if account else "",
+        customer_name=row.customer_name,
+        plan_slug=plan.slug if plan else "",
+        access_starts_at=entitlement.starts_at if entitlement else None,
+        access_ends_at=entitlement.ends_at if entitlement else None,
     )
 
 

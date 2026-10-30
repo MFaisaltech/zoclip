@@ -79,6 +79,7 @@ def activate(
     now = utcnow()
     order = BillingOrder(
         user_id=owner,
+        customer_name=data.customer_name,
         price_version_id=price.id,
         provider="manual",
         fee_schedule_version="manual-independent-verification-v1",

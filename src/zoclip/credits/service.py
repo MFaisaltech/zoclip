@@ -22,6 +22,7 @@ from zoclip.core.errors import ApiError
 from zoclip.credits.models import (
     CostPolicy,
     CostRate,
+    CreditExpiryEvent,
     CreditReservation,
     CreditTransaction,
     Entitlement,
@@ -278,8 +279,11 @@ def configure_plan(
     assert plan is not None
     if (plan.slug == "free" or plan.kind == "topup") and data.valid_days != 0:
         fail("invalid_validity", "Free plans and top-ups have no timed access.", 422)
-    # Prepaid credit packages may have no timed access expiry. Existing 30-day
-    # versions and their entitlements remain immutable.
+    # Owner terms (2026-10-30): Creator and Pro are 30-day prepaid plans.
+    # Existing price versions and their entitlements remain immutable; this
+    # guard only shapes newly configured versions.
+    if plan.kind == "plan" and plan.slug != "free" and data.valid_days != 30:
+        fail("invalid_validity", "Paid plan access is prepaid for 30 days.", 422)
     if plan.slug == "free" and data.price_paisa != 0:
         fail("invalid_price", "Free plan price must be zero.", 422)
     row = PlanPrice(
@@ -628,6 +632,102 @@ def settled_amounts(db: Session, user_id: UUID) -> dict[UUID, int]:
         .group_by(CreditTransaction.reservation_id)
     ).all()
     return {reservation: int(amount) for reservation, amount in rows if reservation is not None}
+
+
+def expire_plan_credits(db: Session, settings: Any, now: datetime | None = None) -> int:
+    """Remove unused prepaid plan credits once a paid entitlement has ended.
+
+    Admission already stops at ends_at (active_price skips expired
+    entitlements); this sweep removes the unspent remainder of a purchase
+    from the wallet as an append-only EXPIRE ledger entry, so the full
+    history (grant, settlements, expiry) stays auditable. Safety rails:
+
+    - Runs only when settings.credits_expiry_enabled is on. That flag is the
+      migration-review gate: already-ended entitlements in a live database
+      must be reviewed before the sweep is first enabled there.
+    - Only purchase-granted entitlements (a linked BillingOrder) are
+      deducted; staff awards and revoked (refunded) entitlements are not.
+    - Each entitlement is processed exactly once, recorded as an
+      append-only CreditExpiryEvent (entitlements themselves are immutable).
+    - Reserved credits are never touched: jobs admitted before expiry keep
+      their holds and settle or release normally afterwards.
+    - Consumption is attributed by reservations created inside the plan
+      window (settled at their settled amount, still-held at their full
+      hold); the deduction is capped at the wallet's available balance.
+    """
+    if not settings.credits_expiry_enabled:
+        return 0
+    from zoclip.billing.models import BillingOrder
+
+    moment = now or utcnow()
+    processed_ids = select(CreditExpiryEvent.entitlement_id)
+    ended = list(
+        db.scalars(
+            select(Entitlement)
+            .where(
+                Entitlement.ends_at.is_not(None),
+                Entitlement.ends_at <= moment,
+                Entitlement.id.not_in(processed_ids),
+            )
+            .order_by(Entitlement.ends_at, Entitlement.id)
+        )
+    )
+    processed = 0
+    for entitlement in ended:
+        deduct = 0
+        order = db.scalar(select(BillingOrder).where(BillingOrder.entitlement_id == entitlement.id))
+        revoked = db.scalar(
+            select(EntitlementRevocation.id).where(
+                EntitlementRevocation.entitlement_id == entitlement.id
+            )
+        )
+        if order is not None and revoked is None:
+            price = db.get(PlanPrice, entitlement.price_version_id)
+            plan = db.get(Plan, price.plan_id) if price else None
+            if plan is not None and plan.kind == "plan" and plan.slug != "free":
+                wallet = lock_wallet(db, entitlement.user_id, active_required=False)
+                settled = settled_amounts(db, entitlement.user_id)
+                # Attribute the window's consumption: settled charges count
+                # at their settled amount; still-held reservations count at
+                # their full hold (presumed spoken for, and never deducted
+                # here); released holds consumed nothing.
+                consumed = 0
+                for reservation in db.scalars(
+                    select(CreditReservation).where(
+                        CreditReservation.user_id == entitlement.user_id,
+                        CreditReservation.created_at >= entitlement.starts_at,
+                        CreditReservation.created_at < entitlement.ends_at,
+                    )
+                ):
+                    if reservation.state == "SETTLED":
+                        consumed += settled.get(reservation.id, 0)
+                    elif reservation.state == "HELD":
+                        consumed += reservation.credits
+                remainder = max(0, order.credits - consumed)
+                deduct = min(remainder, wallet.available)
+                if deduct > 0:
+                    entry(
+                        db,
+                        wallet,
+                        "EXPIRE",
+                        "expiry:" + str(entitlement.id),
+                        fingerprint(
+                            ["expiry", str(entitlement.id), order.credits, consumed, deduct]
+                        ),
+                        -deduct,
+                        reason="Unused plan credits expired at the end of the plan period.",
+                    )
+                    reconcile(db, wallet)
+        db.add(
+            CreditExpiryEvent(
+                user_id=entitlement.user_id,
+                entitlement_id=entitlement.id,
+                deducted_credits=deduct,
+            )
+        )
+        processed += 1
+    db.flush()
+    return processed
 
 
 def finish(

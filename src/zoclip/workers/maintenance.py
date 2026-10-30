@@ -11,6 +11,7 @@ from zoclip.ai.worker import resume_waiting
 from zoclip.auth.mail_queue import cleanup_mail, deliver_one, enqueue_recent_receipts
 from zoclip.core.config import Settings
 from zoclip.core.db import build_engine
+from zoclip.credits.service import expire_plan_credits
 from zoclip.media.cleanup import cleanup
 from zoclip.media.storage import LocalStorage
 from zoclip.media.worker import dispatch, recover
@@ -39,6 +40,7 @@ def main() -> None:
                     cleanup_auth(db)
                     cleanup_mail(db)
                     enqueue_recent_receipts(db, settings)
+                    expire_plan_credits(db, settings)
                     db.commit()
                 Path("/tmp/zoclip-maintenance-heartbeat").touch()
             except Exception as exc:
