@@ -25,7 +25,7 @@ packages = test_package_pricing.packages
 
 
 def test_proposal_preserves_trial_and_has_exact_two_prepaid_packages():
-    current = json.loads(Path("deploy/staging-catalog.json").read_text())
+    current = json.loads(Path("tests/fixtures/legacy-catalog.json").read_text())
     draft = proposal()
     assert draft == json.loads(Path("deploy/pricing-proposal-20261020.json").read_text())
     assert draft["release_status"] == "proposal"

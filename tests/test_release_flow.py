@@ -236,9 +236,9 @@ def test_catalog_provisions_real_quote_terms_without_grants(financial_database):
         preview = money.preview_quote(
             db, users["alice"], QuoteInput(source_seconds=26, output_count=1), config
         )
-        assert preview.credits == 60 and not preview.processing_enabled
+        assert preview.credits == 50 and not preview.processing_enabled
         quote = money.make_quote(db, users["alice"], preview.request, str(uuid4()), production=True)
-        assert quote.credits == 60
+        assert quote.credits == 50
         money.adjust(
             db,
             users["alice"],

@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import sys
 from pathlib import Path
 from uuid import UUID
 
@@ -22,6 +23,7 @@ def install(db: Session, settings: Settings, actor: UUID, catalog: dict) -> list
     if (
         not settings.private_staging
         or settings.ai_enabled
+        or settings.staging_generation_enabled
         or settings.payment_provider != "disabled"
         or settings.enable_live_payments
         or settings.enable_trial_credits
@@ -40,17 +42,31 @@ def install(db: Session, settings: Settings, actor: UUID, catalog: dict) -> list
         if plan is None or not plan.enabled:
             raise RuntimeError("Catalog references an absent or disabled plan")
         data = PlanVersionInput.model_validate({**terms, "reason": catalog["reason"]})
-        if slug == "free" and (
-            data.rules.max_source_seconds != 300
-            or data.rules.max_outputs != 1
-            or data.rules.max_edits != 0
-            or data.rules.lifetime_output_limit != 1
-            or data.rules.purchasable
-            or data.included_credits
-            != service.calculate(QuoteInput(source_seconds=300, output_count=1), data.rules)
+        manual_catalog = catalog.get("billing_model") == "manual_per_clip_v1"
+        if manual_catalog and (
+            data.rules.credits_per_minute != 0
+            or data.rules.credits_per_output != 50
+            or data.rules.credits_per_edit != 50
+            or data.rules.captions_credits != 0
+            or data.rules.reframe_credits != 0
+            or data.rules.minimum_job_credits != 0
+        ):
+            raise RuntimeError("Manual packages must charge exactly 50 credits per output")
+        if (
+            slug == "free"
+            and not manual_catalog
+            and (
+                data.rules.max_source_seconds != 300
+                or data.rules.max_outputs != 1
+                or data.rules.max_edits != 0
+                or data.rules.lifetime_output_limit != 1
+                or data.rules.purchasable
+                or data.included_credits
+                != service.calculate(QuoteInput(source_seconds=300, output_count=1), data.rules)
+            )
         ):
             raise RuntimeError("Trial terms must cover exactly one bounded lifetime clip")
-        if slug != "free" and data.approved:
+        if slug != "free" and data.approved and not manual_catalog:
             raise RuntimeError("Retail packages remain unapproved until measured acceptance")
         row = service.configure_plan(db, plan.id, data, catalog["version"], actor)
         result.append({"slug": slug, "price_version_id": str(row.id), "approved": row.approved})
@@ -87,7 +103,11 @@ def main() -> None:
     parser.add_argument("--execute", action="store_true")
     args = parser.parse_args()
     settings = Settings()  # type: ignore[call-arg]
-    catalog = json.loads(args.catalog.read_text(encoding="utf-8"))
+    catalog = (
+        json.load(sys.stdin)
+        if str(args.catalog) == "-"
+        else json.loads(args.catalog.read_text(encoding="utf-8"))
+    )
     with Session(build_engine(settings.database_url.get_secret_value())) as db:
         result = install(db, settings, args.actor, catalog)
         if args.execute:

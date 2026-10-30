@@ -5,7 +5,7 @@ from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Query, Request
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from zoclip.auth.dependencies import DB, AdminUser, CurrentUser
@@ -14,7 +14,7 @@ from zoclip.billing.models import EntitlementRevocation
 from zoclip.core.db import utcnow
 from zoclip.core.errors import ApiError
 from zoclip.credits import service
-from zoclip.credits.models import CreditReservation, Entitlement, Plan, Wallet
+from zoclip.credits.models import CreditReservation, CreditTransaction, Entitlement, Plan, Wallet
 from zoclip.credits.schemas import PlanView, PriceView, StrictModel
 from zoclip.media.models import Job
 from zoclip.media.schemas import JobView
@@ -96,26 +96,15 @@ def overview(db: Session, user_id: UUID) -> BillingOverview:
     day = now.replace(hour=0, minute=0, second=0, microsecond=0)
     month = day.replace(day=1)
     scope = CreditReservation.user_id == user_id
+    reservations = list(db.scalars(select(CreditReservation).where(scope)))
+    settled = service.settled_amounts(db, user_id)
 
     def used(boundary: datetime) -> int:
-        # Match reserve() exactly: all in-flight holds, plus activity in this UTC period.
-        return int(
-            db.scalar(
-                select(func.coalesce(func.sum(CreditReservation.credits), 0)).where(
-                    scope,
-                    or_(
-                        CreditReservation.state == "HELD",
-                        and_(
-                            CreditReservation.state == "SETTLED",
-                            or_(
-                                CreditReservation.created_at >= boundary,
-                                CreditReservation.updated_at >= boundary,
-                            ),
-                        ),
-                    ),
-                )
-            )
-            or 0
+        return sum(
+            r.credits if r.state == "HELD" else settled.get(r.id, 0)
+            for r in reservations
+            if r.state == "HELD"
+            or (r.state == "SETTLED" and (r.created_at >= boundary or r.updated_at >= boundary))
         )
 
     states = {
@@ -167,8 +156,13 @@ def overview(db: Session, user_id: UUID) -> BillingOverview:
         monthly_used_credits=used(month),
         held_reservations=states.get("HELD", (0, 0))[0],
         held_credits=states.get("HELD", (0, 0))[1],
-        settled_credits=states.get("SETTLED", (0, 0))[1],
-        released_credits=states.get("RELEASED", (0, 0))[1],
+        settled_credits=sum(settled.values()),
+        released_credits=db.scalar(
+            select(func.coalesce(func.sum(CreditTransaction.available_delta), 0)).where(
+                CreditTransaction.user_id == user_id, CreditTransaction.operation == "RELEASE"
+            )
+        )
+        or 0,
     )
 
 

@@ -54,6 +54,7 @@ class Settings(BaseSettings):
     google_redirect_uri: str = ""
     enable_live_payments: bool = False
     enable_trial_credits: bool = False
+    manual_payments_enabled: bool = False
     payment_provider: Literal["disabled", "mock", "jazzcash"] = "disabled"
     payment_mock_webhook_secret: SecretStr = SecretStr("")
     media_root: str = "var/media"
@@ -179,6 +180,15 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_deployment(self) -> Self:
+        if self.manual_payments_enabled and (
+            self.payment_provider != "disabled"
+            or self.enable_live_payments
+            or self.transcription_provider != "whisper"
+            or self.analysis_provider != "local"
+            or self.deepgram_api_key.get_secret_value()
+            or self.gemini_api_key.get_secret_value()
+        ):
+            raise ValueError("Manual purchases require disabled gateways and local-only AI")
         if self.staging_generation_enabled or self.staging_generation_user_id is not None:
             if (
                 self.deployment_tier != "protected_staging"

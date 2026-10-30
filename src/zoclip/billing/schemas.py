@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from zoclip.credits.schemas import Key, PositiveCredit, Reason, StrictModel
 
@@ -23,7 +23,7 @@ class OrderView(StrictModel):
     expires_at: datetime
     paid_at: datetime | None
     created_at: datetime
-    sandbox: Literal[True] = True
+    sandbox: bool = True
     auto_renews: Literal[False] = False
 
 
@@ -59,6 +59,43 @@ class StaffAction(StrictModel):
 
 class RefundInput(StrictModel):
     reason: Reason
+
+
+class ManualPaymentInput(StrictModel):
+    price_version_id: UUID
+    amount_paisa: PositiveCredit
+    payment_reference: Annotated[
+        str, Field(min_length=6, max_length=100, pattern=r"^[A-Za-z0-9 .:_-]+$")
+    ]
+    independently_verified: Literal[True]
+    reason: Reason
+
+    @field_validator("payment_reference")
+    @classmethod
+    def canonical_reference(cls, value: str) -> str:
+        import re
+
+        reference = re.sub(r"[^A-Z0-9]", "", value.upper())
+        if len(reference) < 6:
+            raise ValueError("Use the full bank or wallet transaction reference")
+        return reference
+
+
+class ManualRefundInput(StrictModel):
+    payment_reference: Annotated[
+        str, Field(min_length=6, max_length=100, pattern=r"^[A-Za-z0-9]+$")
+    ]
+    independently_verified: Literal[True]
+    reason: Reason
+
+
+class ManualUserView(StrictModel):
+    id: UUID
+    email: str
+    verified: bool
+    status: str
+    available_credits: int
+    reserved_credits: int
 
 
 class RefundView(StrictModel):

@@ -6,7 +6,7 @@ import time
 from datetime import timedelta
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from zoclip.ai.models import ClipSuggestion, Transcript
@@ -15,7 +15,7 @@ from zoclip.core.db import utcnow
 from zoclip.core.errors import ApiError
 from zoclip.core.generation_access import require_generation_access
 from zoclip.credits import service as money
-from zoclip.credits.models import SpendAttempt
+from zoclip.credits.models import CreditReservation, PlanPrice, Quote, SpendAttempt
 from zoclip.media import service as media
 from zoclip.media.models import Job, Outbox, SourceVideo, StorageObject
 from zoclip.media.storage import LocalStorage
@@ -239,6 +239,16 @@ def run(
                 db.add(Outbox(job_id=job.id, generation=job.generation))
             else:
                 if job.reservation_id:
+                    reservation = db.get(CreditReservation, job.reservation_id)
+                    quote = db.get(Quote, reservation.quote_id)
+                    price = db.get(PlanPrice, quote.price_version_id)
+                    # Pinned commercial rules: historical duration quotes are unchanged.
+                    per_clip = price.rules.get("credits_per_minute") == 0
+                    completed = db.scalar(
+                        select(func.count())
+                        .select_from(RenderOutput)
+                        .where(RenderOutput.job_id == job.id, RenderOutput.state == "COMPLETE")
+                    )
                     money.finish(
                         db,
                         owner,
@@ -246,6 +256,9 @@ def run(
                         "render-settle:" + str(job.id),
                         success=True,
                         evidence=str(job.id),
+                        settled_credits=completed * price.rules["credits_per_output"]
+                        if per_clip
+                        else None,
                     )
                 source_obj = media.required(db, StorageObject, video.object_id)
                 if job.kind == "PROCESS":

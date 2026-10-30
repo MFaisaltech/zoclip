@@ -31,7 +31,7 @@ from zoclip.credits.schemas import PlanVersionInput, QuoteInput
 from zoclip.ops.catalog import install
 
 financial_database = test_credits.concurrent_db
-CATALOG = json.loads(Path("deploy/staging-catalog.json").read_text())
+CATALOG = json.loads(Path("tests/fixtures/legacy-catalog.json").read_text())
 
 
 @pytest.fixture

@@ -31,6 +31,7 @@ from zoclip.credits.schemas import ConsumptionRules
 
 def view(order: BillingOrder) -> OrderView:
     result = OrderView.model_validate(order)
+    result.sandbox = order.provider != "manual"
     if result.state == "OPEN" and order.expires_at <= utcnow():
         result.state = "EXPIRED"
     return result

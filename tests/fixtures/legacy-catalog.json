@@ -1,0 +1,120 @@
+{
+  "version": "pricing-20261017-v2",
+  "reason": "Owner pricing update: 299/699/1299 PKR, total 500/1300/2400 credits, conditional clip targets and one lifetime 5-minute-source trial. No grants or AI/payment/trial activation.",
+  "display": {
+    "free": {
+      "name": "FREE",
+      "target_clips": 1,
+      "bonus_credits": 0
+    },
+    "starter": {
+      "name": "STARTER",
+      "target_clips": 7,
+      "bonus_credits": 0
+    },
+    "creator": {
+      "name": "CREATOR",
+      "target_clips": 20,
+      "bonus_credits": 100
+    },
+    "pro": {
+      "name": "PRO",
+      "target_clips": 38,
+      "bonus_credits": 150
+    }
+  },
+  "retired": [
+    "business",
+    "topup"
+  ],
+  "plans": {
+    "free": {
+      "price_paisa": 0,
+      "included_credits": 60,
+      "valid_days": 0,
+      "approved": true,
+      "rules": {
+        "credits_per_minute": 5,
+        "credits_per_output": 2,
+        "credits_per_edit": 2,
+        "captions_credits": 0,
+        "reframe_credits": 0,
+        "max_source_seconds": 300,
+        "max_outputs": 1,
+        "max_edits": 0,
+        "max_concurrent_jobs": 1,
+        "daily_credits": 60,
+        "monthly_credits": 60,
+        "minimum_job_credits": 60,
+        "purchasable": false,
+        "lifetime_output_limit": 1
+      }
+    },
+    "starter": {
+      "price_paisa": 29900,
+      "included_credits": 500,
+      "valid_days": 30,
+      "approved": false,
+      "rules": {
+        "credits_per_minute": 5,
+        "credits_per_output": 2,
+        "credits_per_edit": 2,
+        "captions_credits": 0,
+        "reframe_credits": 0,
+        "max_source_seconds": 7200,
+        "max_outputs": 3,
+        "max_edits": 1,
+        "max_concurrent_jobs": 1,
+        "daily_credits": 650,
+        "monthly_credits": 2500,
+        "minimum_job_credits": 60,
+        "purchasable": true,
+        "lifetime_output_limit": null
+      }
+    },
+    "creator": {
+      "price_paisa": 69900,
+      "included_credits": 1300,
+      "valid_days": 30,
+      "approved": false,
+      "rules": {
+        "credits_per_minute": 5,
+        "credits_per_output": 2,
+        "credits_per_edit": 2,
+        "captions_credits": 0,
+        "reframe_credits": 0,
+        "max_source_seconds": 7200,
+        "max_outputs": 3,
+        "max_edits": 1,
+        "max_concurrent_jobs": 1,
+        "daily_credits": 650,
+        "monthly_credits": 2500,
+        "minimum_job_credits": 60,
+        "purchasable": true,
+        "lifetime_output_limit": null
+      }
+    },
+    "pro": {
+      "price_paisa": 129900,
+      "included_credits": 2400,
+      "valid_days": 30,
+      "approved": false,
+      "rules": {
+        "credits_per_minute": 5,
+        "credits_per_output": 2,
+        "credits_per_edit": 2,
+        "captions_credits": 0,
+        "reframe_credits": 0,
+        "max_source_seconds": 7200,
+        "max_outputs": 3,
+        "max_edits": 1,
+        "max_concurrent_jobs": 1,
+        "daily_credits": 650,
+        "monthly_credits": 2500,
+        "minimum_job_credits": 60,
+        "purchasable": true,
+        "lifetime_output_limit": null
+      }
+    }
+  }
+}

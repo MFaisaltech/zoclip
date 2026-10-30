@@ -32,7 +32,7 @@ class ConsumptionRules(StrictModel):
     purchasable: bool = True
     lifetime_output_limit: PositiveCredit | None = None
     minimum_job_credits: Credit = 0
-    credits_per_minute: PositiveCredit
+    credits_per_minute: Credit
     credits_per_output: Credit
     credits_per_edit: Credit
     captions_credits: Credit

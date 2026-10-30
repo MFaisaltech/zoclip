@@ -2,14 +2,19 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Header, Query, Request
+from pydantic import EmailStr
 from sqlalchemy import select
 from starlette.concurrency import run_in_threadpool
 
 from zoclip.auth.dependencies import DB, AdminUser, CsrfSession, CurrentUser
-from zoclip.billing import service
+from zoclip.auth.models import User
+from zoclip.billing import manual, service
 from zoclip.billing.models import BillingOrder, BillingRefund
 from zoclip.billing.schemas import (
     CheckoutView,
+    ManualPaymentInput,
+    ManualRefundInput,
+    ManualUserView,
     OrderInput,
     OrderPage,
     OrderView,
@@ -22,11 +27,76 @@ from zoclip.billing.schemas import (
 )
 from zoclip.core.errors import ApiError
 from zoclip.core.rate_limit import rate_limit
+from zoclip.credits.models import Wallet
 from zoclip.credits.schemas import Key
 from zoclip.credits.service import audit, staff
 
 router = APIRouter(prefix="/api/v1", tags=["billing"])
 OperationKey = Annotated[Key, Header(alias="Idempotency-Key")]
+
+
+@router.get("/admin/manual-payments/users", response_model=list[ManualUserView], tags=["admin"])
+def manual_users(
+    email: EmailStr, request: Request, db: DB, user: AdminUser
+) -> list[ManualUserView]:
+    rate_limit(request, "manual-payment-search", str(user.id))
+    rows = db.execute(
+        select(User, Wallet.available, Wallet.reserved)
+        .outerjoin(Wallet, Wallet.user_id == User.id)
+        .where(User.email == str(email).lower())
+    ).all()
+    audit(db, user.id, "billing.manual_user_search", rows[0][0].id if rows else user.id)
+    result = [
+        ManualUserView(
+            id=u.id,
+            email=u.email,
+            verified=u.verified,
+            status=u.status,
+            available_credits=available or 0,
+            reserved_credits=reserved or 0,
+        )
+        for u, available, reserved in rows
+    ]
+    db.commit()
+    return result
+
+
+@router.post(
+    "/admin/manual-payments/users/{user_id}/activate", response_model=StaffOrderView, tags=["admin"]
+)
+def manual_activate(
+    user_id: UUID,
+    data: ManualPaymentInput,
+    key: OperationKey,
+    request: Request,
+    db: DB,
+    user: AdminUser,
+    csrf: CsrfSession,
+) -> StaffOrderView:
+    rate_limit(request, "manual-payment-write", str(user.id))
+    row = manual.activate(db, request.app.state.settings, user.id, user_id, data, key)
+    result = staff_view(db, row)
+    db.commit()
+    return result
+
+
+@router.post(
+    "/admin/manual-payments/{order_id}/refund", response_model=StaffOrderView, tags=["admin"]
+)
+def manual_refund(
+    order_id: UUID,
+    data: ManualRefundInput,
+    key: OperationKey,
+    request: Request,
+    db: DB,
+    user: AdminUser,
+    csrf: CsrfSession,
+) -> StaffOrderView:
+    rate_limit(request, "manual-payment-write", str(user.id))
+    row = manual.refund(db, request.app.state.settings, user.id, order_id, data, key)
+    result = staff_view(db, row)
+    db.commit()
+    return result
 
 
 @router.post("/billing/orders", response_model=CheckoutView, status_code=201)

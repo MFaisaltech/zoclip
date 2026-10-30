@@ -278,8 +278,8 @@ def configure_plan(
     assert plan is not None
     if (plan.slug == "free" or plan.kind == "topup") and data.valid_days != 0:
         fail("invalid_validity", "Free plans and top-ups have no timed access.", 422)
-    if plan.kind == "plan" and plan.slug != "free" and data.valid_days != 30:
-        fail("invalid_validity", "Paid plan access is prepaid for 30 days.", 422)
+    # Prepaid credit packages may have no timed access expiry. Existing 30-day
+    # versions and their entitlements remain immutable.
     if plan.slug == "free" and data.price_paisa != 0:
         fail("invalid_price", "Free plan price must be zero.", 422)
     row = PlanPrice(
@@ -587,9 +587,10 @@ def reserve(
     rows = list(db.scalars(select(CreditReservation).where(CreditReservation.user_id == user_id)))
     if sum(r.state == "HELD" for r in rows) >= rules.max_concurrent_jobs:
         fail("concurrency_limit", "Plan concurrent job limit reached.")
+    settled = settled_amounts(db, user_id)
     for boundary, cap in [(day, rules.daily_credits), (month, rules.monthly_credits)]:
         used = sum(
-            r.credits
+            r.credits if r.state == "HELD" else settled.get(r.id, 0)
             for r in rows
             if r.state == "HELD"
             or (r.state == "SETTLED" and (r.created_at >= boundary or r.updated_at >= boundary))
@@ -620,8 +621,24 @@ def reserve(
     return row
 
 
+def settled_amounts(db: Session, user_id: UUID) -> dict[UUID, int]:
+    rows = db.execute(
+        select(CreditTransaction.reservation_id, func.sum(-CreditTransaction.reserved_delta))
+        .where(CreditTransaction.user_id == user_id, CreditTransaction.operation == "SETTLE")
+        .group_by(CreditTransaction.reservation_id)
+    ).all()
+    return {reservation: int(amount) for reservation, amount in rows if reservation is not None}
+
+
 def finish(
-    db: Session, user_id: UUID, reservation_id: UUID, key: str, *, success: bool, evidence: str
+    db: Session,
+    user_id: UUID,
+    reservation_id: UUID,
+    key: str,
+    *,
+    success: bool,
+    evidence: str,
+    settled_credits: int | None = None,
 ) -> CreditTransaction:
     """Trusted worker only: evidence is a durable verified output/final-failure ID.
 
@@ -632,7 +649,10 @@ def finish(
     operation = "SETTLE" if success else "RELEASE"
     if not 1 <= len(evidence) <= 128:
         fail("evidence_required", "A durable result reference is required.", 422)
-    payload = fingerprint([operation, str(reservation_id), evidence])
+    payload = fingerprint(
+        [operation, str(reservation_id), evidence]
+        + ([settled_credits] if settled_credits is not None else [])
+    )
     old = previous(db, user_id, key, payload)
     if old:
         return old
@@ -646,10 +666,34 @@ def finish(
     assert row is not None
     if row.state != "HELD":
         fail("reservation_final", "Reservation already finalized.")
+    charge = row.credits if settled_credits is None else settled_credits
+    if settled_credits is not None and (
+        not success or type(charge) is not int or not 1 <= charge <= row.credits
+    ):
+        fail("invalid_amount", "Settlement must fit the existing hold.", 422)
+    if success and charge < row.credits:
+        unused = row.credits - charge
+        entry(
+            db,
+            wallet,
+            "RELEASE",
+            key + ":unused",
+            fingerprint([payload, unused]),
+            unused,
+            -unused,
+            row.id,
+        )
     row.state = "SETTLED" if success else "RELEASED"
     row.deliverable_reference = evidence
     result = entry(
-        db, wallet, operation, key, payload, 0 if success else row.credits, -row.credits, row.id
+        db,
+        wallet,
+        operation,
+        key,
+        payload,
+        0 if success else row.credits,
+        -charge if success else -row.credits,
+        row.id,
     )
     reconcile(db, wallet)
     return result

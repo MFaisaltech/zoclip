@@ -11,7 +11,7 @@ from zoclip.credits.service import calculate
 
 
 def test_minimum_price_applies_to_short_sources_but_preserves_plan_limits():
-    terms = json.loads(Path("deploy/staging-catalog.json").read_text())["plans"]["free"]
+    terms = json.loads(Path("tests/fixtures/legacy-catalog.json").read_text())["plans"]["free"]
     rules = ConsumptionRules.model_validate(terms["rules"])
     assert terms["included_credits"] == 60  # Dormant, once-only trial; not an automatic grant.
     assert calculate(QuoteInput(source_seconds=26, output_count=1), rules) == 60
@@ -41,8 +41,9 @@ def test_estimates_use_actual_package_revenue_and_disclose_margin_shortfall(minu
     config = json.loads(Path("deploy/economics.example.json").read_text())
     from decimal import Decimal
 
-    result = economics(config, minutes, outputs, plan)
-    terms = json.loads(Path("deploy/staging-catalog.json").read_text())["plans"][plan]
+    legacy_catalog = json.loads(Path("tests/fixtures/legacy-catalog.json").read_text())
+    result = economics(config, minutes, outputs, plan, catalog=legacy_catalog)
+    terms = json.loads(Path("tests/fixtures/legacy-catalog.json").read_text())["plans"][plan]
     expected = Decimal(terms["price_paisa"]) / 100 / terms["included_credits"]
     assert Decimal(result["package_unit_pkr_per_credit"]) == expected
     assert Decimal(result["payment_fee_usd_estimate"]) == (
@@ -58,5 +59,5 @@ def test_estimates_use_actual_package_revenue_and_disclose_margin_shortfall(minu
     )
     assert result["activation"].startswith("BLOCKED")
     # Retail terms never become approved just because an estimate passed.
-    plans = json.loads(Path("deploy/staging-catalog.json").read_text())["plans"]
+    plans = json.loads(Path("tests/fixtures/legacy-catalog.json").read_text())["plans"]
     assert all(not p["approved"] for slug, p in plans.items() if slug != "free")

@@ -11,7 +11,7 @@ from zoclip.core.db import utcnow
 from zoclip.core.errors import ApiError
 from zoclip.core.generation_access import require_generation_access
 from zoclip.credits import service as money
-from zoclip.credits.models import CreditReservation, CreditTransaction, Quote
+from zoclip.credits.models import CreditReservation, CreditTransaction, PlanPrice, Quote
 from zoclip.media import service as media
 from zoclip.media.models import Job, Outbox, SourceVideo, StorageObject
 from zoclip.media.storage import LocalStorage
@@ -279,7 +279,12 @@ def rerender(
             CreditTransaction.original_id == settlement, CreditTransaction.operation == "REFUND"
         )
     )
-    included = used < original_quote.request["edit_count"] and not refunded
+    original_price = media.required(db, PlanPrice, original_quote.price_version_id)
+    included = (
+        used < original_quote.request["edit_count"]
+        and not refunded
+        and original_price.rules.get("credits_per_minute", 0) > 0
+    )
     if used >= money.active_price(db, owner).rules["max_edits"]:
         raise ApiError(409, "edit_limit", "Plan export/edit limit reached.")
     media.pending_gate(db, settings)

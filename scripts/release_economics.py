@@ -7,14 +7,25 @@ from math import ceil
 from pathlib import Path
 
 
-def calculate(config: dict, source_minutes: int, outputs: int, plan: str = "creator") -> dict:
+def calculate(
+    config: dict,
+    source_minutes: int,
+    outputs: int,
+    plan: str = "creator",
+    *,
+    catalog: dict | None = None,
+) -> dict:
     def d(key: str) -> Decimal:
         return Decimal(str(config[key]))
 
     if source_minutes not in range(1, 121) or outputs not in range(1, 4):
         raise ValueError("Scenario exceeds configured source/output limits")
-    catalog = json.loads(
-        (Path(__file__).resolve().parents[1] / "deploy/staging-catalog.json").read_text()
+    catalog = (
+        catalog
+        if catalog is not None
+        else json.loads(
+            (Path(__file__).resolve().parents[1] / "deploy/staging-catalog.json").read_text()
+        )
     )
     terms = catalog["plans"][plan]
     rules = terms["rules"]
@@ -106,7 +117,7 @@ def main() -> None:
                 "assumptions": config,
                 "scenarios": [
                     calculate(config, m, n, plan)
-                    for plan in ("starter", "creator", "pro")
+                    for plan in ("creator", "pro")
                     for m in (1, 5, 30, 120)
                     for n in (1, 3)
                 ],

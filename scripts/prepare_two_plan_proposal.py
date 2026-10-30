@@ -11,7 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def proposal() -> dict:
-    active = json.loads((ROOT / "deploy/staging-catalog.json").read_text())
+    # Reproduce the dated proposal from its original terms, never today's offers.
+    active = json.loads((ROOT / "tests/fixtures/legacy-catalog.json").read_text())
     result = {
         "version": "pricing-20261020-proposal",
         "release_status": "proposal",

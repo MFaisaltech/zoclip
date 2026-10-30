@@ -1,0 +1,6 @@
+# Optional reviewed manual-sales API only. Not included in paused staging rollouts.
+# No gateway, worker activation, network or port changes.
+services:
+  api:
+    environment:
+      MANUAL_PAYMENTS_ENABLED: "true"
