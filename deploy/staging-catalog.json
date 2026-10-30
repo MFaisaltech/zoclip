@@ -1,5 +1,5 @@
 {
-  "version": "pricing-manual-per-clip-v1",
+  "version": "pricing-manual-per-clip-v2",
   "billing_model": "manual_per_clip_v1",
   "release_status": "ready",
   "reason": "Owner approved Creator PKR 1000 for 10000 credits and Pro PKR 2000 for 21000 credits; 50 credits per delivered clip. Manual independently verified purchases only; no automatic grants or generation activation.",
