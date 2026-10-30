@@ -24,6 +24,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
 
 @pytest.fixture
+def bootstrap_revision():
+    # This historical single-use executor deliberately refuses newer schemas.
+    return "7b37ea061d28"
+
+
+@pytest.fixture
 def continuation(bootstrap_db, tmp_path, monkeypatch):  # noqa: F811
     factory, bootstrap, _ = bootstrap_db
     root = tmp_path / "project"
@@ -331,6 +337,16 @@ def test_changed_financial_or_account_state_blocks(continuation, change):
     assert audit_count(factory) == 0
 
 
+def test_historical_executor_still_rejects_a_newer_schema(continuation):
+    factory, root, approval = continuation
+    with factory() as db:
+        db.execute(text("UPDATE alembic_version SET version_num='c910a2e31f40'"))
+        db.commit()
+    with pytest.raises(ValueError, match="Migration changed"):
+        cont.consume(factory, root, approval, lambda: None)
+    assert audit_count(factory) == 0
+
+
 @pytest.mark.parametrize("kind", ["history", "binding", "phase", "executor"])
 def test_changed_history_or_existing_phase_blocks(continuation, kind):
     factory, root, approval = continuation
@@ -464,6 +480,7 @@ def test_inspect_cli_does_not_consume_or_import_workflow(continuation, monkeypat
     import continue_acceptance as cli
 
     factory, root, _ = continuation
+    monkeypatch.delenv("TEST_DATABASE_URL", raising=False)
     monkeypatch.setattr(cli, "ROOT", root)
     monkeypatch.setattr(cli, "isolated", lambda settings: None)
     monkeypatch.setattr(cli.driver, "isolated", lambda settings: None)
@@ -485,6 +502,7 @@ def test_cli_missing_explicit_execution_flags_fails_before_consumption(
     import continue_acceptance as cli
 
     factory, root, _ = continuation
+    monkeypatch.delenv("TEST_DATABASE_URL", raising=False)
     monkeypatch.setattr(cli, "ROOT", root)
     monkeypatch.setattr(cli, "isolated", lambda settings: None)
     monkeypatch.setattr(cli.driver, "isolated", lambda settings: None)

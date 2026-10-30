@@ -1,5 +1,35 @@
 # ZoClip implementation status
 
+## 2026-10-30 - Final focused import/runtime verification
+
+Private Unix-socket forwarding, worker DNS/egress, image-installed bgutil/EJS/Node,
+and production fail-closed proxy handling are prepared. Actual authorized YouTube
+download through WARP passed in an isolated worker. Local processing no longer
+requires Gemini credentials, and auto-render integer bounds accept fractional
+source durations. Final targeted backend run: 80 passed, including actual local
+Whisper inference/rendering and settlement. Historical-fixture failures were
+resolved without changing execution fences. No full suite or long benchmark was
+repeated in the final round. Frontend 16.4.1 patch/build and earlier 86 unit / five
+browser passes remain valid. Connected browser acceptance is recorded separately.
+No deployment, pricing/payment change, historical credit mutation, paid API call
+or migration. The current private staging profile intentionally pauses generation.
+See [evidence and gated rollout plan](YOUTUBE_RELEASE_2026-10-29.md).
+
+## 2026-10-28 - Unified generation studio (local feature branches)
+
+Local work unifies YouTube/file preparation, exact quote review, generation status,
+and the clip library. Legacy import-url dispatches exact YouTube hosts into the
+validated adapter without relaxing direct-file SSRF rules or credit controls.
+Subprocess input is canonicalized and admitted byte caps are retained. No schema,
+pricing, credit grant, customer data, paid API call or deployment change.
+Frontend: 86 unit / 5 isolated browser tests pass. Backend: 271 distinct passing
+cases plus one skip across the broad run and targeted rerun; affected simulator
+fixtures now pin mocked Gemini/serial seams explicitly. Lint/format/mypy pass.
+Read-only staging found host WARP/PO-token services healthy, but worker DNS fails,
+LINK_PROXY_URL is empty and yt-dlp discovers no plugin directories. Real YouTube
+ingestion awaits an approved runtime/config release. See frontend
+docs/GENERATION_STUDIO_2026-10-28.md for files, scope, screenshots and limitations.
+
 ## 2026-10-20 - Bounded Whisper fix deployed; pricing remains gated
 
 5/30/120-minute synthetic pipelines completed in 235.78/1102.09/5713.48s; peak RSS 1.39 GiB, no OOM. Two-hour transcription used 60 durable windows and recovered two bounded failures. 683 backend tests passed, 82 skipped; six focused capacity checks and an actual isolated off-server backup restore passed. The verified fix is deployed to protected staging with seven healthy services, Whisper default, Deepgram inactive, public AI/payments disabled and all historical table/media fingerprints preserved. Creator 2000/3700 and Pro 5000/9500 remain inactive. Synthetic planning ceilings are 379/93/25 jobs/month for 5/30/120-minute sources; sustainable commercial capacity remains uncertified because retained storage, high-redemption worker capacity, backup retention and real workload/cost acceptance remain unresolved. See [measured report](WHISPER_CHUNKS_2026-10-20.md).

@@ -68,11 +68,11 @@ class Settings(BaseSettings):
     # YouTube link import (paste-a-link ingestion). yt-dlp runs as a
     # constrained subprocess; the proxy/extractor args are configuration
     # because datacenter IPs are bot-challenged without them. The
-    # extractor-args default is the combination verified working on the
-    # staging host (WARP egress + bgutil PO-token provider).
+    # Use the mweb client with the image-installed EJS and bgutil providers.
+    # The worker's proxy must be configured explicitly for production imports.
     ytdlp_binary: str = "yt-dlp"
     link_proxy_url: str = ""
-    link_extractor_args: str = "youtube:player_client=web;player_skip=webpage;fetch_pot=always"
+    link_extractor_args: str = "youtube:player_client=mweb;fetch_pot=always"
     link_deadline_seconds: int = Field(default=3600, ge=300, le=14400)
     ffprobe_binary: str = "ffprobe"
     ffmpeg_binary: str = "ffmpeg"
@@ -151,8 +151,10 @@ class Settings(BaseSettings):
     @property
     def ai_configured(self) -> bool:
         return self.ai_enabled and bool(
-            self.gemini_api_key.get_secret_value()
-            and self.gemini_model
+            (
+                self.analysis_provider == "local"
+                or (self.gemini_api_key.get_secret_value() and self.gemini_model)
+            )
             and (
                 self.transcription_provider == "whisper"
                 or (
@@ -210,9 +212,7 @@ class Settings(BaseSettings):
         if self.ai_min_clip_seconds > self.ai_max_clip_seconds:
             raise ValueError("AI clip duration bounds are invalid")
         if self.ai_enabled and not self.ai_configured:
-            raise ValueError(
-                "AI enablement requires the selected provider and pinned Gemini configuration"
-            )
+            raise ValueError("AI enablement requires configuration for the selected providers")
         db = make_url(self.database_url.get_secret_value())
         if db.drivername != "postgresql+psycopg":
             raise ValueError("DATABASE_URL must use postgresql+psycopg")

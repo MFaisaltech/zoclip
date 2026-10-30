@@ -120,7 +120,7 @@ def test_financial_evidence_and_exact_payloads():
 
 
 @pytest.fixture
-def bootstrap_db():
+def bootstrap_db(bootstrap_revision):
     url = os.environ.get("ZOCLIP_ACCEPTANCE_TEST_DATABASE_URL")
     if not url:
         pytest.skip("Saved separate mock PostgreSQL database required")
@@ -139,7 +139,7 @@ def bootstrap_db():
     with engine.begin() as connection:
         config = Config("alembic.ini")
         config.attributes["connection"] = connection
-        command.upgrade(config, "head")
+        command.upgrade(config, bootstrap_revision)
     factory = sessionmaker(engine, expire_on_commit=False)
     with factory() as db:
         customer = User(email="test-customer@example.com", verified=True)

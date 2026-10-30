@@ -530,10 +530,14 @@ def run(
                 )
                 / 1000
             )
+            # Settings stores these bounds as integer seconds. ffprobe often
+            # returns fractional durations; keep the checkpoint valid and never
+            # round a clip ceiling beyond the source's actual duration.
+            source_clip_seconds = max(1, math.floor(source_seconds))
             pinned = {
                 **pinned,
-                "ai_min_clip_seconds": min(settings.ai_min_clip_seconds, source_seconds),
-                "ai_max_clip_seconds": min(30, settings.ai_max_clip_seconds, source_seconds),
+                "ai_min_clip_seconds": min(settings.ai_min_clip_seconds, source_clip_seconds),
+                "ai_max_clip_seconds": min(30, settings.ai_max_clip_seconds, source_clip_seconds),
             }
         job.checkpoint = {**job.checkpoint, "ai_config": pinned}
         settings = Settings(_env_file=None, **(settings.model_dump() | pinned))  # type: ignore[call-arg]

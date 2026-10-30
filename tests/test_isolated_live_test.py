@@ -82,6 +82,7 @@ def isolated(migrated_database, tmp_path, monkeypatch):
         deepgram_api_key="offline-deepgram-credential-0000000",
         gemini_api_key="offline-gemini-credential-000000000",
         ai_max_chunks=1,
+        ai_chunk_bytes=16000,
         ai_max_candidates=1,
         ai_max_output_tokens=2048,
         ai_min_clip_seconds=2,

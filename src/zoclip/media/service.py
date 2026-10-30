@@ -13,7 +13,7 @@ from zoclip.credits import service as money
 from zoclip.credits.models import Quote, SystemLimits
 from zoclip.credits.schemas import ConsumptionRules
 from zoclip.media.importer import validate_url
-from zoclip.media.link_import import youtube_video_id
+from zoclip.media.link_import import is_youtube_host, youtube_video_id
 from zoclip.media.models import (
     Job,
     JobEvent,
@@ -302,6 +302,18 @@ def import_url(
     db: Session, owner: UUID, data: ImportInput, key: str, settings: Settings, storage: LocalStorage
 ) -> Job:
     url = data.url.get_secret_value()
+    if is_youtube_host(url):
+        # Older protected frontends use import-url for every pasted link. Keep
+        # direct-file SSRF validation strict; YouTube belongs to its own adapter.
+        return import_link(
+            db,
+            owner,
+            LinkImportInput(url=data.url, rights_attested=data.rights_attested),
+            key,
+            settings,
+            storage,
+            max_bytes=data.max_bytes,
+        )
     validate_url(url, settings.media_allowed_import_hosts)
     mutex(db, owner)
     payload = {"url": url, "max_bytes": data.max_bytes, "rights_attested": True}
@@ -324,15 +336,20 @@ def import_link(
     key: str,
     settings: Settings,
     storage: LocalStorage,
+    *,
+    max_bytes: int | None = None,
 ) -> Job:
     url = data.url.get_secret_value()
     video_id = youtube_video_id(url)
+    limit = settings.media_max_bytes if max_bytes is None else max_bytes
+    if limit > settings.media_max_bytes:
+        raise ApiError(413, "media_too_large", "Import exceeds configured size.")
     mutex(db, owner)
     payload = {
         "source": "youtube",
         "url": url,
         "video_id": video_id,
-        "max_bytes": settings.media_max_bytes,
+        "max_bytes": limit,
         "rights_attested": True,
     }
     hashed = money.fingerprint(payload)
@@ -341,7 +358,7 @@ def import_link(
         money.same(old.request_hash, hashed)
         return old
     ingestion_gate(db, owner, settings)
-    video = source(db, owner, settings.media_max_bytes, "IMPORTING", settings, storage)
+    video = source(db, owner, limit, "IMPORTING", settings, storage)
     return queue_job(db, owner, video.id, "IMPORT", key, payload, hashed)
 
 

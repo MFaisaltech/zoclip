@@ -30,6 +30,8 @@ def settings(tmp_path):
         "https://www.youtube.com/live/aqz-KE-bpKQ",
         "https://youtu.be/aqz-KE-bpKQ",
         "https://youtu.be/aqz-KE-bpKQ?si=xyz",
+        "https://www.youtube.com/embed/aqz-KE-bpKQ",
+        " https://youtu.be/aqz-KE-bpKQ?si=xyz#t=42 ",
     ],
 )
 def test_valid_youtube_urls(url):
@@ -49,6 +51,11 @@ def test_valid_youtube_urls(url):
         "https://user:pass@www.youtube.com/watch?v=aqz-KE-bpKQ",
         "https://youtu.be/aqz-KE-bpKQ/extra",
         "not a url",
+        "https://127.0.0.1/watch?v=aqz-KE-bpKQ",
+        "https://youtube.com:8443/watch?v=aqz-KE-bpKQ",
+        "https://youtube.com\\@127.0.0.1/watch?v=aqz-KE-bpKQ",
+        "https://youtube.com/watch?v=aqz-KE-bpKQ\n",
+        "https://youtube.com/watch?v=aqz-KE-bpKQ%0A",
     ],
 )
 def test_rejected_urls(url):
@@ -98,6 +105,14 @@ def test_download_args_and_size(settings, tmp_path, monkeypatch):
     assert "--extractor-args" in args
     assert args[-1] == "https://www.youtube.com/watch?v=aqz-KE-bpKQ"
     assert "--max-filesize" in args
+    assert "--ignore-config" in args
+    assert args[args.index("--js-runtimes") + 1] == "node"
+
+
+def test_only_canonical_video_url_reaches_downloader(settings, tmp_path):
+    url = "https://youtu.be/aqz-KE-bpKQ?si=share&next=https://127.0.0.1/#t=30"
+    args = link_import.build_args(url, tmp_path / "out.mp4", settings)
+    assert args[-2:] == ["--", "https://www.youtube.com/watch?v=aqz-KE-bpKQ"]
 
 
 def test_download_failure_is_422(settings, tmp_path, monkeypatch):
@@ -107,3 +122,20 @@ def test_download_failure_is_422(settings, tmp_path, monkeypatch):
     with pytest.raises(ApiError) as exc:
         link_import.download_youtube("https://youtu.be/aqz-KE-bpKQ", tmp_path / "o.mp4", settings)
     assert exc.value.code == "link_download_failed"
+    assert "boom" not in exc.value.detail
+
+
+def test_production_missing_proxy_never_falls_back_to_direct_egress(
+    settings, tmp_path, monkeypatch
+):
+    def forbidden(*args, **kwargs):
+        pytest.fail("Missing proxy must fail before the downloader starts")
+
+    monkeypatch.setattr(subprocess, "Popen", forbidden)
+    with pytest.raises(ApiError) as exc:
+        link_import.download_youtube(
+            "https://youtu.be/aqz-KE-bpKQ",
+            tmp_path / "out.mp4",
+            settings.model_copy(update={"app_env": "production", "link_proxy_url": ""}),
+        )
+    assert exc.value.code == "link_runtime_unavailable"

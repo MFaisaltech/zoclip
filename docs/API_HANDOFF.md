@@ -1,5 +1,19 @@
 # API handoff - Phases 1 through 6
 
+2026-10-30 runtime follow-up adds no HTTP route/schema or migration. Production
+YouTube workers fail with `link_runtime_unavailable` when the required proxy is
+missing; signed downloader diagnostics are not returned to clients. Local-only
+processing requires no Gemini credentials, but AI enablement, private staging and
+spending-policy guards remain intact. Fractional source durations now produce
+valid integer processing bounds. See [release evidence](YOUTUBE_RELEASE_2026-10-29.md).
+
+2026-10-28 local generation-studio compatibility: `POST /videos/import-link` remains
+the preferred YouTube contract. Exact YouTube hosts sent to legacy `import-url`
+now enter the same validated yt-dlp adapter, retaining that request's byte cap.
+Only canonical HTTPS video-ID URLs reach the subprocess. Non-YouTube direct-file
+imports retain the existing SSRF/DNS/redirect checks. Rights, authentication, CSRF,
+quotes, credit holds and settlement are unchanged. No migration or deployment.
+
 2026-10-15 private upload admission fix adds no routes or schema changes.
 Closed private staging can admit upload/validation without a commercial catalog,
 using the existing120-minute cap only while AI/payments are disabled and breaker

@@ -1,0 +1,38 @@
+# Opt-in AFTER compose.yaml and compose.private-staging.yaml. No host TCP proxy ports.
+# Install the reviewed Unix socket units first; see docs/YOUTUBE_RELEASE_2026-10-29.md.
+services:
+  worker-ai:
+    # Docker cannot forward public DNS from an internal-only network. Only this
+    # worker receives outbound routing; database/queue/API remain private.
+    networks: !override [data, queue, egress]
+    dns: ["1.1.1.1", "9.9.9.9"]
+    environment:
+      LINK_PROXY_URL: socks5://127.0.0.1:40000
+      LINK_EXTRACTOR_ARGS: youtube:player_client=mweb;fetch_pot=always
+  link-proxy:
+    image: ${APP_IMAGE:?Set reviewed immutable application image}
+    network_mode: service:worker-ai
+    command: [python, -m, zoclip.ops.link_proxy]
+    user: "10001:10001"
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 32
+    mem_limit: 64m
+    cpus: 0.1
+    volumes:
+      - type: bind
+        source: /run/zoclip-link
+        target: /run/zoclip-link
+        read_only: true
+        bind: {create_host_path: false}
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, python, -c, "import socket,urllib.request; s=socket.create_connection(('127.0.0.1',40000),timeout=5); s.close(); assert urllib.request.urlopen('http://127.0.0.1:4416/ping',timeout=5).status == 200"]
+      interval: 15s
+      timeout: 12s
+      retries: 3
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}

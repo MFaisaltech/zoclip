@@ -121,6 +121,15 @@ wheels = [
 ]
 
 [[package]]
+name = "bgutil-ytdlp-pot-provider"
+version = "2.0.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b5/a4/b3cf2bf773009b9701f953bd62a6b585905ef498b37bd449767b5e9cd2ed/bgutil_ytdlp_pot_provider-2.0.2.tar.gz", hash = "sha256:a127b20c4757edb33f88061afb01220829d1b340638cf638a293065577a000b4", size = 12095, upload-time = "2026-10-07T17:22:06.685Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fa/ac/9da2e48eb58bbeb2c56739eed37c0e4c17b3c20c4c53a49c5a62c47a1148/bgutil_ytdlp_pot_provider-2.0.2-py3-none-any.whl", hash = "sha256:4f488008d25a715837df79472aad06ea052d20e14ad3a02609bbb0fbd746b8be", size = 12778, upload-time = "2026-10-07T17:22:05.578Z" },
+]
+
+[[package]]
 name = "certifi"
 version = "2026.7.22"
 source = { registry = "https://pypi.org/simple" }
@@ -1300,6 +1309,15 @@ wheels = [
 ]
 
 [[package]]
+name = "yt-dlp-ejs"
+version = "0.8.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d3/e6/cceb9530e8f4e5940f6f7822d90e9d94f1b85343329a16baaf47bbbb3de1/yt_dlp_ejs-0.8.0.tar.gz", hash = "sha256:d5fa1639f63b5c4af8d932495f60689d5370f1a095782c944f7f62a303eb104e", size = 96571, upload-time = "2026-03-17T22:49:19.299Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e3/bd/520769863744b669440a924271a6159ddd82ad5ae26b4ac4d4b69e9f8d44/yt_dlp_ejs-0.8.0-py3-none-any.whl", hash = "sha256:79300e5fca7f937a1eeede11f0456862c1b41107ce1d726871e0207424f4bdb4", size = 53443, upload-time = "2026-03-17T22:49:17.736Z" },
+]
+
+[[package]]
 name = "zoclip-backend"
 version = "0.1.0"
 source = { editable = "." }
@@ -1308,6 +1326,7 @@ dependencies = [
     { name = "argon2-cffi" },
     { name = "authlib" },
     { name = "av" },
+    { name = "bgutil-ytdlp-pot-provider" },
     { name = "cryptography" },
     { name = "email-validator" },
     { name = "fastapi" },
@@ -1323,6 +1342,7 @@ dependencies = [
     { name = "sqlalchemy" },
     { name = "uvicorn" },
     { name = "yt-dlp" },
+    { name = "yt-dlp-ejs" },
 ]
 
 [package.dev-dependencies]
@@ -1341,6 +1361,7 @@ requires-dist = [
     { name = "argon2-cffi", specifier = ">=23.1,<26" },
     { name = "authlib", specifier = ">=1.8,<2" },
     { name = "av", specifier = "==17.1.0" },
+    { name = "bgutil-ytdlp-pot-provider", specifier = "==2.0.2" },
     { name = "cryptography", specifier = ">=50.0.2,<51" },
     { name = "email-validator", specifier = ">=2.2,<3" },
     { name = "fastapi", specifier = ">=0.115,<1" },
@@ -1355,7 +1376,8 @@ requires-dist = [
     { name = "rq", specifier = ">=2.1,<3" },
     { name = "sqlalchemy", specifier = ">=2.0,<3" },
     { name = "uvicorn", specifier = ">=0.34,<1" },
-    { name = "yt-dlp", specifier = ">=2026.10.26" },
+    { name = "yt-dlp", specifier = "==2026.10.26" },
+    { name = "yt-dlp-ejs", specifier = "==0.8.0" },
 ]
 
 [package.metadata.requires-dev]

@@ -12,7 +12,7 @@ from uuid import UUID
 WORKLOAD = ["proxy", "api", "worker-ai", "worker-render", "maintenance"]
 
 
-def validate_private_config(config):
+def validate_private_config(config, youtube_import=False):
     for name in ["api", "proxy", "backup"]:
         if not re.fullmatch(r".+@sha256:[a-f0-9]{64}", config["services"][name]["image"]):
             raise RuntimeError("Private staging requires reviewed app, proxy and tools digests")
@@ -45,8 +45,45 @@ def validate_private_config(config):
             raise RuntimeError("Private staging integrations must remain closed")
     for name in ["api", "worker-ai", "worker-render", "maintenance", "migrate"]:
         networks = config["services"][name]["networks"]
+        if youtube_import and name == "worker-ai":
+            worker = config["services"][name]
+            if (
+                set(networks) != {"data", "queue", "egress"}
+                or worker.get("dns") != ["1.1.1.1", "9.9.9.9"]
+                or worker["environment"].get("LINK_PROXY_URL") != "socks5://127.0.0.1:40000"
+                or worker["environment"].get("LINK_EXTRACTOR_ARGS")
+                != "youtube:player_client=mweb;fetch_pot=always"
+                or worker.get("ports")
+            ):
+                raise RuntimeError(
+                    "YouTube worker requires the reviewed private proxy configuration"
+                )
+            continue
         if any(not config["networks"][network].get("internal") for network in networks):
             raise RuntimeError("Private staging application networks must be internal")
+    if youtube_import:
+        relay = config["services"].get("link-proxy", {})
+        if (
+            relay.get("image") != config["services"]["api"]["image"]
+            or relay.get("network_mode") != "service:worker-ai"
+            or relay.get("command") != ["python", "-m", "zoclip.ops.link_proxy"]
+            or relay.get("user") != "10001:10001"
+            or not relay.get("read_only")
+            or relay.get("ports")
+            or relay.get("environment")
+            or relay.get("secrets")
+            or relay.get("volumes")
+            != [
+                {
+                    "type": "bind",
+                    "source": "/run/zoclip-link",
+                    "target": "/run/zoclip-link",
+                    "read_only": True,
+                    "bind": {"create_host_path": False},
+                }
+            ]
+        ):
+            raise RuntimeError("YouTube relay must use only the reviewed private Unix sockets")
     mounts = config["services"]["proxy"]["volumes"]
     if not any(
         mount["target"] == "/etc/nginx/nginx.conf"
@@ -64,12 +101,16 @@ def main():
     parser.add_argument("--project", default="zoclip-private")
     parser.add_argument("--execute-local", action="store_true")
     parser.add_argument("--private-staging", action="store_true")
+    parser.add_argument("--youtube-import", action="store_true")
     parser.add_argument("--previous-image")
     args = parser.parse_args()
+    workload = list(WORKLOAD)
     if not args.project.startswith("zoclip-"):
         parser.error("Use a named isolated zoclip- project")
     if args.action != "plan" and not args.execute_local:
         parser.error("--execute-local is required; VPS execution needs separate user authorization")
+    if args.youtube_import and not args.private_staging:
+        parser.error("--youtube-import requires --private-staging")
     environment = dict(os.environ)
     if args.previous_image:
         if args.action != "rollback" or "@sha256:" not in args.previous_image:
@@ -89,6 +130,9 @@ def main():
     ]
     if args.private_staging:
         compose += ["-f", str(Path(__file__).parent / "compose.private-staging.yaml")]
+    if args.youtube_import:
+        compose += ["-f", str(Path(__file__).parent / "compose.youtube-import.yaml")]
+        workload.append("link-proxy")
     # Capture configuration privately; do not print environment or resolved secrets paths.
     config = json.loads(
         subprocess.check_output(
@@ -100,7 +144,7 @@ def main():
             if name != "proxy" or port.get("host_ip") != "127.0.0.1":
                 raise RuntimeError("Only loopback proxy publication is authorized")
     if args.private_staging:
-        validate_private_config(config)
+        validate_private_config(config, youtube_import=args.youtube_import)
     print(
         json.dumps(
             {
@@ -128,7 +172,7 @@ def main():
         # Existing reviewed installation only; refuse recreation or implicit migration on boot.
         call(["start", "--wait", "--wait-timeout", "180", "db", "redis"])
         identifiers = []
-        for service in WORKLOAD:
+        for service in workload:
             existing = (
                 subprocess.check_output(
                     compose + ["ps", "--all", "--quiet", service], env=environment
@@ -150,7 +194,7 @@ def main():
         else:
             raise RuntimeError("Resumed workload did not become healthy")
     elif args.action == "backup":
-        call(["stop", *WORKLOAD])
+        call(["stop", *workload])
         call(["run", "--rm", "--no-deps", "-e", "BACKUP_QUIESCED=1", "backup"])
         print(
             "Backup complete. Workload remains stopped; verify/copy ciphertext before restarting."
@@ -169,7 +213,7 @@ def main():
             raise RuntimeError("Verified backup or explicitly new empty database required")
         if args.action == "rollback" and not approval.get("schema_compatible"):
             raise RuntimeError("Rollback requires reviewed compatibility with the current schema")
-        call(["stop", *WORKLOAD])
+        call(["stop", *workload])
         call(["up", "--detach", "--wait", "--wait-timeout", "180", "db", "redis"])
         if args.action == "up" and not approval.get("backup_verified"):
             count = subprocess.check_output(
@@ -192,7 +236,7 @@ def main():
                 raise RuntimeError("New-empty approval cannot bypass backup for an existing schema")
         if args.action == "up":
             call(["run", "--rm", "--no-deps", "migrate"])
-        call(["up", "--detach", "--no-deps", "--wait", "--wait-timeout", "180", *WORKLOAD])
+        call(["up", "--detach", "--no-deps", "--wait", "--wait-timeout", "180", *workload])
 
 
 if __name__ == "__main__":

@@ -27,7 +27,9 @@ dependencies = [
   "faster-whisper==1.2.1",
   # faster-whisper 1.2.1 still passes metadata_errors, removed by newer PyAV.
   "av==17.1.0",
-  "yt-dlp>=2026.10.26",
+  "yt-dlp==2026.10.26",
+  "bgutil-ytdlp-pot-provider==2.0.2",
+  "yt-dlp-ejs==0.8.0",
 ]
 
 [dependency-groups]

@@ -15,9 +15,15 @@ COPY alembic ./alembic
 COPY alembic.ini ./
 COPY scripts/container_smoke.py ./scripts/container_smoke.py
 COPY scripts/ingestion_smoke.py ./scripts/ingestion_smoke.py
+COPY scripts/youtube_worker_smoke.py ./scripts/youtube_worker_smoke.py
 COPY deploy/migrate.py ./scripts/migrate.py
 RUN uv sync --frozen --no-dev --no-editable && useradd --uid 10001 --create-home zoclip \
     && mkdir -p /app/var/mailbox /app/var/media && chown -R zoclip:zoclip /app/var
+# A host installation is invisible in this image. Fail the build if the pinned
+# plugin cannot be imported from the worker's actual Python environment.
+# Only the JS runtime binary is copied; no remote solver downloads at runtime.
+COPY --from=node:22.23.3-bookworm-slim@sha256:3ed98443660ff48413b5af19ecefce3b9d50845a901a43420d47cc63a9fddbe9 /usr/local/bin/node /usr/local/bin/node
+RUN node --version && /opt/venv/bin/python -c "import yt_dlp_plugins.extractor.getpot_bgutil, yt_dlp_ejs"
 ENV PATH="/opt/venv/bin:$PATH"
 USER 10001:10001
 CMD ["uvicorn", "zoclip.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--limit-concurrency", "32", "--no-access-log", "--no-proxy-headers"]

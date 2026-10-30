@@ -1,0 +1,13 @@
+[Unit]
+Description=Private ZoClip worker access to existing WARP
+
+[Socket]
+ListenStream=/run/zoclip-link/warp.sock
+SocketUser=10001
+SocketGroup=10001
+SocketMode=0600
+DirectoryMode=0755
+RemoveOnStop=yes
+
+[Install]
+WantedBy=sockets.target

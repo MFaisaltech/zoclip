@@ -16,6 +16,11 @@ from zoclip.core.db import build_engine
 from zoclip.main import create_app
 
 
+@pytest.fixture
+def bootstrap_revision():
+    return "head"
+
+
 @pytest.fixture(scope="session")
 def database_url() -> str:
     url = os.environ.get("TEST_DATABASE_URL", "")

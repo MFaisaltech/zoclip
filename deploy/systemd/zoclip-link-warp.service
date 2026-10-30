@@ -1,0 +1,15 @@
+[Unit]
+Description=Forward private Unix socket to existing loopback WARP
+Requires=warp-svc.service
+After=warp-svc.service
+
+[Service]
+ExecStart=/usr/lib/systemd/systemd-socket-proxyd 127.0.0.1:40000
+DynamicUser=yes
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+RestrictAddressFamilies=AF_UNIX AF_INET
+IPAddressDeny=any
+IPAddressAllow=localhost

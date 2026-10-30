@@ -135,6 +135,7 @@ def configure(factory, users, settings):
     settings = settings.model_copy(
         update={
             "transcription_provider": "deepgram",  # This simulator tests paid Deepgram accounting.
+            "analysis_provider": "gemini",  # Explicit mocked-provider accounting.
             "ai_enabled": True,
             "deepgram_api_key": "unused",
             "gemini_api_key": "unused",
@@ -639,7 +640,7 @@ def test_model_rate_mismatch_blocks_paid_call(processing, monkeypatch):
 @pytest.mark.parametrize(
     "bad",
     [
-        {"ai_enabled": True},
+        {"ai_enabled": True, "analysis_provider": "gemini"},
         {"deepgram_language": "ur"},
         {"ai_min_clip_seconds": 60, "ai_max_clip_seconds": 10},
         {"gemini_model": "../untrusted"},

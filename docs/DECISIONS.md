@@ -1,5 +1,16 @@
 # ZoClip decision register
 
+## 2026-10-30 - Private import runtime and local processing
+
+Keep WARP and the token service on host loopback; expose only permission-restricted
+Unix sockets to a bounded relay in the worker namespace. Only the AI worker gets
+opt-in outbound routing and DNS. Require a production proxy rather than direct
+fallback. Pin yt-dlp 2026.10.26, bgutil 2.0.2, matching EJS 0.8.0 and digest-pinned
+Node 22.23.3 inside the image. Local Whisper/selection does not require paid keys.
+Preserve private staging's existing AI pause, all authentication/SSRF/financial
+fences, catalog and historical balances. Activation and rollout require explicit
+owner approval; see [release plan](YOUTUBE_RELEASE_2026-10-29.md).
+
 ## 2026-10-20 - Checkpoint bounded local ASR; deploy the fix only
 
 Use configurable 120-second cores with one-second overlap, one transcription and one renderer. Preserve CPU INT8, all existing runtime deadlines, paid-provider safeguards and TranscriptData. Local-only retry and checkpoint recovery reuse completed windows; no whole-file waveform is held. 5/30/120-minute synthetic pipelines completed in 235.78/1102.09/5713.48s; peak RSS 1.39 GiB, no OOM. Two-hour transcription used 60 durable windows and recovered two bounded failures. 683 backend tests passed, 82 skipped; six focused capacity checks and an actual isolated off-server backup restore passed. The verified fix is deployed to protected staging with seven healthy services, Whisper default, Deepgram inactive, public AI/payments disabled and all historical table/media fingerprints preserved. Creator 2000/3700 and Pro 5000/9500 remain inactive. Synthetic planning ceilings are 379/93/25 jobs/month for 5/30/120-minute sources; sustainable commercial capacity remains uncertified because retained storage, high-redemption worker capacity, backup retention and real workload/cost acceptance remain unresolved. See [measured report](WHISPER_CHUNKS_2026-10-20.md).

@@ -105,7 +105,12 @@ def chunk_case(processing, monkeypatch, simulator):
     configured, video, jid = processing
     factory, users, settings, storage = configured
     settings = settings.model_copy(
-        update={"transcription_provider": "whisper", "whisper_chunk_seconds": 30}
+        update={
+            "transcription_provider": "whisper",
+            "whisper_chunk_seconds": 30,
+            "whisper_overlap_seconds": 1,
+            "whisper_parallelism": 1,  # Receipt/recovery fixtures deliberately use serial windows.
+        }
     )
     with factory() as db:
         source = db.get(SourceVideo, video)

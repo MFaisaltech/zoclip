@@ -1,0 +1,15 @@
+[Unit]
+Description=Forward private Unix socket to existing loopback token service
+Requires=bgutil-pot.service
+After=bgutil-pot.service
+
+[Service]
+ExecStart=/usr/lib/systemd/systemd-socket-proxyd 127.0.0.1:4416
+DynamicUser=yes
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+RestrictAddressFamilies=AF_UNIX AF_INET
+IPAddressDeny=any
+IPAddressAllow=localhost

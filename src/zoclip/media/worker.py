@@ -158,8 +158,13 @@ def run_job(
                 if payload.get("source") == "youtube":
                     tmp = storage.path(token).with_name(storage.path(token).name + ".linksrc")
                     try:
-                        download_youtube(payload["url"], tmp, settings, progress=heartbeat)
+                        link_settings = settings.model_copy(
+                            update={"media_max_bytes": payload["max_bytes"]}
+                        )
+                        download_youtube(payload["url"], tmp, link_settings, progress=heartbeat)
                         size = tmp.stat().st_size
+                        if not 0 < size <= payload["max_bytes"]:
+                            raise ApiError(413, "media_too_large", "Import exceeds admitted size.")
                         with open(tmp, "rb") as source_file:
                             while chunk := source_file.read(1024 * 1024):
                                 heartbeat()

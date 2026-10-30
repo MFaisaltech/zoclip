@@ -1,6 +1,7 @@
 """Customer-confirmed automatic exports: real FFmpeg, isolated PostgreSQL, mock AI."""
 
 import json
+import math
 import os
 import subprocess
 from pathlib import Path
@@ -21,7 +22,7 @@ from zoclip.credits.models import (
 from zoclip.credits.schemas import PolicyInput, QuoteInput
 from zoclip.media import service
 from zoclip.media.models import Job
-from zoclip.media.schemas import ProcessInput
+from zoclip.media.schemas import LinkImportInput, ProcessInput
 from zoclip.ops.catalog import install
 from zoclip.rendering.models import RenderOutput
 
@@ -29,9 +30,10 @@ financial_database = test_ai.financial_database
 media = test_media.media
 
 
-@pytest.mark.parametrize("seconds,outputs", [(24, 1), (120, 1), (60, 3)])
+@pytest.mark.parametrize("seconds,outputs", [(24, 1), (24.5, 1), (120, 1), (60, 3)])
+@pytest.mark.parametrize("input_kind", ["upload", "youtube"])
 def test_upload_generate_render_mp4_without_manual_selection(
-    media, monkeypatch, tmp_path, seconds, outputs
+    media, monkeypatch, tmp_path, seconds, outputs, input_kind
 ):
     factory, users, settings, storage = media
     source = tmp_path / "customer-source.mp4"
@@ -64,7 +66,29 @@ def test_upload_generate_render_mp4_without_manual_selection(
         check=True,
         timeout=90,
     )
-    video, _ = test_media.ready(media, source.read_bytes())
+    if input_kind == "youtube":
+        # Actual network download is verified separately in the isolated worker
+        # smoke. Here the transport boundary supplies owned synthetic media.
+        def downloaded(url, dest, settings, progress):
+            data = source.read_bytes()
+            dest.write_bytes(data)
+            return len(data)
+
+        monkeypatch.setattr(test_media.worker, "download_youtube", downloaded)
+        with factory() as db:
+            imported = service.import_link(
+                db,
+                users["alice"],
+                LinkImportInput(url="https://youtu.be/aqz-KE-bpKQ", rights_attested=True),
+                "release-link",
+                settings,
+                storage,
+            )
+            imported_id, video = imported.id, imported.video_id
+            db.commit()
+        test_media.worker.run_job(imported_id, 0, factory, settings, storage)
+    else:
+        video, _ = test_media.ready(media, source.read_bytes())
     settings = test_ai.configure(factory, users, settings)
     settings = settings.model_copy(update={"ai_min_clip_seconds": 15})
     with factory() as db:
@@ -83,7 +107,7 @@ def test_upload_generate_render_mp4_without_manual_selection(
         quote = money.make_quote(
             db,
             users["alice"],
-            QuoteInput(source_seconds=seconds, output_count=outputs),
+            QuoteInput(source_seconds=math.ceil(seconds), output_count=outputs),
             "release-quote",
         )
         request = ProcessInput(video_id=video, quote_id=quote.id, auto_render=True)
@@ -105,7 +129,7 @@ def test_upload_generate_render_mp4_without_manual_selection(
         db.commit()
     words = [
         {"word": "example", "start": i / 2, "end": (i + 1) / 2, "confidence": 0.95}
-        for i in range(seconds * 2)
+        for i in range(int(seconds * 2))
     ]
     dg = {
         "metadata": {"duration": seconds},
