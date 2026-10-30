@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from zoclip.core.config import Settings
 from zoclip.core.db import Base, utcnow
 from zoclip.core.errors import ApiError
+from zoclip.core.generation_access import require_generation_access
 from zoclip.credits import service as money
 from zoclip.credits.models import Quote, SystemLimits
 from zoclip.credits.schemas import ConsumptionRules
@@ -371,6 +372,7 @@ def process(
     storage: LocalStorage,
 ) -> Job:
     # Financial locks precede media locks everywhere. User lock serializes all mutations.
+    require_generation_access(settings, owner)
     money.lock_wallet(db, owner)
     # Preserve fingerprints for previously accepted manual-selection requests.
     hashed = money.fingerprint(data.model_dump(exclude_defaults=True))

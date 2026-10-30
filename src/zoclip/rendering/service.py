@@ -9,6 +9,7 @@ from zoclip.ai.models import ClipSuggestion
 from zoclip.core.config import Settings
 from zoclip.core.db import utcnow
 from zoclip.core.errors import ApiError
+from zoclip.core.generation_access import require_generation_access
 from zoclip.credits import service as money
 from zoclip.credits.models import CreditReservation, CreditTransaction, Quote
 from zoclip.media import service as media
@@ -179,6 +180,7 @@ def select_clips(
     settings: Settings,
     storage: LocalStorage,
 ) -> Job:
+    require_generation_access(settings, owner)
     media.mutex(db, owner)
     job = media.owned(db, Job, owner, job_id, lock=True)
     hashed = money.fingerprint([str(i) for i in ids])
@@ -222,6 +224,7 @@ def rerender(
     settings: Settings,
     storage: LocalStorage,
 ) -> Job:
+    require_generation_access(settings, owner)
     media.mutex(db, owner)
     hashed = money.fingerprint([str(clip_id), data.model_dump(mode="json")])
     old = db.scalar(select(Job).where(Job.user_id == owner, Job.operation_key == key))

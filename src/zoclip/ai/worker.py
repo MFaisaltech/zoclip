@@ -32,6 +32,7 @@ from zoclip.auth.models import User
 from zoclip.core.config import Settings
 from zoclip.core.db import utcnow
 from zoclip.core.errors import ApiError
+from zoclip.core.generation_access import require_generation_access
 from zoclip.credits import service as money
 from zoclip.credits.models import CreditReservation, Quote
 from zoclip.media import service
@@ -511,6 +512,7 @@ def run(
     storage: LocalStorage,
     providers: Providers | None = None,
 ) -> None:
+    require_generation_access(settings, owner)
     with factory() as db:
         job = checked(db, owner, job_id, token)
         if not settings.ai_configured:

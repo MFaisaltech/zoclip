@@ -16,6 +16,7 @@ from zoclip.auth.models import User
 from zoclip.core.config import Settings
 from zoclip.core.db import build_engine, utcnow
 from zoclip.core.errors import ApiError
+from zoclip.core.generation_access import require_generation_access
 from zoclip.credits import service as financial
 from zoclip.media import service
 from zoclip.media.importer import download
@@ -100,6 +101,13 @@ def run_job(
         job = db.get(Job, job_id)
         kind, payload = job.kind, dict(job.payload)
         render_selected = bool(job.checkpoint.get("render_selection"))
+        if kind in {"PROCESS", "RENDER"} or render_selected:
+            try:
+                require_generation_access(settings, owner)
+            except ApiError as exc:
+                service.terminate(db, job, "FAILED", exc.code)
+                db.commit()
+                return
         video = service.required(db, SourceVideo, job.video_id)
         object_id = video.object_id
         if kind == "VALIDATE":

@@ -20,6 +20,9 @@ class Settings(BaseSettings):
 
     app_env: Literal["development", "test", "production"] = "development"
     private_staging: bool = False
+    deployment_tier: Literal["production", "protected_staging"] = "production"
+    staging_generation_enabled: bool = False
+    staging_generation_user_id: UUID | None = None
     staging_site_domain: str = ""
     staging_invite_epoch: UUID | None = (
         None  # Rotate outside DB after any restore; old tokens fail.
@@ -143,6 +146,11 @@ class Settings(BaseSettings):
     ai_min_clip_seconds: int = Field(default=15, ge=1, le=60)
     ai_max_clip_seconds: int = Field(default=90, ge=1, le=180)
 
+    @field_validator("staging_generation_user_id", mode="before")
+    @classmethod
+    def blank_staging_user(cls, value: str | UUID | None) -> str | UUID | None:
+        return value or None
+
     @field_validator("smtp_from", mode="before")
     @classmethod
     def blank_smtp_from(cls, value: str | None) -> str | None:
@@ -150,7 +158,7 @@ class Settings(BaseSettings):
 
     @property
     def ai_configured(self) -> bool:
-        return self.ai_enabled and bool(
+        return (self.ai_enabled or self.staging_generation_enabled) and bool(
             (
                 self.analysis_provider == "local"
                 or (self.gemini_api_key.get_secret_value() and self.gemini_model)
@@ -171,6 +179,21 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_deployment(self) -> Self:
+        if self.staging_generation_enabled or self.staging_generation_user_id is not None:
+            if (
+                self.deployment_tier != "protected_staging"
+                or not self.private_staging
+                or self.app_env != "production"
+                or (self.staging_generation_enabled and self.staging_generation_user_id is None)
+                or self.ai_enabled
+                or self.transcription_provider != "whisper"
+                or self.analysis_provider != "local"
+                or self.deepgram_api_key.get_secret_value()
+                or self.gemini_api_key.get_secret_value()
+            ):
+                raise ValueError(
+                    "Account generation requires protected staging and local-only processing"
+                )
         if self.email_mode == "smtp":
             try:
                 queue_key = base64.b64decode(

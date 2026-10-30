@@ -13,6 +13,10 @@ WORKLOAD = ["proxy", "api", "worker-ai", "worker-render", "maintenance"]
 
 
 def validate_private_config(config, youtube_import=False):
+    for name in ["api", "worker-ai", "worker-render", "maintenance", "migrate"]:
+        env = config["services"][name]["environment"]
+        if env.get("STAGING_GENERATION_ENABLED", "false") != "false":
+            raise RuntimeError("This rollout requires staging generation paused")
     for name in ["api", "proxy", "backup"]:
         if not re.fullmatch(r".+@sha256:[a-f0-9]{64}", config["services"][name]["image"]):
             raise RuntimeError("Private staging requires reviewed app, proxy and tools digests")

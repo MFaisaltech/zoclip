@@ -2,6 +2,9 @@
 # Use AFTER deploy/compose.yaml; never publish this listener on 0.0.0.0.
 x-private: &private
   PRIVATE_STAGING: "true"
+  DEPLOYMENT_TIER: protected_staging
+  STAGING_GENERATION_ENABLED: ${STAGING_GENERATION_ENABLED:-false}
+  STAGING_GENERATION_USER_ID: ${STAGING_GENERATION_USER_ID:-}
   STAGING_SITE_DOMAIN: ${STAGING_SITE_DOMAIN:?Set owned same-site domain}
   STAGING_INVITE_EPOCH: ${STAGING_INVITE_EPOCH:?Set fresh deployment UUID and rotate after restores}
   REGISTRATION_ENABLED: "false"

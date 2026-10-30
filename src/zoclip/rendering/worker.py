@@ -13,6 +13,7 @@ from zoclip.ai.models import ClipSuggestion, Transcript
 from zoclip.core.config import Settings
 from zoclip.core.db import utcnow
 from zoclip.core.errors import ApiError
+from zoclip.core.generation_access import require_generation_access
 from zoclip.credits import service as money
 from zoclip.credits.models import SpendAttempt
 from zoclip.media import service as media
@@ -102,6 +103,7 @@ def run(
 ) -> None:
     from zoclip.media.worker import current
 
+    require_generation_access(settings, owner)
     last = 0.0
     started = cpu()
 
