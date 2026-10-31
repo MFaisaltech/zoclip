@@ -9,8 +9,11 @@ datacenter egress is bot-challenged by YouTube; both are settings,
 not code, so deployments choose their own egress.
 """
 
+import json
+import logging
 import re
 import subprocess
+import tempfile
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -22,6 +25,46 @@ from zoclip.core.errors import ApiError
 _VIDEO_ID = re.compile(r"^[A-Za-z0-9_-]{11}$")
 _YOUTUBE_HOSTS = {"youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"}
 _FORMAT = "bv*[height<=1080]+ba/b[height<=1080]/b"
+logger = logging.getLogger("zoclip.media.import")
+
+
+def download_failure(diagnostic: str, returncode: int) -> ApiError:
+    """Log actionable categories, never signed URLs, titles or proxy credentials."""
+    message = diagnostic.lower()
+    status = re.search(r"http (?:error |status )?([45]\d\d)", message)
+    http_status = int(status[1]) if status else None
+    if any(
+        word in message
+        for word in (
+            "private video",
+            "video unavailable",
+            "not available",
+            "sign in",
+            "age-restricted",
+        )
+    ):
+        reason, code = "video_access_restricted", "link_unavailable"
+    elif http_status in {403, 429}:
+        reason, code = "provider_rejected_stream", "link_provider_unavailable"
+    elif any(word in message for word in ("timed out", "connection", "resolve", "network")) or (
+        http_status and http_status >= 500
+    ):
+        reason, code = "upstream_connection_failed", "link_connection_failed"
+    elif "requested format" in message:
+        reason, code = "requested_format_unavailable", "link_unavailable"
+    else:
+        reason, code = "downloader_exit", "link_download_failed"
+    logger.warning(
+        json.dumps(
+            {
+                "event": "youtube_download_failed",
+                "reason": reason,
+                "exit_code": returncode,
+                "http_status": http_status,
+            }
+        )
+    )
+    return ApiError(422, code, "Video import failed. Retry or upload the original video.")
 
 
 def is_youtube_host(url: str) -> bool:
@@ -117,13 +160,14 @@ def download_youtube(
     if settings.app_env == "production" and not settings.link_proxy_url:
         raise ApiError(503, "link_runtime_unavailable", "Video import is temporarily unavailable.")
     deadline = time.monotonic() + settings.link_deadline_seconds
+    diagnostic = tempfile.TemporaryFile()
     proc = subprocess.Popen(
         build_args(url, dest, settings),
         shell=False,
         # Progress is polled through the application heartbeat. Unread pipes can
         # fill and deadlock yt-dlp; provider diagnostics must not reach customers.
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stderr=diagnostic,
     )
     try:
         while proc.poll() is None:
@@ -133,14 +177,19 @@ def download_youtube(
                 raise TimeoutError("link download deadline")
             progress()
             time.sleep(2)
-        proc.communicate()
+        _, simulated_stderr = proc.communicate()
     finally:
         if proc.poll() is None:
             proc.kill()
             proc.wait()
+        diagnostic.seek(0)
+        # Provider output stays private and only categorized fields reach logs.
+        captured = diagnostic.read(16384).decode("utf8", errors="replace")
+        diagnostic.close()
     if proc.returncode != 0:
-        # yt-dlp errors may contain signed media URLs or proxy credentials.
-        raise ApiError(422, "link_download_failed", "Video download failed. Please retry later.")
+        if simulated_stderr:
+            captured = simulated_stderr.decode("utf8", errors="replace")
+        raise download_failure(captured, proc.returncode)
     if not dest.exists():
         raise ApiError(422, "link_download_failed", "Video download produced no file.")
     size = dest.stat().st_size

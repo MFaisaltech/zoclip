@@ -139,3 +139,25 @@ def test_production_missing_proxy_never_falls_back_to_direct_egress(
             settings.model_copy(update={"app_env": "production", "link_proxy_url": ""}),
         )
     assert exc.value.code == "link_runtime_unavailable"
+
+
+@pytest.mark.parametrize(
+    "diagnostic,code",
+    [
+        (
+            "HTTP Error 403: Forbidden https://media.example/private?sig=secret",
+            "link_provider_unavailable",
+        ),
+        ("HTTP Error 503", "link_connection_failed"),
+        ("Connection timed out socks5://user:password@proxy", "link_connection_failed"),
+        ("This is a private video", "link_unavailable"),
+        ("Requested format is not available", "link_unavailable"),
+    ],
+)
+def test_failure_diagnostics_are_useful_without_leaking_urls_or_credentials(
+    diagnostic, code, caplog
+):
+    error = link_import.download_failure(diagnostic, 1)
+    assert error.code == code
+    assert "secret" not in caplog.text and "password" not in caplog.text
+    assert "http_status" in caplog.text and "exit_code" in caplog.text
